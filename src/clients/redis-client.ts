@@ -25,7 +25,7 @@ const redisGetJson = (key: string): Promise<string> =>
 
 const redisSetJson = (key: string, value: string): Promise<string> =>
   new Promise((resolve) => {
-    redisClient.SET(key, JSON.stringify(value), (err, res) => {
+    redisClient.SET(key, value, (err, res) => {
       if (err) {
         LoggerService.error(`Error while saving to Redis key: ${key}`, err);
         resolve('');

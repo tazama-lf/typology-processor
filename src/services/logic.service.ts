@@ -94,7 +94,7 @@ const executeRequest = async (
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
-      await redisSetJson(cacheKey, ruleResults);
+      await redisSetJson(cacheKey, JSON.stringify(ruleResults));
       return 0.0;
     }
     // else means we have all results for Typology, so lets evaluate result
