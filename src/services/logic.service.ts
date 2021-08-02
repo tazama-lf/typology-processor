@@ -6,33 +6,12 @@ import { CustomerCreditTransferInitiation } from '../classes/iPain001Transaction
 import { NetworkMap, Rule, Typology } from '../classes/network-map';
 import { FlowFileReply, FlowFileRequest } from '../models/nifi_pb';
 import { sendUnaryData } from '@grpc/grpc-js';
-import { redisAppendJson, redisGetJson } from '../clients/redis-client';
+import { redisSetJson, redisGetJson } from '../clients/redis-client';
 import { RuleResult } from '../classes/rule-result';
 import { IExpression, IRuleValue, ITypologyExpression, Operators } from '../interfaces/iTypologyExpression';
 import axios from 'axios';
-
-export const handleTransaction = async (req: CustomerCreditTransferInitiation, networkMap: NetworkMap, ruleResult: RuleResult, callback: sendUnaryData<FlowFileReply>) => {
-  let typologyCounter = 0;
-  let toReturn = [];
-  for (const channel of networkMap.transactions[0].channels) {
-    for (const typology of channel.typologies.filter(typo => typo.rules.some(r => r.rule_name === ruleResult.rule))) {
-      // will loop through every Typology here
-      typologyCounter++;
-      for (const rule of typology.rules) {
-        // determine rule completion
-      }
-      var typoRes = await executeRequest(req, typology, ruleResult);
-      toReturn.push(`{"Typology": ${typology.typology_name}}, "Result":${typoRes}}`);
-    }
-  }
-
-  const result = `${typologyCounter} typologies initiated for transaction ID: ${req.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification}, with the following results:\r\n${toReturn}`;
-  LoggerService.log(result);
-  const res: FlowFileReply = new FlowFileReply();
-  res.setBody(result);
-  res.setResponsecode(1);
-  callback(null, res);
-};
+import { cadpService } from '../clients/cadp.client';
+import { TypologyResult } from '../classes/typology-result';
 
 const getTypologyExpression = async (): Promise<ITypologyExpression> => {
   // Fetch typology expression from config store
@@ -99,50 +78,44 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
 const executeRequest = async (
   request: CustomerCreditTransferInitiation,
   typology: Typology,
-  ruleResult: RuleResult
+  ruleResult: RuleResult,
+  networkMap: NetworkMap
 ): Promise<number> => {
 
   try {
     let score: string = '';
-    try {
-      const transactionID = request.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification;
-      const cacheKey = `${transactionID}_${typology.typology_id}`
-      var jruleResults = await redisGetJson(cacheKey);
-      const ruleResults: RuleResult[] = [];
 
-      if (jruleResults && jruleResults.length > 0)
-        Object.assign(ruleResults, jruleResults);
+    const transactionID = request.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification;
+    const cacheKey = `${transactionID}_${typology.typology_id}`
+    var jruleResults = await redisGetJson(cacheKey);
+    const ruleResults: RuleResult[] = [];
 
-      ruleResults.push({ rule: ruleResult.rule, result: ruleResult.result });
+    if (jruleResults && jruleResults.length > 0)
+      Object.assign(ruleResults, jruleResults);
 
-      // check if all results for this typology are found 
-      if (ruleResults.length < typology.rules.length) {
-        var saveResult = await redisAppendJson(cacheKey, ruleResults);
-        //response.status(200).send('All rules not yet processed for Typology 28');
-        return 0.0;
-      }
-      // else means we have all results for Typology, so lets evaluate result
-      const expression: ITypologyExpression = await getTypologyExpression();
+    ruleResults.push({ rule: ruleResult.rule, result: ruleResult.result });
 
-      const typologyResult = evaluateTypologyExpression(expression.rules_values, ruleResults, expression.typology_expression);
-      return typologyResult;
-      // Convert rule results to Score object
-      // const scores: Typology28Type = {};
-      // ruleResults.forEach((rule) => {
-      //   scores[rule.name] = rule.result;
-      // });
-
-      // // Calculate score for Typology-28
-      // // See https://lextego.atlassian.net/browse/ACTIO-197
-      // score = handleScores(scores, transfer.transaction.TransactionID, transfer.transaction.HTTPTransactionDate);
-    } catch (e) {
-      console.error(e);
+    // check if all results for this typology are found 
+    if (ruleResults.length < typology.rules.length) {
+      await redisSetJson(cacheKey, ruleResults);
       return 0.0;
     }
+    // else means we have all results for Typology, so lets evaluate result
+    const expression: ITypologyExpression = await getTypologyExpression();
 
-    // var res = await sendScore(score);
-
-    // response.status(200).send(`${score}\r\nChannel Score Response:\r\n${res}`);
+    const typologyResultValue = evaluateTypologyExpression(expression.rules_values, ruleResults, expression.typology_expression);
+    const typologyResult: TypologyResult = { result: typologyResultValue, typology: typology.typology_name }
+    // Send CADP request with this Typology's result
+    try {
+      let cadpReq = new FlowFileRequest();
+      const cadpReqBody = `{"typologyResult": ${typologyResult}, "transaction":${request}, "networkMap":${networkMap}, "ruleResults":${ruleResults}`;
+      cadpReq.setContent(cadpReqBody);
+      await cadpService.send(cadpReq);
+    }
+    catch (error) {
+      LoggerService.error('Error while sending Typology result to CADP', error);
+    }
+    return typologyResultValue;
   } catch (error) {
     const processError = new Error(
       'Failed to process Typology-28 request',
@@ -155,8 +128,32 @@ const executeRequest = async (
   }
 }
 
+export const handleTransaction = async (req: CustomerCreditTransferInitiation, networkMap: NetworkMap, ruleResult: RuleResult, callback: sendUnaryData<FlowFileReply>) => {
+  let typologyCounter = 0;
+  let toReturn = [];
+  for (const channel of networkMap.transactions[0].channels) {
+    for (const typology of channel.typologies.filter(typo => typo.rules.some(r => r.rule_name === ruleResult.rule))) {
+      // will loop through every Typology here
+      typologyCounter++;
+      for (const rule of typology.rules) {
+        // determine rule completion
+      }
+      var typoRes = await executeRequest(req, typology, ruleResult, networkMap);
+      toReturn.push(`{"Typology": ${typology.typology_name}}, "Result":${typoRes}}`);
+    }
+  }
+
+  const result = `${typologyCounter} typologies initiated for transaction ID: ${req.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification}, with the following results:\r\n${toReturn}`;
+  LoggerService.log(result);
+  const res: FlowFileReply = new FlowFileReply();
+  res.setBody(result);
+  res.setResponsecode(1);
+
+  callback(null, res);
+};
+
 const sendRule = async (rule: Rule, req: CustomerCreditTransferInitiation) => {
-  const ruleEndpoint = `${config.ruleEndpoint}/${rule.rule_name}/${rule.rule_version}`; // rule.ruleEndpoint;
+  const ruleEndpoint = `${config.cadpEndpoint}/${rule.rule_name}/${rule.rule_version}`; // rule.ruleEndpoint;
   // const ruleRequest: RuleRequest = new RuleRequest(req, rule.typologies);
   const toSend = `{"transaction":${JSON.stringify(req)}, "typologies":${JSON.stringify(rule.typologies)}}`;
 
@@ -202,31 +199,4 @@ const executePost = (endpoint: string, request: string): Promise<void | Error> =
     req.end();
   });
 };
-
-function getRuleMap(networkMap: NetworkMap, transactionType: string): Rule[] {
-  const rules: Rule[] = new Array<Rule>();
-  const painChannel = networkMap.transactions.find((tran) => tran.transaction_type === transactionType);
-  if (painChannel && painChannel.channels && painChannel.channels.length > 0)
-    for (const channel of painChannel.channels) {
-      if (channel.typologies && channel.typologies.length > 0)
-        for (const typology of channel.typologies) {
-          if (typology.rules && typology.rules.length > 0)
-            for (const rule of typology.rules) {
-              const ruleIndex = rules.findIndex(
-                (r: Rule) => `${r.rule_id}${r.rule_name}${r.rule_version}` === `${rule.rule_id}${rule.rule_name}${rule.rule_version}`,
-              );
-              if (ruleIndex > -1) {
-                rules[ruleIndex].typologies.push(new Typology(typology.typology_id, typology.typology_name, typology.typology_version));
-              } else {
-                const tempTypologies = Array<Typology>();
-                tempTypologies.push(new Typology(typology.typology_id, typology.typology_name, typology.typology_version));
-                rule.typologies = tempTypologies;
-                rules.push(rule);
-              }
-            }
-        }
-    }
-
-  return rules;
-}
 

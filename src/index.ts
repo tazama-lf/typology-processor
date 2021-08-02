@@ -4,7 +4,7 @@ import apm from 'elastic-apm-node';
 import { Server, ServerCredentials } from '@grpc/grpc-js';
 import { LoggerService } from './services/logger.service';
 import Health from './servers/health.server';
-import ChannelRouter from './servers/typology.server';
+import TypologyProcessor from './servers/typology.server';
 import App from './app';
 import { initializeRedis } from './clients/redis-client';
 
@@ -33,9 +33,9 @@ export const runServer = async (): Promise<void> => {
   });
 
   server.addService(Health.service, Health.handler);
-  server.addService(ChannelRouter.service, ChannelRouter.handler);
+  server.addService(TypologyProcessor.service, TypologyProcessor.handler);
 
-  await server.bindAsync(`0.0.0.0:${config.grpcport}`, ServerCredentials.createInsecure(), (err: Error | null, bindPort: number) => {
+  await server.bindAsync(`0.0.0.0:${config.grpcPort}`, ServerCredentials.createInsecure(), (err: Error | null, bindPort: number) => {
     if (err) {
       throw err;
     }

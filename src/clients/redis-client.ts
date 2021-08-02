@@ -29,7 +29,7 @@ const redisGetJson = (key: string): Promise<any> =>
     })
   });
 
-const redisAppendJson = (key: string, value: any): Promise<any> =>
+const redisSetJson = (key: string, value: any): Promise<any> =>
   new Promise<any>((resolve) => {
     redisClient.SET(key, JSON.stringify(value), (err, res) => {
       if (err) {
@@ -40,4 +40,4 @@ const redisAppendJson = (key: string, value: any): Promise<any> =>
     })
   });
 
-export { redisGetJson, redisAppendJson, initializeRedis };
+export { redisGetJson, redisSetJson, initializeRedis };
