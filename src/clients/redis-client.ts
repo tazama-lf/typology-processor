@@ -3,12 +3,7 @@ import { LoggerService } from '../services/logger.service';
 
 let redisClient: RedisClient;
 
-const initializeRedis = (
-  redisDB: string,
-  redisHost: string,
-  redisPort: number,
-  redisAuth: string,
-): void => {
+const initializeRedis = (redisDB: string, redisHost: string, redisPort: number, redisAuth: string): void => {
   redisClient = new RedisClient({
     db: redisDB,
     host: redisHost,
@@ -17,27 +12,37 @@ const initializeRedis = (
   });
 };
 
-const redisGetJson = (key: string): Promise<any> =>
-  new Promise<any>((resolve) => {
+const redisGetJson = (key: string): Promise<string> =>
+  new Promise((resolve) => {
     redisClient.get(key, (err, res) => {
       if (err) {
         LoggerService.error('Error while getting Redis key', err);
-        resolve(err);
+        resolve('');
       }
-      let ruleRes = JSON.parse(res ?? "[]");
-      resolve(ruleRes);
-    })
+      resolve(res ?? '');
+    });
   });
 
-const redisSetJson = (key: string, value: any): Promise<any> =>
-  new Promise<any>((resolve) => {
+const redisSetJson = (key: string, value: string): Promise<string> =>
+  new Promise((resolve) => {
     redisClient.SET(key, JSON.stringify(value), (err, res) => {
       if (err) {
         LoggerService.error(`Error while saving to Redis key: ${key}`, err);
-        resolve(err);
+        resolve('');
       }
       resolve(res);
-    })
+    });
   });
 
-export { redisGetJson, redisSetJson, initializeRedis };
+const redisDeleteKey = (key: string): Promise<number> =>
+  new Promise((resolve) => {
+    redisClient.DEL(key, (err, res) => {
+      if (err) {
+        LoggerService.error(`Error while Deleting key in Redis: ${key}`, err);
+        resolve(0);
+      }
+      resolve(res);
+    });
+  });
+
+export { redisGetJson, redisSetJson, initializeRedis, redisDeleteKey };

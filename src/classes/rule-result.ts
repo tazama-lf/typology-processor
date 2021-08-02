@@ -1,4 +1,4 @@
 export class RuleResult {
-    rule: string = '';
-    result: boolean = false;
+  rule = '';
+  result = false;
 }

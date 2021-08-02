@@ -16,11 +16,11 @@ export const config: IConfig = {
   logstashHost: <string>process.env.LOGSTASH_HOST,
   logstashPort: parseInt(process.env.LOGSTASH_PORT!, 10),
   grpcPort: parseInt(process.env.GRPC_PORT!, 10) || 50051,
-  networkMap: <string>process.env.NETWORK_MAP,
   functionName: <string>process.env.FUNCTION_NAME,
   cadpEndpoint: <string>process.env.CADP_ENDPOINT,
   apmLogging: <boolean>(process.env.APM_LOGGING === 'true'),
   apmSecretToken: <string>process.env.APM_SECRET_TOKEN,
   apmURL: <string>process.env.APM_URL,
   dev: <string>process.env.NODE_ENV,
+  druidEndpoint: <string>process.env.DRUID_ENDPOINT,
 };

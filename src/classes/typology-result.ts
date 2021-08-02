@@ -1,4 +1,4 @@
 export class TypologyResult {
-    typology: string = '';
-    result: number = 0.0;
+  typology = '';
+  result = 0.0;
 }
