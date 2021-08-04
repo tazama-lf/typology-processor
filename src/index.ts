@@ -6,16 +6,19 @@ import { LoggerService } from './services/logger.service';
 import Health from './servers/health.server';
 import TypologyProcessor from './servers/typology.server';
 import App from './app';
-import { initializeRedis } from './clients/redis-client';
+import { initializeRedis } from './clients/redis.client';
+import NodeCache from 'node-cache';
 
-if (config.apmLogging) {
-  apm.start({
-    serviceName: config.functionName,
-    secretToken: config.apmSecretToken,
-    serverUrl: config.apmURL,
-    usePathAsTransactionName: true,
-  });
-}
+apm.start({
+  serviceName: config.functionName,
+  secretToken: config.apmSecretToken,
+  serverUrl: config.apmURL,
+  usePathAsTransactionName: true,
+  active: config.apmLogging
+});
+
+
+export const cache = new NodeCache();
 
 export const runServer = async (): Promise<void> => {
   /**
@@ -50,16 +53,16 @@ export const runServer = async (): Promise<void> => {
 };
 
 process.on('uncaughtException', (err) => {
-  LoggerService.error(`process on uncaughtException error: ${err}`);
+  LoggerService.error(`process on uncaughtException error`, err, 'index.ts');
 });
 
 process.on('unhandledRejection', (err) => {
-  LoggerService.error(`process on unhandledRejection error: ${err}`);
+  LoggerService.error(`process on unhandledRejection error: ${err ?? "[NoMetaData]"}`);
 });
 
 try {
-  runServer();
   initializeRedis(config.redisDB, config.redisHost, config.redisPort, config.redisAuth);
+  runServer();
 } catch (err) {
-  LoggerService.error('Error while starting gRPC server', err);
+  LoggerService.error('Error while starting gRPC server', err, 'index.ts');
 }

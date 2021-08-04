@@ -3,12 +3,11 @@ provider:
   name: openfaas
   gateway: http://20.90.137.195:8080
 functions:
-  off-typology-processor:
+  off-frm-typology-processor:
     namespace: frm-meshed
     lang: dockerfile
     handler: .
-    version: 1.8
-    image: frmacr.azurecr.io/off-typology-processor:1.8
+    image: frmacr.azurecr.io/frm-typology-processor:latest
     annotations:
       com.openfaas.health.http.path: /health
       com.openfaas.health.http.initialDelay: "45s"

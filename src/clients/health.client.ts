@@ -24,8 +24,6 @@ class HealthCheckService {
           return LoggerService.error(`healthCheck: ${status}`);
         }
 
-        LoggerService.log(`healthCheck: ${status}`);
-
         resolve(res);
       });
     });

@@ -7,6 +7,7 @@ import { IFlowFileServiceServer, FlowFileServiceService } from '../models/nifi_g
 import { FlowFileReply, FlowFileRequest } from '../models/nifi_pb';
 import { LoggerService } from '../services/logger.service';
 import { handleTransaction } from '../services/logic.service';
+import apm from 'elastic-apm-node';
 
 /**
  * gRPC Health Check
@@ -15,22 +16,27 @@ import { handleTransaction } from '../services/logic.service';
 class Execute implements IFlowFileServiceServer {
   [method: string]: UntypedHandleCall;
 
-  public async send(call: ServerUnaryCall<FlowFileRequest, FlowFileReply>, callback: sendUnaryData<FlowFileReply>): Promise<void> {
-    const res: FlowFileReply = new FlowFileReply();
+  public async send(call: ServerUnaryCall<FlowFileRequest, FlowFileReply>, callback: sendUnaryData<FlowFileReply>): Promise<void> {    
     LoggerService.log('Start - Handle execute request');
+    const res: FlowFileReply = new FlowFileReply();
     let networkMap: NetworkMap = new NetworkMap();
     let ruleResult: RuleResult = new RuleResult();
     let req: CustomerCreditTransferInitiation = new CustomerCreditTransferInitiation({});
+    let sReqData = '';
     try {
-      const reqData = Buffer.from(call.request.getContent_asB64(), 'base64').toString();
-      LoggerService.log(`gRPC string request received with data: ${reqData ?? ''}`);
-      const request = JSON.parse(reqData);
+      try {
+        sReqData = Buffer.from(call.request.getContent_asB64(), 'base64').toString();
+      } catch (error) {
+        LoggerService.error(`Failed to parse execution request from base64 as Json`, error, 'typology.server.ts');
+        throw error;
+      }
+      const request = JSON.parse(sReqData);
       networkMap = request.networkMap;
       ruleResult = request.ruleResult;
       req = request.transaction;
     } catch (parseError) {
-      const failMessage = 'Failed to parse execution request.';
-      LoggerService.error(failMessage, parseError, 'ApplicationService');
+      const failMessage = `Failed to parse execution request`;
+      LoggerService.error(failMessage, parseError, 'typology.server.ts');
       LoggerService.log('End - Handle execute request');
       res.setResponsecode(0);
       res.setBody(failMessage);

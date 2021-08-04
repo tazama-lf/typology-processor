@@ -13,5 +13,8 @@ export interface IConfig {
   apmSecretToken: string;
   apmURL: string;
   dev: string;
-  druidEndpoint: string;
+  dbURL: string;
+  dbName: string;
+  dbUser: string;
+  dbPassword: string;
 }

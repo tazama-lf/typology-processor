@@ -1,32 +1,17 @@
 import http from 'http';
-import { forkJoin } from 'rxjs';
 import { config } from '../config';
 import { LoggerService } from './logger.service';
 import { CustomerCreditTransferInitiation } from '../classes/iPain001Transaction';
 import { NetworkMap, Rule, Typology } from '../classes/network-map';
 import { FlowFileReply, FlowFileRequest } from '../models/nifi_pb';
 import { sendUnaryData } from '@grpc/grpc-js';
-import { redisSetJson, redisGetJson, redisDeleteKey } from '../clients/redis-client';
+import { redisSetJson, redisGetJson, redisDeleteKey } from '../clients/redis.client';
 import { RuleResult } from '../classes/rule-result';
 import { IExpression, IRuleValue, ITypologyExpression } from '../interfaces/iTypologyExpression';
-import axios from 'axios';
 import { cadpService } from '../clients/cadp.client';
 import { TypologyResult } from '../classes/typology-result';
-
-const getTypologyExpression = async (): Promise<ITypologyExpression> => {
-  // Fetch typology expression from config store
-  const typologyExpressionRes = await axios.post(`${config.druidEndpoint}/druid/v2/sql`, {
-    query: 'select * from TypologyExpression WHERE typology_name = \'Typology_29\'',
-  });
-  const jTypoloty = typologyExpressionRes.data[0];
-
-  const toReturn = {} as ITypologyExpression;
-  toReturn.rules_values = JSON.parse(jTypoloty.rules_values);
-  toReturn.typology_expression = JSON.parse(jTypoloty.typology_expression);
-  toReturn.typology_name = jTypoloty.typology_name;
-  toReturn.typology_version = jTypoloty.sum_typology_version;
-  return toReturn;
-};
+import { arangoDBService } from '../clients/arango.client';
+import apm from 'elastic-apm-node';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -80,9 +65,9 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
 ): Promise<number> => {
+  // Have to manually start transaction because we are not making use of one of the out-of-the-box solutions (eg, express / koa server)
+  const apmTran = apm.startTransaction(`${typology.typology_id}`);
   try {
-    const score = '';
-
     const transactionID = request.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification;
     const cacheKey = `${transactionID}_${typology.typology_id}`;
     const jruleResults = await redisGetJson(cacheKey);
@@ -94,13 +79,21 @@ const executeRequest = async (
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
+      const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`, { childOf: apmTran == null ? undefined : apmTran })
       await redisSetJson(cacheKey, JSON.stringify(ruleResults));
+      span?.end();
       return 0.0;
     }
     // else means we have all results for Typology, so lets evaluate result
-    const expression: ITypologyExpression = await getTypologyExpression();
 
+    const expressionRes = await arangoDBService.getTypologyExpression(typology.typology_id);
+    if (!expressionRes)
+      return 0.0;
+
+    const expression: ITypologyExpression = expressionRes!;
+    let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`, { childOf: apmTran == null ? undefined : apmTran });
     const typologyResultValue = evaluateTypologyExpression(expression.rules_values, ruleResults, expression.typology_expression);
+    span?.end();
     const typologyResult: TypologyResult = { result: typologyResultValue, typology: typology.typology_id };
     // Send CADP request with this Typology's result
     try {
@@ -110,18 +103,25 @@ const executeRequest = async (
       )}, "networkMap":${JSON.stringify(networkMap)}, "ruleResults":${JSON.stringify(ruleResults)}}`;
       const toSend = Buffer.from(JSON.stringify(cadpReqBody)).toString('base64');
       cadpReq.setContent(toSend);
+      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`, { childOf: apmTran == null ? undefined : apmTran });
       await cadpService.send(cadpReq);
+      span?.end();
     } catch (error) {
+      span?.end();
       LoggerService.error('Error while sending Typology result to CADP', error);
     }
+    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`, { childOf: apmTran == null ? undefined : apmTran });
     await redisDeleteKey(cacheKey);
+    span?.end();
     return typologyResultValue;
   } catch (error) {
     const processError = new Error(`Failed to process Typology ${typology.typology_id} request`);
     processError.message += `\n${error.message}`;
-
     LoggerService.error(`${processError.message}`);
     return 0.0;
+  }
+  finally {
+    apmTran?.end();
   }
 };
 
