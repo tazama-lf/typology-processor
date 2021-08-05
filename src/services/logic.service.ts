@@ -101,14 +101,12 @@ const executeRequest = async (
     const typologyResult: TypologyResult = { result: typologyResultValue, typology: typology.typology_id };
     // Send CADP request with this Typology's result
     try {
-      const cadpReq = new FlowFileRequest();
       const cadpReqBody = `{"typologyResult": ${JSON.stringify(typologyResult)}, "transaction":${JSON.stringify(
         request,
       )}, "networkMap":${JSON.stringify(networkMap)}, "ruleResults":${JSON.stringify(ruleResults)}}`;
       const toSend = Buffer.from(JSON.stringify(cadpReqBody)).toString('base64');
-      cadpReq.setContent(toSend);
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`, { childOf: apmTran == null ? undefined : apmTran });
-      await cadpService.send(cadpReq);
+      await executePost(config.cadpEndpoint, toSend);
       span?.end();
     } catch (error) {
       span?.end();
@@ -182,19 +180,19 @@ const executePost = (endpoint: string, request: string): Promise<void | Error> =
     };
 
     const req = http.request(endpoint, options, (res) => {
-      LoggerService.log(`Rule response statusCode: ${res.statusCode}`);
+      LoggerService.log(`CADP statusCode: ${res.statusCode}`);
       if (res.statusCode !== 200) {
         LoggerService.trace(`StatusCode != 200, request:\r\n${request}`);
       }
 
       res.on('data', (d) => {
-        LoggerService.log(`Rule response data: ${d.toString()}`);
+        LoggerService.log(`CADP data: ${d.toString()}`);
         resolve();
       });
     });
 
     req.on('error', (error) => {
-      LoggerService.error(`Rule response Error data: ${error}`);
+      LoggerService.error(`CADP Error data: ${error}`);
       LoggerService.trace(`Request:\r\n${request}`);
       resolve(error);
     });

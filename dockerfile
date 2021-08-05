@@ -66,7 +66,7 @@ ENV REDIS_HOST=my-redis-master.frm
 ENV REDIS_PORT=6379
 ENV REDIS_DB=0
 ENV REDIS_AUTH=TjEmUWes67
-ENV CADP_ENDPOINT=http://gateway.frm:8080/function/off-frm-channel-aggregation-decisioning-processor.frm-meshed
+ENV CADP_ENDPOINT=http://gateway.frm:8080/function/off-frm-channel-aggregation-decisioning-processor.frm-meshed/execute
 
 ENV prefix_logs="false"
 
