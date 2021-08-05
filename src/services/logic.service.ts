@@ -73,7 +73,11 @@ const executeRequest = async (
     const jruleResults = await redisGetJson(cacheKey);
     const ruleResults: RuleResult[] = [];
 
-    if (jruleResults && jruleResults.length > 0) Object.assign(ruleResults, jruleResults);
+    if (jruleResults && jruleResults.length > 0)
+      Object.assign(ruleResults, JSON.parse(jruleResults));
+
+    if (ruleResults.some(r => r.rule === typologyResult.typology))
+      return 0.0;
 
     ruleResults.push({ rule: ruleResult.rule, result: ruleResult.result });
 
@@ -115,9 +119,7 @@ const executeRequest = async (
     span?.end();
     return typologyResultValue;
   } catch (error) {
-    const processError = new Error(`Failed to process Typology ${typology.typology_id} request`);
-    processError.message += `\n${error.message}`;
-    LoggerService.error(`${processError.message}`);
+    LoggerService.error(`Failed to process Typology ${typology.typology_id} request`, error, 'executeRequest');
     return 0.0;
   }
   finally {
