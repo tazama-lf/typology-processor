@@ -1,6 +1,4 @@
-import bodyParser from 'koa-bodyparser';
 import { config } from './config';
-import apm from 'elastic-apm-node';
 import { Server, ServerCredentials } from '@grpc/grpc-js';
 import { LoggerService } from './services/logger.service';
 import Health from './servers/health.server';
@@ -8,15 +6,15 @@ import TypologyProcessor from './servers/typology.server';
 import App from './app';
 import { initializeRedis } from './clients/redis.client';
 import NodeCache from 'node-cache';
+import apm from 'elastic-apm-node';
 
 apm.start({
   serviceName: config.functionName,
   secretToken: config.apmSecretToken,
   serverUrl: config.apmURL,
   usePathAsTransactionName: true,
-  active: config.apmLogging
+  active: config.apmLogging,
 });
-
 
 export const cache = new NodeCache();
 
@@ -38,7 +36,7 @@ export const runServer = async (): Promise<void> => {
   server.addService(Health.service, Health.handler);
   server.addService(TypologyProcessor.service, TypologyProcessor.handler);
 
-  await server.bindAsync(`0.0.0.0:${config.grpcPort}`, ServerCredentials.createInsecure(), (err: Error | null, bindPort: number) => {
+  server.bindAsync(`0.0.0.0:${config.grpcPort}`, ServerCredentials.createInsecure(), (err: Error | null, bindPort: number) => {
     if (err) {
       throw err;
     }
@@ -53,11 +51,11 @@ export const runServer = async (): Promise<void> => {
 };
 
 process.on('uncaughtException', (err) => {
-  LoggerService.error(`process on uncaughtException error`, err, 'index.ts');
+  LoggerService.error('process on uncaughtException error', err, 'index.ts');
 });
 
 process.on('unhandledRejection', (err) => {
-  LoggerService.error(`process on unhandledRejection error: ${err ?? "[NoMetaData]"}`);
+  LoggerService.error(`process on unhandledRejection error: ${err ?? '[NoMetaData]'}`);
 });
 
 try {
