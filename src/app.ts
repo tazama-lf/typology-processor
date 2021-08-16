@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Koa from 'koa';
-import * as swagger from 'swagger2';
-import { ui, validate } from 'swagger2-koa';
 import bodyParser from 'koa-bodyparser';
 import { Server } from 'http';
 import router from './router';
-import path from 'path';
 import { LoggerService } from './services/logger.service';
 
 class App extends Koa {

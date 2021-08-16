@@ -2,13 +2,12 @@ import http from 'http';
 import { config } from '../config';
 import { LoggerService } from './logger.service';
 import { CustomerCreditTransferInitiation } from '../classes/iPain001Transaction';
-import { NetworkMap, Rule, Typology } from '../classes/network-map';
-import { FlowFileReply, FlowFileRequest } from '../models/nifi_pb';
+import { NetworkMap, Typology } from '../classes/network-map';
+import { FlowFileReply } from '../models/nifi_pb';
 import { sendUnaryData } from '@grpc/grpc-js';
 import { redisSetJson, redisGetJson, redisDeleteKey } from '../clients/redis.client';
 import { RuleResult } from '../classes/rule-result';
 import { IExpression, IRuleValue, ITypologyExpression } from '../interfaces/iTypologyExpression';
-import { cadpService } from '../clients/cadp.client';
 import { TypologyResult } from '../classes/typology-result';
 import { arangoDBService } from '../clients/arango.client';
 import apm from 'elastic-apm-node';
@@ -73,17 +72,19 @@ const executeRequest = async (
     const jruleResults = await redisGetJson(cacheKey);
     const ruleResults: RuleResult[] = [];
 
-    if (jruleResults && jruleResults.length > 0)
-      Object.assign(ruleResults, JSON.parse(jruleResults));
+    // Get cache from Redis if we have
+    if (jruleResults && jruleResults.length > 0) Object.assign(ruleResults, JSON.parse(jruleResults));
 
-    if (ruleResults.some(r => r.rule === typologyResult.typology))
-      return 0.0;
+    if (ruleResults.some((r) => r.rule === typologyResult.typology)) return 0.0;
 
     ruleResults.push({ rule: ruleResult.rule, result: ruleResult.result });
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
-      const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`, { childOf: apmTran == null ? undefined : apmTran })
+      const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`, {
+        childOf: apmTran == null ? undefined : apmTran,
+      });
+      // Save Typology interim rule results to Cache
       await redisSetJson(cacheKey, JSON.stringify(ruleResults));
       span?.end();
       return 0.0;
@@ -91,8 +92,7 @@ const executeRequest = async (
     // else means we have all results for Typology, so lets evaluate result
 
     const expressionRes = await arangoDBService.getTypologyExpression(typology.typology_id);
-    if (!expressionRes)
-      return 0.0;
+    if (!expressionRes) return 0.0;
 
     const expression: ITypologyExpression = expressionRes!;
     let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`, { childOf: apmTran == null ? undefined : apmTran });
@@ -119,8 +119,7 @@ const executeRequest = async (
   } catch (error) {
     LoggerService.error(`Failed to process Typology ${typology.typology_id} request`, error, 'executeRequest');
     return 0.0;
-  }
-  finally {
+  } finally {
     apmTran?.end();
   }
 };
@@ -145,6 +144,7 @@ export const handleTransaction = async (
     }
   }
 
+  // Response for CRSP - How many typologies have kicked off?
   const result = `${typologyCounter} typologies initiated for transaction ID: ${req.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification}, with the following results:\r\n${toReturn}`;
   LoggerService.log(result);
   const res: FlowFileReply = new FlowFileReply();
@@ -154,21 +154,7 @@ export const handleTransaction = async (
   callback(null, res);
 };
 
-const sendRule = async (rule: Rule, req: CustomerCreditTransferInitiation) => {
-  const ruleEndpoint = `${config.cadpEndpoint}/${rule.rule_name}/${rule.rule_version}`; // rule.ruleEndpoint;
-  // const ruleRequest: RuleRequest = new RuleRequest(req, rule.typologies);
-  const toSend = `{"transaction":${JSON.stringify(req)}, "typologies":${JSON.stringify(rule.typologies)}}`;
-
-  // Uncomment this to send gRPC request to Rule Engines
-  // let ruleRequest = new FlowFileRequest();
-  const objJsonB64 = Buffer.from(JSON.stringify(toSend)).toString('base64');
-  // ruleRequest.setContent(objJsonB64);
-  // ruleEngineService.send(ruleRequest);
-
-  await executePost(ruleEndpoint, toSend);
-};
-
-// Submit the score to the Rule Engine
+// Submit the score to the CADP
 const executePost = (endpoint: string, request: string): Promise<void | Error> => {
   return new Promise((resolve) => {
     const options: http.RequestOptions = {

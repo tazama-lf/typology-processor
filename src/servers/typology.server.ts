@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { sendUnaryData, ServerUnaryCall, UntypedHandleCall } from '@grpc/grpc-js';
 import { CustomerCreditTransferInitiation } from '../classes/iPain001Transaction';
-import { NetworkMap, Typology } from '../classes/network-map';
+import { NetworkMap } from '../classes/network-map';
 import { RuleResult } from '../classes/rule-result';
 import { IFlowFileServiceServer, FlowFileServiceService } from '../models/nifi_grpc_pb';
 import { FlowFileReply, FlowFileRequest } from '../models/nifi_pb';
 import { LoggerService } from '../services/logger.service';
 import { handleTransaction } from '../services/logic.service';
-import apm from 'elastic-apm-node';
 
 /**
  * gRPC Health Check
@@ -16,7 +15,7 @@ import apm from 'elastic-apm-node';
 class Execute implements IFlowFileServiceServer {
   [method: string]: UntypedHandleCall;
 
-  public async send(call: ServerUnaryCall<FlowFileRequest, FlowFileReply>, callback: sendUnaryData<FlowFileReply>): Promise<void> {    
+  public async send(call: ServerUnaryCall<FlowFileRequest, FlowFileReply>, callback: sendUnaryData<FlowFileReply>): Promise<void> {
     LoggerService.log('Start - Handle execute request');
     const res: FlowFileReply = new FlowFileReply();
     let networkMap: NetworkMap = new NetworkMap();
@@ -27,7 +26,8 @@ class Execute implements IFlowFileServiceServer {
       try {
         sReqData = Buffer.from(call.request.getContent_asB64(), 'base64').toString();
       } catch (error) {
-        LoggerService.error(`Failed to parse execution request from base64 as Json`, error, 'typology.server.ts');
+        // TODO find type of 'error' and use it to log the error
+        LoggerService.error('Failed to parse execution request from base64 as Json', error, 'typology.server.ts');
         throw error;
       }
       const request = JSON.parse(sReqData);
@@ -35,7 +35,8 @@ class Execute implements IFlowFileServiceServer {
       ruleResult = request.ruleResult;
       req = request.transaction;
     } catch (parseError) {
-      const failMessage = `Failed to parse execution request`;
+      const failMessage = 'Failed to parse execution request';
+      // TODO find type of 'parseError' and use it to log the error
       LoggerService.error(failMessage, parseError, 'typology.server.ts');
       LoggerService.log('End - Handle execute request');
       res.setResponsecode(0);

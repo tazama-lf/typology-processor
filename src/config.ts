@@ -22,8 +22,8 @@ export const config: IConfig = {
   apmSecretToken: <string>process.env.APM_SECRET_TOKEN,
   apmURL: <string>process.env.APM_URL,
   dev: <string>process.env.NODE_ENV,
-  dbURL: <string>(process.env.DB_URL),
-  dbName: <string>(process.env.DB_NAME),
-  dbUser: <string>(process.env.DB_USER),
-  dbPassword: <string>(process.env.DB_PASSWORD),
+  dbURL: <string>process.env.DB_URL,
+  dbName: <string>process.env.DB_NAME,
+  dbUser: <string>process.env.DB_USER,
+  dbPassword: <string>process.env.DB_PASSWORD,
 };
