@@ -101,11 +101,16 @@ const executeRequest = async (
     const typologyResult: TypologyResult = { result: typologyResultValue, typology: typology.typology_id };
     // Send CADP request with this Typology's result
     try {
-      const cadpReqBody = `{"typologyResult": ${JSON.stringify(typologyResult)}, "transaction":${JSON.stringify(
-        request,
-      )}, "networkMap":${JSON.stringify(networkMap)}, "ruleResults":${JSON.stringify(ruleResults)}}`;
-      const toSend = Buffer.from(JSON.stringify(cadpReqBody)).toString('base64');
+      
+      const cadpReqBody = {
+        typologyResult: typologyResult,
+        transaction: request,
+        networkMap: networkMap,
+        ruleResults: ruleResults
+      };
+      const toSend = JSON.stringify(cadpReqBody);
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`, { childOf: apmTran == null ? undefined : apmTran });
+      //LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
       await executePost(config.cadpEndpoint, toSend);
       span?.end();
     } catch (error) {
