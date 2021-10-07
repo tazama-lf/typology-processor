@@ -1,66 +1,69 @@
-import { config } from './config';
-import { Server, ServerCredentials } from '@grpc/grpc-js';
-import { LoggerService } from './services/logger.service';
-import Health from './servers/health.server';
-import TypologyProcessor from './servers/typology.server';
 import App from './app';
-import { initializeRedis } from './clients/redis.client';
-import NodeCache from 'node-cache';
+import { Context } from 'koa';
+import { configuration } from './config';
 import apm from 'elastic-apm-node';
+import { LoggerService } from './logger.service';
+import NodeCache from 'node-cache';
+import { ArangoDBService, RedisService } from './clients';
 
-apm.start({
-  serviceName: config.functionName,
-  secretToken: config.apmSecretToken,
-  serverUrl: config.apmURL,
-  usePathAsTransactionName: true,
-  active: config.apmLogging,
-});
+/*
+ * Initialize the APM Logging
+ **/
+if (configuration.env === 'production') {
+  apm.start({
+    serviceName: configuration.apm?.serviceName,
+    secretToken: configuration.apm?.secretToken,
+    serverUrl: configuration.apm?.url,
+    usePathAsTransactionName: true,
+    active: Boolean(configuration.apm?.active),
+  });
+}
+
+export const app = new App();
 
 export const cache = new NodeCache();
+export const databaseClient = new ArangoDBService();
+export const cacheClient = new RedisService();
 
-export const runServer = async (): Promise<void> => {
-  /**
-   * KOA Rest Server
-   */
-  const app = new App();
+/*
+ * Centralized error handling
+ **/
+app.on('error', handleError);
 
-  /**
-   * gRPC Server
-   */
-  const messageSendLimit = 4194304;
-  const server: Server = new Server({
-    'grpc.max_receive_message_length': -1,
-    'grpc.max_send_message_length': messageSendLimit,
-  });
-
-  server.addService(Health.service, Health.handler);
-  server.addService(TypologyProcessor.service, TypologyProcessor.handler);
-
-  server.bindAsync(`0.0.0.0:${config.grpcPort}`, ServerCredentials.createInsecure(), (err: Error | null, bindPort: number) => {
-    if (err) {
-      throw err;
-    }
-
-    app.listen(config.restPort, () => {
-      LoggerService.log(`Rest Server listening on port ${config.restPort}`);
-    });
-
-    server.start();
-    LoggerService.log(`gRPC Server listening on port ${bindPort}`);
-  });
-};
-
-process.on('uncaughtException', (err) => {
-  LoggerService.error('process on uncaughtException error', err, 'index.ts');
-});
-
-process.on('unhandledRejection', (err) => {
-  LoggerService.error(`process on unhandledRejection error: ${err ?? '[NoMetaData]'}`);
-});
-
-try {
-  initializeRedis(config.redisDB, config.redisHost, config.redisPort, config.redisAuth);
-  runServer();
-} catch (err) {
-  LoggerService.error('Error while starting gRPC server', err, 'index.ts');
+function handleError(err: Error, ctx: Context): void {
+  if (ctx == null) {
+    LoggerService.error(err, undefined, 'Unhandled exception occured');
+  }
 }
+
+function terminate(signal: NodeJS.Signals): void {
+  try {
+    app.terminate();
+  } finally {
+    LoggerService.log('App is terminated');
+    process.kill(process.pid, signal);
+  }
+}
+
+/*
+ * Start server
+ **/
+if (Object.values(require.cache).filter(async (m) => m?.children.includes(module))) {
+  const server = app.listen(configuration.port, () => {
+    LoggerService.log(`API server listening on PORT ${configuration.port}`, 'execute');
+  });
+  server.on('error', handleError);
+
+  const errors = ['unhandledRejection', 'uncaughtException'];
+  errors.forEach((error) => {
+    process.on(error, handleError);
+  });
+
+  const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
+
+  signals.forEach((signal) => {
+    process.once(signal, () => terminate(signal));
+  });
+}
+
+export default app;

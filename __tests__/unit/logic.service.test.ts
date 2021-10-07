@@ -1,10 +1,6 @@
-import { Metadata, sendUnaryData } from '@grpc/grpc-js';
-import { ServerErrorResponse, ServerStatusResponse } from '@grpc/grpc-js/build/src/server-call';
 import { CustomerCreditTransferInitiation } from '../../src/classes/iPain001Transaction';
 import { NetworkMap } from '../../src/classes/network-map';
 import { RuleResult } from '../../src/classes/rule-result';
-import { config } from '../../src/config';
-import { FlowFileReply } from '../../src/models/nifi_pb';
 import { handleTransaction } from '../../src/services/logic.service';
 
 const getMockRequest = () => {

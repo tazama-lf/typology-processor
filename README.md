@@ -35,15 +35,236 @@ Sample configuration:
   }
 }
 ```
---- 
-Sample gRPC request:
+
+---
+
+Sample HTTP request to /execute endpoint:
+
 ```json
 {
-"id": 20,
-"attributes": {
-"Hello": "27"
-},
-"content":
-"ew0KICAgICJ0cmFuc2FjdGlvbiI6IHsNCiAgICAgICAgIkdyb3VwSGVhZGVyIjogew0KICAgICAgICAgICAgIkluaXRpYXRpbmdQYXJ0eSI6IHsNCiAgICAgICAgICAgICAgICAiSWRlbnRpZmljYXRpb24iOiB7DQogICAgICAgICAgICAgICAgICAgICJDb250YWN0RGV0YWlscyI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICJNb2JpbGVOdW1iZXIiOiAiSGVsbG8iDQogICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICJJZGVudGlmaWNhdGlvbiI6ICJjNTI0OWMxOC0zNTE4LTQ5NzUtODJhMi01MzEzYmQ2NjYxZjEiLA0KICAgICAgICAgICAgICAgICAgICAiT3RoZXIiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAiQ29udGFjdERldGFpbHMiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIk1vYmlsZU51bWJlciI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAiSWRlbnRpZmljYXRpb24iOiAiMmIwNGU0ODUtYmQ0Yi00YzhjLThlYzEtMmQzMWNhMDdjODQ4IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICJQcml2YXRlSWRlbnRpZmljYXRpb24iOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIkRhdGVBbmRQbGFjZU9mQmlydGgiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJCaXJ0aGRhdGUiOiAiSGVsbG8iDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAgICAgICAgICJTY2hlbWVOYW1lIjogew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICJQcm9wcmlldGFyeSI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAgICAgIlByaXZhdGVJZGVudGlmaWNhdGlvbiI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICJEYXRlQW5kUGxhY2VPZkJpcnRoIjogew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICJCaXJ0aGRhdGUiOiAiSGVsbG8iDQogICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICJTY2hlbWVOYW1lIjogew0KICAgICAgICAgICAgICAgICAgICAgICAgIlByb3ByaWV0YXJ5IjogIkhlbGxvIg0KICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAiTmFtZSI6ICInQUJEIEFMLU1BTElLMiINCiAgICAgICAgICAgIH0NCiAgICAgICAgfSwNCiAgICAgICAgIlBheW1lbnRJbmZvcm1hdGlvbiI6IHsNCiAgICAgICAgICAgICJDcmVkaXRUcmFuc2ZlclRyYW5zYWN0aW9uSW5mb3JtYXRpb24iOiB7DQogICAgICAgICAgICAgICAgIkFtb3VudCI6IHsNCiAgICAgICAgICAgICAgICAgICAgIkVxdWl2YWxlbnRBbW91bnQiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAiQW1vdW50IjogMS4xLA0KICAgICAgICAgICAgICAgICAgICAgICAgIkN1cnJlbmN5T2ZUcmFuc2ZlciI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAgICAgIkluc3RydWN0ZWRBbW91bnQiOiB7fQ0KICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgIkNyZWRpdG9yIjogew0KICAgICAgICAgICAgICAgICAgICAiSWRlbnRpZmljYXRpb24iOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAiQ29udGFjdERldGFpbHMiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIk1vYmlsZU51bWJlciI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAiSWRlbnRpZmljYXRpb24iOiAiZTgzOGQwMDEtNWRkOS00ZTdkLWE2N2YtMjg1ODg5ZWE5YTA5IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICJPdGhlciI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAiQ29udGFjdERldGFpbHMiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJNb2JpbGVOdW1iZXIiOiAiSGVsbG8iDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAiSWRlbnRpZmljYXRpb24iOiAiZDhiMmIzZDAtZTAwYi00YTkyLThlNDUtNjBiNGZkZjA1NjNiIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAiUHJpdmF0ZUlkZW50aWZpY2F0aW9uIjogew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAiRGF0ZUFuZFBsYWNlT2ZCaXJ0aCI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJCaXJ0aGRhdGUiOiAiMTk4OS0wNy0xMzIiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIkNpdHlPZkJpcnRoIjogIkhlbGxvIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJDb3VudHJ5T2ZCaXJ0aCI6ICIiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIlByb3ZpbmNlT2ZCaXJ0aCI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIlNjaGVtZU5hbWUiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJQcm9wcmlldGFyeSI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICAgICAgICAgIlByaXZhdGVJZGVudGlmaWNhdGlvbiI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAiRGF0ZUFuZFBsYWNlT2ZCaXJ0aCI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIkJpcnRoZGF0ZSI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICAgICAgICAgIlNjaGVtZU5hbWUiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIlByb3ByaWV0YXJ5IjogIkhlbGxvIg0KICAgICAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICAgICAiTmFtZSI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICJDcmVkaXRvckFjY291bnQiOiB7DQogICAgICAgICAgICAgICAgICAgICJJZGVudGlmaWNhdGlvbiI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICJDb250YWN0RGV0YWlscyI6IHt9LA0KICAgICAgICAgICAgICAgICAgICAgICAgIklkZW50aWZpY2F0aW9uIjogImE1OGNjNmM5LWUwY2YtNDFjNi1iYzY3LWU3M2MyMjQwZmE3NCIsDQogICAgICAgICAgICAgICAgICAgICAgICAiT3RoZXIiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIkNvbnRhY3REZXRhaWxzIjoge30sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIklkZW50aWZpY2F0aW9uIjogImFlYzE4MzU3LTA0ZWMtNGZiMy1hZWZjLTMzNTc5ZTYwNjhiNCIsDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIlByaXZhdGVJZGVudGlmaWNhdGlvbiI6IHt9LA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICJTY2hlbWVOYW1lIjoge30NCiAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAiUHJpdmF0ZUlkZW50aWZpY2F0aW9uIjoge30sDQogICAgICAgICAgICAgICAgICAgICAgICAiU2NoZW1lTmFtZSI6IHt9DQogICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICJOYW1lIjogIkhlbGxvIiwNCiAgICAgICAgICAgICAgICAgICAgIlByb3h5IjogIkhlbGxvIg0KICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgIkNyZWRpdG9yQWdlbnQiOiB7DQogICAgICAgICAgICAgICAgICAgICJGaW5hbmNpYWxJbnN0aXR1dGlvbklkZW50aWZpY2F0aW9uIjogew0KICAgICAgICAgICAgICAgICAgICAgICAgIkNsZWFyaW5nU3lzdGVtTWVtYmVySWRlbnRpZmljYXRpb24iOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgIk1lbWJlcklkZW50aWZpY2F0aW9uIjogIkhlbGxvIg0KICAgICAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAiUGF5bWVudElkZW50aWZpY2F0aW9uIjogew0KICAgICAgICAgICAgICAgICAgICAiRW5kVG9FbmRJZGVudGlmaWNhdGlvbiI6ICJhZWMxODM2Mi0wNGVjLTRmYjMtYWVmYy0zMzU3OWU2MDY4YiINCiAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICJQYXltZW50VHlwZUluZm9ybWF0aW9uIjogew0KICAgICAgICAgICAgICAgICAgICAiQ2F0ZWdvcnlQdXJwb3NlIjogew0KICAgICAgICAgICAgICAgICAgICAgICAgIlByb3ByaWV0YXJ5IjogIkhlbGxvIg0KICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICAiUmVndWxhdG9yeVJlcG9ydGluZyI6IHsNCiAgICAgICAgICAgICAgICAgICAgIkRldGFpbHMiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAiQ29kZSI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgIlJlbWl0dGFuY2VJbmZvcm1hdGlvbiI6IHsNCiAgICAgICAgICAgICAgICAgICAgIlN0cnVjdHVyZWQiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAiQWRkaXRpb25hbFJlbWl0dGFuY2VJbmZvcm1hdGlvbiI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgIlN1cHBsZW1lbnRhcnlEYXRhIjogew0KICAgICAgICAgICAgICAgICAgICAiZmVlc19hbW91bnQiOiAxLjEsDQogICAgICAgICAgICAgICAgICAgICJmZWVzX2N1cnJlbmN5IjogIkhlbGxvIg0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgIH0sDQogICAgICAgICAgICAiRGVidG9yIjogew0KICAgICAgICAgICAgICAgICJJZGVudGlmaWNhdGlvbiI6IHsNCiAgICAgICAgICAgICAgICAgICAgIkNvbnRhY3REZXRhaWxzIjoge30sDQogICAgICAgICAgICAgICAgICAgICJJZGVudGlmaWNhdGlvbiI6ICJlMjc0ZGRjNC1jYzhjLTRlN2QtOGQ0Ni0wMmZkZWUxNGE1ZDUiLA0KICAgICAgICAgICAgICAgICAgICAiT3RoZXIiOiB7DQogICAgICAgICAgICAgICAgICAgICAgICAiQ29udGFjdERldGFpbHMiOiB7fSwNCiAgICAgICAgICAgICAgICAgICAgICAgICJJZGVudGlmaWNhdGlvbiI6ICI2NmQ0NmMxNi1iY2Q2LTQzZjAtYWRhYy0yYTVkMjg5NTI5YmEiLA0KICAgICAgICAgICAgICAgICAgICAgICAgIlByaXZhdGVJZGVudGlmaWNhdGlvbiI6IHt9LA0KICAgICAgICAgICAgICAgICAgICAgICAgIlNjaGVtZU5hbWUiOiB7fQ0KICAgICAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICAgICAiUHJpdmF0ZUlkZW50aWZpY2F0aW9uIjoge30sDQogICAgICAgICAgICAgICAgICAgICJTY2hlbWVOYW1lIjoge30NCiAgICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAgICJOYW1lIjogIkhlbGxvIg0KICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICJEZWJ0b3JBY2NvdW50Ijogew0KICAgICAgICAgICAgICAgICJJZGVudGlmaWNhdGlvbiI6IHt9LA0KICAgICAgICAgICAgICAgICJOYW1lIjogIkhlbGxvIiwNCiAgICAgICAgICAgICAgICAiUHJveHkiOiAiSGVsbG8iDQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgIkRlYnRvckFnZW50Ijogew0KICAgICAgICAgICAgICAgICJGaW5hbmNpYWxJbnN0aXR1dGlvbklkZW50aWZpY2F0aW9uIjogew0KICAgICAgICAgICAgICAgICAgICAiQ2xlYXJpbmdTeXN0ZW1NZW1iZXJJZGVudGlmaWNhdGlvbiI6IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICJNZW1iZXJJZGVudGlmaWNhdGlvbiI6ICJIZWxsbyINCiAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgIH0sDQogICAgICAgICAgICAiUGF5bWVudEluZm9ybWF0aW9uSWRlbnRpZmljYXRpb24iOiAiSGVsbG8iDQogICAgICAgIH0sDQogICAgICAgICJTdXBwbGVtZW50YXJ5RGF0YSI6IHsNCiAgICAgICAgICAgICJnZW9Db2RlX2xhdGl0dWRlIjogIkhlbGxvIiwNCiAgICAgICAgICAgICJnZW9Db2RlX2xvbmdpdHVkZSI6ICJIZWxsbyIsDQogICAgICAgICAgICAicGF5ZWVfbWVyY2hhbnRDbGFzc2lmaWNhdGlvbkNvZGUiOiAiSGVsbG8iLA0KICAgICAgICAgICAgInBheWVyX21lcmNoYW50Q2xhc3NpZmljYXRpb25Db2RlIjogIkhlbGxvIiwNCiAgICAgICAgICAgICJ0cmFuc2FjdGlvblR5cGVfaW5pdGlhdG9yVHlwZSI6ICJIZWxsbyINCiAgICAgICAgfQ0KICAgIH0sDQogICAgInJ1bGVSZXN1bHQiOiB7DQogICAgICAgICJydWxlIjogIlJ1bGVfMjdfMS4wIiwNCiAgICAgICAgInJlc3VsdCI6IHRydWUNCiAgICB9LA0KICAgICJuZXR3b3JrTWFwIjogew0KICAgICAgICAidHJhbnNhY3Rpb25zIjogWw0KICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICJ0cmFuc2FjdGlvbl90eXBlIjogInBhaW4uMDAxLjAwMS4xMiIsDQogICAgICAgICAgICAgICAgInRyYW5zYWN0aW9uX25hbWUiOiAiQ3VzdG9tZXJDcmVkaXRUcmFuc2ZlckluaXRpYXRpb25WMTEiLA0KICAgICAgICAgICAgICAgICJjaGFubmVscyI6IFsNCiAgICAgICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgICAgICAgImNoYW5uZWxfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICJjaGFubmVsX25hbWUiOiAiRnJhdWQiLA0KICAgICAgICAgICAgICAgICAgICAgICAgInR5cG9sb2dpZXMiOiBbDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidHlwb2xvZ3lfaWQiOiAiVHlwb2xvZ3lfMjkuMS4wIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInR5cG9sb2d5X25hbWUiOiAiVHlwb2xvZ3lfMjkiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidHlwb2xvZ3lfdmVyc2lvbiI6ICIxLjAiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZXMiOiBbDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInJ1bGVfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV9uYW1lIjogIlJ1bGVfMjdfMS4wIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV92ZXJzaW9uIjogIjEuMCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInJ1bGVfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV9uYW1lIjogIlJ1bGVfMTVfMS40IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV92ZXJzaW9uIjogIjEuMCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInJ1bGVfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV9uYW1lIjogIlJ1bGVfMDVfMS4wIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV92ZXJzaW9uIjogIjEuMCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidHlwb2xvZ3lfaWQiOiAiVHlwb2xvZ3lfMzAuMS4wIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInR5cG9sb2d5X25hbWUiOiAiVHlwb2xvZ3lfMzAiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidHlwb2xvZ3lfdmVyc2lvbiI6ICIxLjAiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZXMiOiBbDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInJ1bGVfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV9uYW1lIjogIlJ1bGVfMjdfMS4wIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV92ZXJzaW9uIjogIjEuMCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInJ1bGVfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV9uYW1lIjogIlJ1bGVfMTVfMS40IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV92ZXJzaW9uIjogIjEuMCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInJ1bGVfaWQiOiAiVVVJRHY0IiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV9uYW1lIjogIlJ1bGVfMDVfMS4wIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicnVsZV92ZXJzaW9uIjogIjEuMCINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAgICAgIF0NCiAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgIF0NCiAgICAgICAgICAgIH0NCiAgICAgICAgXQ0KICAgIH0NCn0"
-}
+    "transaction": {
+        "GroupHeader": {
+            "InitiatingParty": {
+                "Identification": {
+                    "ContactDetails": {
+                        "MobileNumber": "Hello"
+                    },
+                    "Identification": "c5249c18-3518-4975-82a2-5313bd6661f1",
+                    "Other": {
+                        "ContactDetails": {
+                            "MobileNumber": "Hello"
+                        },
+                        "Identification": "2b04e485-bd4b-4c8c-8ec1-2d31ca07c848",
+                        "PrivateIdentification": {
+                            "DateAndPlaceOfBirth": {
+                                "Birthdate": "Hello"
+                            }
+                        },
+                        "SchemeName": {
+                            "Proprietary": "Hello"
+                        }
+                    },
+                    "PrivateIdentification": {
+                        "DateAndPlaceOfBirth": {
+                            "Birthdate": "Hello"
+                        }
+                    },
+                    "SchemeName": {
+                        "Proprietary": "Hello"
+                    }
+                },
+                "Name": "'ABD AL-MALIK2"
+            }
+        },
+        "PaymentInformation": {
+            "CreditTransferTransactionInformation": {
+                "Amount": {
+                    "EquivalentAmount": {
+                        "Amount": 1.1,
+                        "CurrencyOfTransfer": "Hello"
+                    },
+                    "InstructedAmount": {}
+                },
+                "Creditor": {
+                    "Identification": {
+                        "ContactDetails": {
+                            "MobileNumber": "Hello"
+                        },
+                        "Identification": "e838d001-5dd9-4e7d-a67f-285889ea9a09",
+                        "Other": {
+                            "ContactDetails": {
+                                "MobileNumber": "Hello"
+                            },
+                            "Identification": "d8b2b3d0-e00b-4a92-8e45-60b4fdf0563b",
+                            "PrivateIdentification": {
+                                "DateAndPlaceOfBirth": {
+                                    "Birthdate": "1989-07-132",
+                                    "CityOfBirth": "Hello",
+                                    "CountryOfBirth": "",
+                                    "ProvinceOfBirth": "Hello"
+                                }
+                            },
+                            "SchemeName": {
+                                "Proprietary": "Hello"
+                            }
+                        },
+                        "PrivateIdentification": {
+                            "DateAndPlaceOfBirth": {
+                                "Birthdate": "Hello"
+                            }
+                        },
+                        "SchemeName": {
+                            "Proprietary": "Hello"
+                        }
+                    },
+                    "Name": "Hello"
+                },
+                "CreditorAccount": {
+                    "Identification": {
+                        "ContactDetails": {},
+                        "Identification": "a58cc6c9-e0cf-41c6-bc67-e73c2240fa74",
+                        "Other": {
+                            "ContactDetails": {},
+                            "Identification": "aec18357-04ec-4fb3-aefc-33579e6068b4",
+                            "PrivateIdentification": {},
+                            "SchemeName": {}
+                        },
+                        "PrivateIdentification": {},
+                        "SchemeName": {}
+                    },
+                    "Name": "Hello",
+                    "Proxy": "Hello"
+                },
+                "CreditorAgent": {
+                    "FinancialInstitutionIdentification": {
+                        "ClearingSystemMemberIdentification": {
+                            "MemberIdentification": "Hello"
+                        }
+                    }
+                },
+                "PaymentIdentification": {
+                    "EndToEndIdentification": "aec18362-04ec-4fb3-aefc-33579e6068b"
+                },
+                "PaymentTypeInformation": {
+                    "CategoryPurpose": {
+                        "Proprietary": "Hello"
+                    }
+                },
+                "RegulatoryReporting": {
+                    "Details": {
+                        "Code": "Hello"
+                    }
+                },
+                "RemittanceInformation": {
+                    "Structured": {
+                        "AdditionalRemittanceInformation": "Hello"
+                    }
+                },
+                "SupplementaryData": {
+                    "fees_amount": 1.1,
+                    "fees_currency": "Hello"
+                }
+            },
+            "Debtor": {
+                "Identification": {
+                    "ContactDetails": {},
+                    "Identification": "e274ddc4-cc8c-4e7d-8d46-02fdee14a5d5",
+                    "Other": {
+                        "ContactDetails": {},
+                        "Identification": "66d46c16-bcd6-43f0-adac-2a5d289529ba",
+                        "PrivateIdentification": {},
+                        "SchemeName": {}
+                    },
+                    "PrivateIdentification": {},
+                    "SchemeName": {}
+                },
+                "Name": "Hello"
+            },
+            "DebtorAccount": {
+                "Identification": {},
+                "Name": "Hello",
+                "Proxy": "Hello"
+            },
+            "DebtorAgent": {
+                "FinancialInstitutionIdentification": {
+                    "ClearingSystemMemberIdentification": {
+                        "MemberIdentification": "Hello"
+                    }
+                }
+            },
+            "PaymentInformationIdentification": "Hello"
+        },
+        "SupplementaryData": {
+            "geoCode_latitude": "Hello",
+            "geoCode_longitude": "Hello",
+            "payee_merchantClassificationCode": "Hello",
+            "payer_merchantClassificationCode": "Hello",
+            "transactionType_initiatorType": "Hello"
+        }
+    },
+    "ruleResult": {
+        "rule": "Rule_27_1.0",
+        "result": true
+    },
+    "networkMap": {
+        "transactions": [
+            {
+                "transaction_type": "pain.001.001.12",
+                "transaction_name": "CustomerCreditTransferInitiationV11",
+                "channels": [
+                    {
+                        "channel_id": "UUIDv4",
+                        "channel_name": "Fraud",
+                        "typologies": [
+                            {
+                                "typology_id": "Typology_29.1.0",
+                                "typology_name": "Typology_29",
+                                "typology_version": "1.0",
+                                "rules": [
+                                    {
+                                        "rule_id": "UUIDv4",
+                                        "rule_name": "Rule_27_1.0",
+                                        "rule_version": "1.0"
+                                    },
+                                    {
+                                        "rule_id": "UUIDv4",
+                                        "rule_name": "Rule_15_1.4",
+                                        "rule_version": "1.0"
+                                    },
+                                    {
+                                        "rule_id": "UUIDv4",
+                                        "rule_name": "Rule_05_1.0",
+                                        "rule_version": "1.0"
+                                    }
+                                ]
+                            },
+                            {
+                                "typology_id": "Typology_30.1.0",
+                                "typology_name": "Typology_30",
+                                "typology_version": "1.0",
+                                "rules": [
+                                    {
+                                        "rule_id": "UUIDv4",
+                                        "rule_name": "Rule_27_1.0",
+                                        "rule_version": "1.0"
+                                    },
+                                    {
+                                        "rule_id": "UUIDv4",
+                                        "rule_name": "Rule_15_1.4",
+                                        "rule_version": "1.0"
+                                    },
+                                    {
+                                        "rule_id": "UUIDv4",
+                                        "rule_name": "Rule_05_1.0",
+                                        "rule_version": "1.0"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+} 
 ```

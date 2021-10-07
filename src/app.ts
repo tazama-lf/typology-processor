@@ -3,19 +3,24 @@ import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import { Server } from 'http';
 import router from './router';
-import { LoggerService } from './services/logger.service';
+import helmet from 'koa-helmet';
+import { LoggerService } from './logger.service';
 
 class App extends Koa {
   public servers: Server[];
-
   constructor() {
     super();
 
     // bodyparser needs to be loaded first in order to work
     this.servers = [];
+    this._configureRoutes();
+  }
+
+  async _configureRoutes(): Promise<void> {
     this.use(bodyParser());
-    this.configureRoutes();
-    this.configureMiddlewares();
+    this.use(router.routes());
+    this.use(router.allowedMethods());
+    this.use(helmet());
   }
 
   configureMiddlewares(): void {
@@ -35,12 +40,6 @@ class App extends Koa {
       const ms = Date.now() - start;
       ctx.set('X-Response-Time', `${ms}ms`);
     });
-  }
-
-  configureRoutes(): void {
-    // Bootstrap application router
-    this.use(router.routes());
-    this.use(router.allowedMethods());
   }
 
   listen(...args: any[]): Server {

@@ -1,29 +1,87 @@
-import path from 'path';
-import { config as dotenv } from 'dotenv';
-import { IConfig } from './interfaces/iConfig';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+// config settings, env variables
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 
 // Load .env file into process.env if it exists. This is convenient for running locally.
-dotenv({
+const result = dotenv.config({
   path: path.resolve(__dirname, '../.env'),
 });
 
-export const config: IConfig = {
-  redisDB: <string>process.env.REDIS_DB,
-  redisAuth: <string>process.env.REDIS_AUTH,
-  redisHost: <string>process.env.REDIS_HOST,
-  redisPort: parseInt(process.env.REDIS_PORT!, 10),
-  restPort: parseInt(process.env.REST_PORT!, 10),
-  logstashHost: <string>process.env.LOGSTASH_HOST,
-  logstashPort: parseInt(process.env.LOGSTASH_PORT!, 10),
-  grpcPort: parseInt(process.env.GRPC_PORT!, 10) || 50051,
-  functionName: <string>process.env.FUNCTION_NAME,
+if (result.error) {
+  throw result.error;
+}
+
+export interface IConfig {
+  collectionName: string;
+  env: string;
+  functionName: string;
+  port: number;
+  apm: {
+    secretToken: string;
+    serviceName: string;
+    url: string;
+    active: string;
+  };
+  db: {
+    name: string;
+    password: string;
+    url: string;
+    user: string;
+    graphName: string;
+  };
+  cadpEndpoint: string;
+  logstash: {
+    host: string;
+    port: number;
+  };
+  redis: {
+    auth: string;
+    connection: boolean;
+    db: string;
+    host: string;
+    port: number;
+  };
+  transactionRouting: {
+    host: string;
+    path: string;
+    port: number;
+  };
+}
+
+export const configuration: IConfig = {
+  apm: {
+    serviceName: <string>process.env.APM_SERVICE_NAME,
+    url: <string>process.env.APM_URL,
+    secretToken: <string>process.env.APM_SECRET_TOKEN,
+    active: <string>process.env.APM_ACTIVE,
+  },
+  collectionName: <string>process.env.COLLECTION_NAME,
   cadpEndpoint: <string>process.env.CADP_ENDPOINT,
-  apmLogging: <boolean>(process.env.APM_LOGGING === 'true'),
-  apmSecretToken: <string>process.env.APM_SECRET_TOKEN,
-  apmURL: <string>process.env.APM_URL,
-  dev: <string>process.env.NODE_ENV,
-  dbURL: <string>process.env.DB_URL,
-  dbName: <string>process.env.DB_NAME,
-  dbUser: <string>process.env.DB_USER,
-  dbPassword: <string>process.env.DB_PASSWORD,
+  db: {
+    name: <string>process.env.DATABASE_NAME,
+    password: <string>process.env.DATABASE_PASSWORD,
+    url: <string>process.env.DATABASE_URL,
+    user: <string>process.env.DATABASE_USER,
+    graphName: <string>process.env.GRAPH_NAME,
+  },
+  env: <string>process.env.NODE_ENV,
+  functionName: <string>process.env.FUNCTION_NAME,
+  logstash: {
+    host: <string>process.env.LOGSTASH_HOST,
+    port: parseInt(process.env.LOGSTASH_PORT!, 10),
+  },
+  port: parseInt(process.env.PORT!, 10) || 3000,
+  redis: {
+    auth: <string>process.env.REDIS_AUTH,
+    connection: <boolean>(process.env.REDIS_CONNECTION === 'true'),
+    db: <string>process.env.REDIS_DB,
+    host: <string>process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT!, 10),
+  },
+  transactionRouting: {
+    host: <string>process.env.TRANSACTION_ROUTING_HOST,
+    path: <string>process.env.TRANSACTION_ROUTING_PATH,
+    port: parseInt(process.env.TRANSACTION_ROUTING_PORT!, 10),
+  },
 };

@@ -1,16 +1,15 @@
 import http from 'http';
-import { config } from '../config';
+
 import { LoggerService } from './logger.service';
-import { CustomerCreditTransferInitiation } from '../classes/iPain001Transaction';
-import { NetworkMap, Typology } from '../classes/network-map';
-import { FlowFileReply } from '../models/nifi_pb';
-import { sendUnaryData } from '@grpc/grpc-js';
-import { redisSetJson, redisGetJson, redisDeleteKey } from '../clients/redis.client';
-import { RuleResult } from '../classes/rule-result';
-import { IExpression, IRuleValue, ITypologyExpression } from '../interfaces/iTypologyExpression';
-import { TypologyResult } from '../classes/typology-result';
-import { arangoDBService } from '../clients/arango.client';
+import { CustomerCreditTransferInitiation } from './classes/iPain001Transaction';
+import { NetworkMap, Typology } from './classes/network-map';
+
+import { RuleResult } from './classes/rule-result';
+import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
+import { TypologyResult } from './classes/typology-result';
 import apm from 'elastic-apm-node';
+import { configuration } from './config';
+import { cacheClient, databaseClient } from '.';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -69,7 +68,7 @@ const executeRequest = async (
   try {
     const transactionID = request.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification;
     const cacheKey = `${transactionID}_${typology.typology_id}`;
-    const jruleResults = await redisGetJson(cacheKey);
+    const jruleResults = await cacheClient.getJson(cacheKey);
     const ruleResults: RuleResult[] = [];
 
     // Get cache from Redis if we have
@@ -85,13 +84,13 @@ const executeRequest = async (
         childOf: apmTran == null ? undefined : apmTran,
       });
       // Save Typology interim rule results to Cache
-      await redisSetJson(cacheKey, JSON.stringify(ruleResults));
+      await cacheClient.setJson(cacheKey, JSON.stringify(ruleResults));
       span?.end();
       return 0.0;
     }
     // else means we have all results for Typology, so lets evaluate result
 
-    const expressionRes = await arangoDBService.getTypologyExpression(typology.typology_id);
+    const expressionRes = await databaseClient.getTypologyExpression(typology.typology_id);
     if (!expressionRes) return 0.0;
 
     const expression: ITypologyExpression = expressionRes!;
@@ -101,28 +100,27 @@ const executeRequest = async (
     const typologyResult: TypologyResult = { result: typologyResultValue, typology: typology.typology_id };
     // Send CADP request with this Typology's result
     try {
-      
       const cadpReqBody = {
         typologyResult: typologyResult,
         transaction: request,
         networkMap: networkMap,
-        ruleResults: ruleResults
+        ruleResults: ruleResults,
       };
       const toSend = JSON.stringify(cadpReqBody);
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`, { childOf: apmTran == null ? undefined : apmTran });
-      //LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
-      await executePost(config.cadpEndpoint, toSend);
+      // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
+      await executePost(configuration.cadpEndpoint, toSend);
       span?.end();
     } catch (error) {
       span?.end();
-      LoggerService.error('Error while sending Typology result to CADP', error);
+      LoggerService.error('Error while sending Typology result to CADP', error as Error);
     }
     span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`, { childOf: apmTran == null ? undefined : apmTran });
-    await redisDeleteKey(cacheKey);
+    await cacheClient.deleteKey(cacheKey);
     span?.end();
     return typologyResultValue;
   } catch (error) {
-    LoggerService.error(`Failed to process Typology ${typology.typology_id} request`, error, 'executeRequest');
+    LoggerService.error(`Failed to process Typology ${typology.typology_id} request`, error as Error, 'executeRequest');
     return 0.0;
   } finally {
     apmTran?.end();
@@ -130,11 +128,10 @@ const executeRequest = async (
 };
 
 export const handleTransaction = async (
-  req: CustomerCreditTransferInitiation,
+  transaction: CustomerCreditTransferInitiation,
   networkMap: NetworkMap,
   ruleResult: RuleResult,
-  callback: sendUnaryData<FlowFileReply>,
-) => {
+): Promise<string> => {
   let typologyCounter = 0;
   const toReturn = [];
   for (const channel of networkMap.transactions[0].channels) {
@@ -142,24 +139,24 @@ export const handleTransaction = async (
       // will loop through every Typology here
       typologyCounter++;
       // for (const rule of typology.rules) {
-      //   // determine rule completion
+      // determine rule completion
       // }
-      const typoRes = await executeRequest(req, typology, ruleResult, networkMap);
+      const typoRes = await executeRequest(transaction, typology, ruleResult, networkMap);
       toReturn.push(`{"Typology": ${typology.typology_id}}, "Result":${typoRes}}`);
     }
   }
 
   // Response for CRSP - How many typologies have kicked off?
-  const result = `${typologyCounter} typologies initiated for transaction ID: ${req.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification}, with the following results:\r\n${toReturn}`;
-  LoggerService.log(result);
-  const res: FlowFileReply = new FlowFileReply();
-  res.setBody(result);
-  res.setResponsecode(1);
 
-  callback(null, res);
+  // Let CRSP know that we have finished processing this transaction
+  const result = `${typologyCounter} typologies initiated for transaction ID: ${transaction.PaymentInformation.CreditTransferTransactionInformation.PaymentIdentification.EndToEndIdentification}, with the following results:\r\n${toReturn}`;
+  LoggerService.log(result);
+
+  return result;
 };
 
 // Submit the score to the CADP
+// TODO: It needs to be rewritten with Axios library instead of 'http'
 const executePost = (endpoint: string, request: string): Promise<void | Error> => {
   return new Promise((resolve) => {
     const options: http.RequestOptions = {
