@@ -48,10 +48,10 @@ export abstract class LoggerService {
     logger.warn(`${LoggerService.messageStamp(serviceOperation)}[WARN] - ${message}`);
   }
 
-  static error(message: string | Error, innerError?: Error, serviceOperation?: string): void {
+  static error(message: string | Error, innerError?: unknown, serviceOperation?: string): void {
     let errMessage = typeof message === 'string' ? message : message.stack;
 
-    if (innerError) {
+    if (innerError && innerError instanceof Error) {
       errMessage += `\r\n${innerError.message}${innerError.stack ? '\r\n' + innerError.stack : ''}`;
     }
 

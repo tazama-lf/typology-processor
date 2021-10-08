@@ -15,6 +15,7 @@ export interface IExpression {
 export interface ITypologyExpression {
   typology_name: string;
   typology_version: string;
+  typology_id: string;
   rules_values: IRuleValue[];
   typology_expression: IExpression;
 }

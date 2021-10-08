@@ -9,7 +9,7 @@ import { ArangoDBService, RedisService } from './clients';
 /*
  * Initialize the APM Logging
  **/
-if (configuration.env === 'production') {
+if (configuration.apm.active === 'true') {
   apm.start({
     serviceName: configuration.apm?.serviceName,
     secretToken: configuration.apm?.secretToken,

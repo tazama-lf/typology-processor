@@ -1,7 +1,7 @@
 import { CustomerCreditTransferInitiation } from '../../src/classes/iPain001Transaction';
 import { NetworkMap } from '../../src/classes/network-map';
 import { RuleResult } from '../../src/classes/rule-result';
-import { handleTransaction } from '../../src/services/logic.service';
+import { handleTransaction } from '../../src/app.service';
 
 const getMockRequest = () => {
   const quote = new CustomerCreditTransferInitiation(

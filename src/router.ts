@@ -6,6 +6,6 @@ const router = new Router();
 
 router.get('/', handleHealthCheck);
 router.get('/health', handleHealthCheck);
-router.get('/execute', handleExecute);
+router.post('/execute', handleExecute);
 
 export default router;

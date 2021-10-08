@@ -4,16 +4,11 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 
 // Load .env file into process.env if it exists. This is convenient for running locally.
-const result = dotenv.config({
+dotenv.config({
   path: path.resolve(__dirname, '../.env'),
 });
 
-if (result.error) {
-  throw result.error;
-}
-
 export interface IConfig {
-  collectionName: string;
   env: string;
   functionName: string;
   port: number;
@@ -28,7 +23,7 @@ export interface IConfig {
     password: string;
     url: string;
     user: string;
-    graphName: string;
+    collectionName: string;
   };
   cadpEndpoint: string;
   logstash: {
@@ -56,14 +51,13 @@ export const configuration: IConfig = {
     secretToken: <string>process.env.APM_SECRET_TOKEN,
     active: <string>process.env.APM_ACTIVE,
   },
-  collectionName: <string>process.env.COLLECTION_NAME,
   cadpEndpoint: <string>process.env.CADP_ENDPOINT,
   db: {
     name: <string>process.env.DATABASE_NAME,
     password: <string>process.env.DATABASE_PASSWORD,
     url: <string>process.env.DATABASE_URL,
     user: <string>process.env.DATABASE_USER,
-    graphName: <string>process.env.GRAPH_NAME,
+    collectionName: <string>process.env.COLLECTION_NAME,
   },
   env: <string>process.env.NODE_ENV,
   functionName: <string>process.env.FUNCTION_NAME,

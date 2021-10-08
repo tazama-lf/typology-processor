@@ -1,12 +1,12 @@
 /* eslint-disable */
 export class Rule {
-  rule_id = '';
+  id = '';
   rule_name = '';
   rule_version = '';
   typologies: Array<Typology> = [];
 
   getStrValue(): string {
-    return `${this.rule_id}${this.rule_name}${this.rule_version}`;
+    return `${this.id}${this.rule_name}${this.rule_version}`;
   }
 }
 
@@ -14,6 +14,7 @@ export class Typology {
   typology_id = '';
   typology_name = '';
   typology_version = '';
+  host = '';
   rules: Array<Rule> = [];
 
   constructor(typology_id: string, typology_name: string, typology_version: string) {

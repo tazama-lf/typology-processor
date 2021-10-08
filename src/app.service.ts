@@ -72,9 +72,9 @@ const executeRequest = async (
     const ruleResults: RuleResult[] = [];
 
     // Get cache from Redis if we have
-    if (jruleResults && jruleResults.length > 0) Object.assign(ruleResults, JSON.parse(jruleResults));
-
-    if (ruleResults.some((r) => r.rule === typologyResult.typology)) return 0.0;
+    if (jruleResults && jruleResults.length > 0) { Object.assign(ruleResults, JSON.parse(jruleResults)); }
+    let typologyResult: TypologyResult = { result: 0, typology: typology.typology_id };
+    if (ruleResults.some((r) => r.rule === ruleResult.rule)) return 0.0;
 
     ruleResults.push({ rule: ruleResult.rule, result: ruleResult.result });
 
@@ -97,7 +97,7 @@ const executeRequest = async (
     let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`, { childOf: apmTran == null ? undefined : apmTran });
     const typologyResultValue = evaluateTypologyExpression(expression.rules_values, ruleResults, expression.typology_expression);
     span?.end();
-    const typologyResult: TypologyResult = { result: typologyResultValue, typology: typology.typology_id };
+    typologyResult = { result: typologyResultValue, typology: typology.typology_id };
     // Send CADP request with this Typology's result
     try {
       const cadpReqBody = {

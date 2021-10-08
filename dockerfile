@@ -11,8 +11,6 @@ RUN addgroup -S app && adduser -S -g app app
 
 RUN apk --no-cache add curl ca-certificates
 
-RUN apk add --no-cache -t build-dependencies git make gcc g++ python libtool autoconf automake yarn
-
 # Turn down the verbosity to default level.
 ENV NPM_CONFIG_LOGLEVEL warn
 
@@ -23,20 +21,17 @@ RUN mkdir -p /home/app
 WORKDIR /home/app
 
 COPY ./package.json ./
-COPY ./yarn.lock ./
+COPY ./package-lock.json ./
 COPY ./tsconfig.json ./
 COPY ./global.d.ts ./
 
 # Install dependencies
-# RUN yarn run cleanup
-
-# Install dependencies
-RUN yarn install
+RUN npm install
 
 COPY ./src ./src
 
 # Build the project
-RUN yarn run build
+RUN npm run build
 
 # Environment variables for openfaas
 ENV cgi_headers="true"
@@ -51,29 +46,27 @@ ENV read_timeout="15s"
 ENV prefix_logs="false"
 
 ENV FUNCTION_NAME=typology-processor
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 ENV PORT=3000
-ENV CADP_ENDPOINT=http://gateway.frm:8080/function/off-frm-channel-aggregation-decisioning-processor.frm-meshed/execute
-ENV DRUID_ENDPOINT=http://localhost:50582
+ENV CADP_ENDPOINT=http://gateway.openfaas:8080/function/off-channel-aggregation-decisioning-processor.openfaas-fn/execute
 
 ENV REDIS_DB=0
-ENV REDIS_AUTH=exampleAuth
-ENV REDIS_HOST=127.0.0.1
+ENV REDIS_AUTH=utiYxjU3gK
+ENV REDIS_HOST=20.108.120.33
 ENV REDIS_PORT=6379
 
-ENV DATABASE_NAME=transactionHistory
-ENV DATABASE_URL=tcp://0.0.0.0:8529
-ENV DATABASE_USER=root
-ENV DATABASE_PASSWORD=123456
-ENV COLLECTION_NAME=exampleCollection
-ENV GRAPH_NAME=exampleGraph
+ENV DATABASE_NAME="Configuration"
+ENV DATABASE_URL="http://arango.development:8529"
+ENV DATABASE_USER="root"
+ENV DATABASE_PASSWORD='$!prAtHe>Qh5X9D3'
+ENV COLLECTION_NAME="typologyExpression"
 
 ENV APM_ACTIVE=true
 ENV APM_SERVICE_NAME=typology-processor
-ENV APM_URL=http://apm:8200
+ENV APM_URL=http://apm-server.development:8200
 ENV APM_SECRET_TOKEN=""
 
-ENV LOGSTASH_HOST=logstashhost
+ENV LOGSTASH_HOST=logstash.development
 ENV LOGSTASH_PORT=8080
 
 HEALTHCHECK --interval=60s CMD [ -e /tmp/.lock ] || exit 1
