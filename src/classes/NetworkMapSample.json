@@ -1,73 +1,187 @@
 {
-  "transactions": [
+  "_key": "26345403",
+  "_id": "networkConfiguration/26345403",
+  "_rev": "_cxc-1vO---",
+  "messages": [
     {
-      "transaction_type": "pain.001.001.10",
-      "transaction_name": "CustomerCreditTransferInitiationV11",
+      "id": "001@1.0",
+      "host": "http://openfaas:8080",
+      "cfg": "1.0",
+      "txTp": "pain.001.001.11",
       "channels": [
         {
-          "channel_id": "UUIDv4",
-          "channel_name": "Fraud",
+          "id": "001@1.0",
+          "host": "http://openfaas:8080",
+          "cfg": "1.0",
           "typologies": [
             {
-              "typology_id": "UUIDv4",
-              "typology_name": "Typology_28",
-              "typology_version": "1.1",
+              "id": "028@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "028@1.0",
               "rules": [
                 {
-                  "rule_id": "UUIDv4",
-                  "rule_name": "001_Derived_account_age_payee",
-                  "rule_version": "1.5"
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
                 },
                 {
-                  "rule_id": "UUIDv4",
-                  "rule_name": "002_Velocity_incoming",
-                  "rule_version": "1.2"
-                },
-                {
-                  "rule_id": "UUIDv4",
-                  "rule_name": "030_New_payee_transfer",
-                  "rule_version": "1.0"
+                  "id": "028@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
                 }
               ]
             },
             {
-              "typology_id": "UUIDv4",
-              "typology_name": "Typology_27",
-              "typology_version": "1.0",
+              "id": "029@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "029@1.0",
               "rules": [
                 {
-                  "rule_id": "UUIDv4",
-                  "rule_name": "018_Exceptionally_large_outgoing_transfer",
-                  "rule_version": "1.0"
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
                 },
                 {
-                  "rule_id": "UUIDv4",
-                  "rule_name": "030_New_payee_transfer",
-                  "rule_version": "1.0"
-                },
-                {
-                  "rule_id": "UUIDv4",
-                  "rule_name": "031_Account_drain_multiple_transactions",
-                  "rule_version": "1.0"
+                  "id": "005@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
                 }
               ]
             }
           ]
         },
         {
-          "channel_id": "UUIDv4",
-          "channel_name": "AML"
+          "id": "002@1.0",
+          "host": "http://openfaas:8080",
+          "cfg": "1.0",
+          "typologies": [
+            {
+              "id": "030@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "030@1.0",
+              "rules": [
+                {
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                },
+                {
+                  "id": "006@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                }
+              ]
+            },
+            {
+              "id": "031@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "031@1.0",
+              "rules": [
+                {
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                },
+                {
+                  "id": "007@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     {
-      "transaction_type": "pain.013.001.09"
-    },
-    {
-      "transaction_type": "pacs.008.001.10"
-    },
-    {
-      "transaction_type": "pacs.002.001.12"
+      "id": "001@1.0",
+      "host": "http://openfaas:8080",
+      "cfg": "1.0",
+      "txTp": "pacs.008.001.11",
+      "channels": [
+        {
+          "id": "001@1.0",
+          "host": "http://openfaas:8080",
+          "cfg": "1.0",
+          "typologies": [
+            {
+              "id": "028@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "028@1.0",
+              "rules": [
+                {
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                },
+                {
+                  "id": "028@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                }
+              ]
+            },
+            {
+              "id": "029@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "029@1.0",
+              "rules": [
+                {
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                },
+                {
+                  "id": "005@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "002@1.0",
+          "host": "http://openfaas:8080",
+          "cfg": "1.0",
+          "typologies": [
+            {
+              "id": "030@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "030@1.0",
+              "rules": [
+                {
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                },
+                {
+                  "id": "006@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                }
+              ]
+            },
+            {
+              "id": "031@1.0",
+              "host": "http://openfaas:8080",
+              "cfg": "031@1.0",
+              "rules": [
+                {
+                  "id": "003@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                },
+                {
+                  "id": "007@1.0",
+                  "host": "http://openfaas:8080",
+                  "cfg": "1.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

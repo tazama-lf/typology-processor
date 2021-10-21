@@ -3,11 +3,11 @@ provider:
   name: openfaas
   gateway: https://frmfaas.sybrin.com
 functions:
-  off-frm-typology-processor:
+  off-typology-processor:
     namespace: openfaas-fn
     lang: dockerfile
     handler: .
-    image: actio.azurecr.io/frm-typology-processor:latest
+    image: actio.azurecr.io/off-typology-processor:latest
     annotations:
       com.openfaas.health.http.path: /health
       com.openfaas.health.http.initialDelay: "45s"
