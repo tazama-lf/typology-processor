@@ -51,20 +51,20 @@ ENV PORT=3000
 ENV CADP_ENDPOINT=http://gateway.openfaas:8080/function/off-channel-aggregation-decisioning-processor.openfaas-fn/execute
 
 ENV REDIS_DB=0
-ENV REDIS_AUTH=utiYxjU3gK
-ENV REDIS_HOST=20.108.120.33
+ENV REDIS_AUTH=
+ENV REDIS_HOST=
 ENV REDIS_PORT=6379
 
 ENV DATABASE_NAME="Configuration"
 ENV DATABASE_URL="http://arango.development:8529"
 ENV DATABASE_USER="root"
-ENV DATABASE_PASSWORD='$!prAtHe>Qh5X9D3'
+ENV DATABASE_PASSWORD=
 ENV COLLECTION_NAME="typologyExpression"
 
 ENV APM_ACTIVE=true
 ENV APM_SERVICE_NAME=typology-processor
 ENV APM_URL=http://apm-server.development:8200
-ENV APM_SECRET_TOKEN=""
+ENV APM_SECRET_TOKEN=
 
 ENV LOGSTASH_HOST=logstash.development
 ENV LOGSTASH_PORT=8080

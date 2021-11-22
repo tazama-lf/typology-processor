@@ -65,7 +65,6 @@ const executeRequest = async (
   networkMap: NetworkMap,
 ): Promise<CADPRequest> => {
   // Have to manually start transaction because we are not making use of one of the out-of-the-box solutions (eg, express / koa server)
-  const apmTran = apm.startTransaction(`${typology.id}`);
   let typologyResult: TypologyResult = { result: 0.0, typology: typology.id, cfg: typology.cfg };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
@@ -92,9 +91,7 @@ const executeRequest = async (
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
-      const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`, {
-        childOf: apmTran == null ? undefined : apmTran,
-      });
+      const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`);
       // Save Typology interim rule results to Cache
       await cacheClient.setJson(cacheKey, JSON.stringify(ruleResults));
       span?.end();
@@ -106,7 +103,7 @@ const executeRequest = async (
     if (!expressionRes) return cadpReqBody;
 
     const expression: ITypologyExpression = expressionRes!;
-    let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`, { childOf: apmTran == null ? undefined : apmTran });
+    let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
     const typologyResultValue = evaluateTypologyExpression(expression.rules_values, ruleResults, expression.typology_expression);
     span?.end();
     typologyResult.result = typologyResultValue;
@@ -114,7 +111,7 @@ const executeRequest = async (
     try {
       cadpReqBody.typologyResult = typologyResult;
       const toSend = JSON.stringify(cadpReqBody);
-      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`, { childOf: apmTran == null ? undefined : apmTran });
+      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
       await executePost(configuration.cadpEndpoint, toSend);
       span?.end();
@@ -122,7 +119,7 @@ const executeRequest = async (
       span?.end();
       LoggerService.error('Error while sending Typology result to CADP', error as Error);
     }
-    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`, { childOf: apmTran == null ? undefined : apmTran });
+    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
     await cacheClient.deleteKey(cacheKey);
     span?.end();
     return cadpReqBody;
@@ -130,7 +127,6 @@ const executeRequest = async (
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
     return cadpReqBody;
   } finally {
-    apmTran?.end();
   }
 };
 

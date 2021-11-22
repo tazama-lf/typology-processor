@@ -9,7 +9,6 @@ import { configuration } from './config';
 
 export const handleExecute = async (ctx: Context, next: Next): Promise<Context | undefined> => {
   LoggerService.log('Start - Handle execute request');
-  apm.startTransaction(configuration.functionName, 'handleExecute');
   const span = apm.startSpan('Handle execute request');
 
   const request = ctx.request.body;
