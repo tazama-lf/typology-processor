@@ -1,41 +1,43 @@
 /* eslint-disable */
 export class Rule {
   id = '';
-  rule_name = '';
-  rule_version = '';
+  cfg = '';
+  host = '';
   typologies: Array<Typology> = [];
 
   getStrValue(): string {
-    return `${this.id}${this.rule_name}${this.rule_version}`;
+    return `${this.id}${this.cfg}`;
   }
 }
 
 export class Typology {
-  typology_id = '';
-  typology_name = '';
-  typology_version = '';
+  id = '';
   host = '';
+  cfg = '';
   rules: Array<Rule> = [];
 
-  constructor(typology_id: string, typology_name: string, typology_version: string) {
-    this.typology_id = typology_id;
-    this.typology_name = typology_name;
-    this.typology_version = typology_version;
+  constructor(typology_id: string, cfg: string, host: string) {
+    this.id = typology_id;
+    this.cfg = cfg;
+    this.host = host;
   }
 }
 
 export class Channel {
-  channel_id = '';
-  channel_name = '';
+  id = '';
+  host = '';
+  cfg = '';
   typologies: Array<Typology> = [];
 }
 
-export class Transaction {
-  transaction_type = '';
-  transaction_name = '';
+export class Message {
+  id = '';
+  host = '';
+  cfg = '';
+  txTp = '';
   channels: Array<Channel> = [];
 }
 
 export class NetworkMap {
-  transactions: Array<Transaction> = [];
+  messages: Array<Message> = [];
 }

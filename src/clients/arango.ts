@@ -4,6 +4,7 @@ import { LoggerService } from '../logger.service';
 import { cache } from '..';
 import { ITypologyExpression } from '../interfaces/iTypologyExpression';
 import apm from 'elastic-apm-node';
+import { Typology } from '../classes/network-map';
 
 export class ArangoDBService {
   client: Database;
@@ -40,13 +41,13 @@ export class ArangoDBService {
     }
   }
 
-  async getTypologyExpression(typologyId: string): Promise<ITypologyExpression | undefined> {
-    const cacheVal = cache.get(typologyId);
+  async getTypologyExpression(typology: Typology): Promise<ITypologyExpression | undefined> {
+    const cacheVal = cache.get(`${typology.id}_${typology.cfg}`);
     if (cacheVal) return cacheVal as ITypologyExpression;
     const span = apm.startSpan('Fetch Typology Expression from Database');
     const typologyExpressionQuery = `
         FOR doc IN ${configuration.db.collectionName}
-        FILTER doc.typology_id == "${typologyId}"
+        FILTER doc.typology_id == "${typology.id}" AND doc.typology_version == "${typology.cfg}"
         RETURN doc
         `;
 
@@ -55,7 +56,7 @@ export class ArangoDBService {
       const results = await cycles.batches.all();
       if (results.length === 0) return;
       const typologyExpression: ITypologyExpression = results[0][0];
-      cache.set(typologyId, results[0][0]);
+      cache.set(`${typology.id}_${typology.cfg}`, results[0][0]);
       return typologyExpression;
     } catch (error) {
       LoggerService.error('Error while executing ArangoDB query with message:', error as Error, 'ArangoDBService');

@@ -1,4 +1,4 @@
-import { CustomerCreditTransferInitiation } from './classes/iPain001Transaction';
+import { Pain001V11Transaction } from './classes/Pain.001.001.11/iPain001Transaction';
 import { NetworkMap } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
 import { LoggerService } from './logger.service';
@@ -9,19 +9,19 @@ import { configuration } from './config';
 
 export const handleExecute = async (ctx: Context, next: Next): Promise<Context | undefined> => {
   LoggerService.log('Start - Handle execute request');
-  apm.startTransaction(configuration.functionName, 'handleExecute');
   const span = apm.startSpan('Handle execute request');
 
   const request = ctx.request.body;
 
   let networkMap: NetworkMap = new NetworkMap();
   let ruleResult: RuleResult = new RuleResult();
-  let transaction: CustomerCreditTransferInitiation = new CustomerCreditTransferInitiation({});
+  let transaction: Pain001V11Transaction = new Pain001V11Transaction({});
 
   try {
     networkMap = request.networkMap;
     ruleResult = request.ruleResult;
     transaction = request.transaction;
+    transaction.TxTp = request.transaction.TxTp;
   } catch (parseError) {
     const failMessage = 'Failed to parse execution request';
 
@@ -34,9 +34,7 @@ export const handleExecute = async (ctx: Context, next: Next): Promise<Context |
 
     // The request has been received but not yet acted upon.
     ctx.status = 200;
-    ctx.body = {
-      message: result,
-    };
+    ctx.body = result;
 
     await next();
     span?.end();
