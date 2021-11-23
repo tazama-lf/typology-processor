@@ -11,6 +11,7 @@ import apm from 'elastic-apm-node';
 import { configuration } from './config';
 import { cacheClient, databaseClient } from '.';
 import { CADPRequest, CombinedResult } from './classes/cadp-request';
+import axios from 'axios';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -110,10 +111,9 @@ const executeRequest = async (
     // Send CADP request with this Typology's result
     try {
       cadpReqBody.typologyResult = typologyResult;
-      const toSend = JSON.stringify(cadpReqBody);
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
-      await executePost(configuration.cadpEndpoint, toSend);
+      await executePost(configuration.cadpEndpoint, cadpReqBody);
       span?.end();
     } catch (error) {
       span?.end();
@@ -145,15 +145,14 @@ export const handleTransaction = async (
       // for (const rule of typology.rules) {
       // determine rule completion
       // }
-      const typoRes = await executeRequest(transaction, typology, ruleResult, networkMap);
+      const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap);
       //typoRes.transaction = new Pain001V11Transaction({});
-      toReturn.cadpRequests.push(typoRes);
+      toReturn.cadpRequests.push(cadpRes);
       // toReturn.push(`{"Typology": "${typology.id}", "cfg": "${typology.cfg}"}, "Result":${typoRes.typologyResult.result}}`);
     }
   }
 
   // Response for CRSP - How many typologies have kicked off?
-
   // Let CRSP know that we have finished processing this transaction
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transaction.CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.PmtId.EndToEndId}`;
   LoggerService.log(result);
@@ -162,36 +161,14 @@ export const handleTransaction = async (
 };
 
 // Submit the score to the CADP
-// TODO: It needs to be rewritten with Axios library instead of 'http'
-const executePost = (endpoint: string, request: string): Promise<void | Error> => {
-  return new Promise((resolve) => {
-    const options: http.RequestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': request.length,
-      },
-    };
-
-    const req = http.request(endpoint, options, (res) => {
-      LoggerService.log(`CADP statusCode: ${res.statusCode}`);
-      if (res.statusCode !== 200) {
-        LoggerService.trace(`StatusCode != 200, request:\r\n${request}`);
-      }
-
-      res.on('data', (d) => {
-        LoggerService.log(`CADP data: ${d.toString()}`);
-        resolve();
-      });
-    });
-
-    req.on('error', (error) => {
-      LoggerService.error(`CADP Error data: ${error}`);
-      LoggerService.trace(`Request:\r\n${request}`);
-      resolve(error);
-    });
-
-    req.write(request);
-    req.end();
-  });
+const executePost = async (endpoint: string, request: CADPRequest) => {
+  try {
+    const cadpRes = await axios.post(endpoint, request);
+    if (cadpRes.status !== 200) {
+      LoggerService.error(`CADP Response StatusCode != 200, request:\r\n${request}`);
+    }
+  } catch (error) {
+    LoggerService.error(`Error while sending request to CADP at ${endpoint ?? ""} with message: ${error}`);
+    LoggerService.trace(`CADP Error Request:\r\n${request}`);
+  }
 };
