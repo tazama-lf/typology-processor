@@ -1,21 +1,27 @@
 /* eslint-disable camelcase */
 
 export interface IRuleValue {
-  rule_id: string;
-  rule_true_value: string;
-  rule_false_value: string;
+  id: string;
+  cfg: string;
+  ref: string;
+  true: number;
+  false: number;
+}
+
+export interface IRule {
+  id: string;
+  cfg: string;
 }
 
 export interface IExpression {
-  operation: string;
-  values: string[];
-  nested_expression: IExpression;
+  operator: string;
+  terms: IRule[];
+  expression: IExpression;
 }
 
 export interface ITypologyExpression {
-  typology_name: string;
-  typology_version: string;
-  typology_id: string;
-  rules_values: IRuleValue[];
-  typology_expression: IExpression;
+  id: string;
+  cfg: string;
+  rules: IRuleValue[];
+  expression: IExpression;
 }

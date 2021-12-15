@@ -47,7 +47,7 @@ export class ArangoDBService {
     const span = apm.startSpan('Fetch Typology Expression from Database');
     const typologyExpressionQuery = `
         FOR doc IN ${configuration.db.collectionName}
-        FILTER doc.typology_id == "${typology.id}" AND doc.typology_version == "${typology.cfg}"
+        FILTER doc.id == "${typology.id}" AND doc.cfg == "${typology.cfg}"
         RETURN doc
         `;
 

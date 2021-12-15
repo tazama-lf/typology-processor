@@ -6,23 +6,23 @@ import { NetworkMap, Typology } from './classes/network-map';
 
 import { RuleResult } from './classes/rule-result';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
-import { TypologyResult } from './classes/typology-result';
 import apm from 'elastic-apm-node';
 import { configuration } from './config';
 import { cacheClient, databaseClient } from '.';
-import { CADPRequest, CombinedResult } from './classes/cadp-request';
+import { CADPRequest, CombinedResult, TypologyResult } from './classes/cadp-request';
 import axios from 'axios';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
-  for (const rule in typologyExpression.values) {
-    const ruleResult = ruleResults.find((r) => r.rule === typologyExpression.values[rule])?.result ?? false;
+  for (const rule in typologyExpression.terms) {
+    const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg)?.result ?? false;
     let ruleVal = 0.0;
     if (ruleResult)
-      ruleVal = Number.parseFloat(ruleValues.find((rv) => rv.rule_id === typologyExpression.values[rule])?.rule_true_value ?? '0.0');
-    else ruleVal = Number.parseFloat(ruleValues.find((rv) => rv.rule_id === typologyExpression.values[rule])?.rule_false_value ?? '0.0');
+      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg)?.true ?? 0.0;
+    else
+      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg)?.false ?? 0.0;
 
-    switch (typologyExpression.operation) {
+    switch (typologyExpression.operator) {
       case '+':
         toReturn += ruleVal;
         break;
@@ -38,9 +38,9 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
         break;
     }
   }
-  if (typologyExpression.nested_expression) {
-    const evalRes = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.nested_expression);
-    switch (typologyExpression.operation) {
+  if (typologyExpression.expression) {
+    const evalRes = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    switch (typologyExpression.operator) {
       case '+':
         toReturn += evalRes;
         break;
@@ -65,17 +65,16 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
 ): Promise<CADPRequest> => {
-  // Have to manually start transaction because we are not making use of one of the out-of-the-box solutions (eg, express / koa server)
-  let typologyResult: TypologyResult = { result: 0.0, typology: typology.id, cfg: typology.cfg };
+
+  let typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: request,
-    networkMap: networkMap,
-    ruleResults: [],
+    networkMap: networkMap
   };
   try {
     const transactionID = request.CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.PmtId.EndToEndId;
-    const cacheKey = `${transactionID}_${typology.id}`;
+    const cacheKey = `${transactionID}_${typology.id}_${typology.cfg}`;
     const jruleResults = await cacheClient.getJson(cacheKey);
     const ruleResults: RuleResult[] = [];
 
@@ -84,11 +83,11 @@ const executeRequest = async (
       Object.assign(ruleResults, JSON.parse(jruleResults));
     }
     cadpReqBody.typologyResult = typologyResult;
-    cadpReqBody.ruleResults = ruleResults;
-    if (ruleResults.some((r) => r.rule === ruleResult.rule)) return cadpReqBody;
+    cadpReqBody.typologyResult.ruleResults = ruleResults;
+    if (ruleResults.some((r) => r.id === ruleResult.id && r.cfg === ruleResult.cfg)) return cadpReqBody;
 
-    ruleResults.push({ rule: ruleResult.rule, result: ruleResult.result, reason: ruleResult.reason, subRuleRef: ruleResult.subRuleRef });
-    cadpReqBody.ruleResults = ruleResults;
+    ruleResults.push({ id: ruleResult.id, result: ruleResult.result, cfg: ruleResult.cfg, reason: ruleResult.reason, subRuleRef: ruleResult.subRuleRef });
+    cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
@@ -105,7 +104,7 @@ const executeRequest = async (
 
     const expression: ITypologyExpression = expressionRes!;
     let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
-    const typologyResultValue = evaluateTypologyExpression(expression.rules_values, ruleResults, expression.typology_expression);
+    const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
     typologyResult.result = typologyResultValue;
     // Send CADP request with this Typology's result
@@ -139,7 +138,7 @@ export const handleTransaction = async (
   const toReturn: CombinedResult = new CombinedResult();
 
   for (const channel of networkMap.messages[0].channels) {
-    for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.rule))) {
+    for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
       typologyCounter++;
       // for (const rule of typology.rules) {
