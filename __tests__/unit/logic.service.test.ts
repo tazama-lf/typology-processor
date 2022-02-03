@@ -26,7 +26,7 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0","host":"http://openfaas:8080","cfg":"1.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0","host":"http://openfaas:8080","cfg":"1.0","typologies":[{"id":"028@1.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0","rules":[{"id":"003@1.0","host":"http://openfaas:8080","cfg":"1.0"}]},{"id":"029@1.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0","rules":[{"id":"003@1.0","host":"http://openfaas:8080","cfg":"1.0"},{"id":"005@1.0","host":"http://openfaas:8080","cfg":"1.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { result: true, rule: '003@1.0', reason: 'reason', subRuleRef: 'ref1' };
+      const ruleResult: RuleResult = { id: '', cfg: '', result: true, reason: 'reason', subRuleRef: 'ref1' };
       const result = await handleTransaction(expectedReq, networkMap, ruleResult);
       if (result) test = true;
       expect(test).toBeTruthy();
@@ -40,7 +40,7 @@ describe('Logic Service', () => {
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
 
-      const ruleResult: RuleResult = { result: true, rule: '001_Derived_account_age_payee', reason: 'reason', subRuleRef: 'ref1' };
+      const ruleResult: RuleResult = { result: true, id: '', cfg: '',  reason: 'reason', subRuleRef: 'ref1' };
       const result = await handleTransaction(expectedReq, networkMap, ruleResult);
       if (result) test = true;
       expect(test).toBeTruthy();
