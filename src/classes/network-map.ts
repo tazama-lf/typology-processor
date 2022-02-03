@@ -39,5 +39,7 @@ export class Message {
 }
 
 export class NetworkMap {
+  cfg = '';
+  active = false;
   messages: Array<Message> = [];
 }
