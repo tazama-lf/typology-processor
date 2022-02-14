@@ -11,12 +11,13 @@ export interface IRuleValue {
 export interface IRule {
   id: string;
   cfg: string;
+  ref: string;
 }
 
 export interface IExpression {
   operator: string;
   terms: IRule[];
-  expression: IExpression;
+  expression: IExpression | undefined;
 }
 
 export interface ITypologyExpression {

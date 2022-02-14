@@ -56,7 +56,7 @@ export class ArangoDBService {
       const results = await cycles.batches.all();
       if (results.length === 0) return;
       const typologyExpression: ITypologyExpression = results[0][0];
-      cache.set(`${typology.id}_${typology.cfg}`, results[0][0]);
+      cache.set(`${typology.id}_${typology.cfg}`, results[0][0], configuration.cacheTTL);
       return typologyExpression;
     } catch (error) {
       LoggerService.error('Error while executing ArangoDB query with message:', error as Error, 'ArangoDBService');
