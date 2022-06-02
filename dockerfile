@@ -45,21 +45,23 @@ ENV read_timeout="15s"
 
 ENV prefix_logs="false"
 
-ENV FUNCTION_NAME=typology-processor
+ENV FUNCTION_NAME=typology-processor-rel-1-0-0
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV CADP_ENDPOINT=http://gateway.openfaas:8080/function/off-channel-aggregation-decisioning-processor.openfaas-fn/execute
+ENV CADP_ENDPOINT=http://gateway.openfaas:8080/function/off-channel-aggregation-decisioning-processor-rel-1-0-0.openfaas-fn/execute
+ENV CMS_ENDPOINT=http://gateway.openfaas:8080/function/off-cms-service.openfaas-fn/execute
+ENV CACHE_TTL=0
 
 ENV REDIS_DB=0
 ENV REDIS_AUTH=
 ENV REDIS_HOST=
 ENV REDIS_PORT=6379
 
-ENV DATABASE_NAME="Configuration"
-ENV DATABASE_URL="http://arango.development:8529"
-ENV DATABASE_USER="root"
-ENV DATABASE_PASSWORD=
-ENV COLLECTION_NAME="typologyExpression"
+ENV DATABASE_NAME=Configuration
+ENV DATABASE_URL=http://arango.development:8529
+ENV DATABASE_USER=root
+ENV DATABASE_PASSWORD=''
+ENV COLLECTION_NAME=typologyExpression
 
 ENV APM_ACTIVE=true
 ENV APM_SERVICE_NAME=typology-processor
