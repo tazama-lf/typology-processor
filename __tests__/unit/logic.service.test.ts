@@ -1,7 +1,11 @@
-import { NetworkMap } from '../../src/classes/network-map';
+import { NetworkMap, Typology } from '../../src/classes/network-map';
 import { RuleResult } from '../../src/classes/rule-result';
-import { handleTransaction } from '../../src/app.service';
+import { handleTransaction } from '../../src/logic.service';
 import { Pain001V11Transaction } from '../../src/classes/Pain.001.001.11/iPain001Transaction';
+import { ArangoDBService } from '../../src/clients';
+import { ITypologyExpression } from '../../src/interfaces/iTypologyExpression';
+import { cacheClient, databaseClient } from '../../src';
+import _ from 'lodash';
 
 const getMockRequest = () => {
   const quote = new Pain001V11Transaction(
@@ -12,38 +16,87 @@ const getMockRequest = () => {
   return quote;
 };
 
+let cacheString = '';
+
 describe('Logic Service', () => {
-  // let logicServiceExecutePostSpy: jest.SpyInstance;
-  // beforeEach(() => {
-  //   logicServiceExecutePostSpy = jest.spyOn(LogicService, 'executePost').mockImplementation();
-  // });
+  let databaseServiceSpy: jest.SpyInstance;
+  let getJsonSpy: jest.SpyInstance;
+  let setJsonSpy: jest.SpyInstance;
+  let deleteJsonSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    //const typology: Typology = { id: '028@1.0.0', cfg: '1.0.0', host: 'local', rules: [] }
+    databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
+      return new Promise((resolve, reject) => {
+        if (typology.id === "028@1.0.0")
+          resolve({ cfg: "1.0.0", id: "028@1.0.0", rules: [{ id: "003@1.0.0", cfg: "1.0.0", ref: ".01", true: 100, false: 2 }, { id: "004@1.0.0", cfg: "1.0.0", ref: ".01", true: 50, false: 2 }], expression: { operator: "+", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "-", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "*", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "/", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "/", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: undefined } } } } } });
+        else
+          resolve({ cfg: "1.0.0", id: "029@1.0.0", rules: [{ id: "003@1.0.0", cfg: "1.0.0", ref: ".01", true: 100, false: 2 }, { id: "004@1.0.0", cfg: "1.0.0", ref: ".01", true: 50, false: 2 }], expression: { operator: "+", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "-", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "*", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "/", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: { operator: "/", terms: [{ "id": "003@1.0.0", "cfg": "1.0.0" }, { "id": "004@1.0.0", "cfg": "1.0.0" }], expression: undefined } } } } } });
+
+      });
+    });
+
+    getJsonSpy = jest.spyOn(cacheClient, 'getJson').mockImplementation((key: string): Promise<string> => {
+      return new Promise<string>((resolve, reject) => {
+        resolve(cacheString);
+      });
+    });
+
+    setJsonSpy = jest.spyOn(cacheClient, 'setJson').mockImplementation((key: string, value: string): Promise<string> => {
+      return new Promise<string>((resolve, reject) => {
+        cacheString = value;
+        resolve('OK');
+      });
+    });
+
+    deleteJsonSpy = jest.spyOn(cacheClient, 'deleteKey').mockImplementation((key: string): Promise<number> => {
+      return new Promise<number>((resolve, reject) => {
+        cacheString = '';
+        resolve(0);
+      });
+    });
+  });
 
   describe('Handle Transaction', () => {
-    it('should handle successful request, with a unmatched number', async () => {
+    it('should handle successful request', async () => {
       const expectedReq = getMockRequest();
       let test = false;
       const jNetworkMap = JSON.parse(
-        '{"messages":[{"id":"001@1.0","host":"http://openfaas:8080","cfg":"1.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0","host":"http://openfaas:8080","cfg":"1.0","typologies":[{"id":"028@1.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0","rules":[{"id":"003@1.0","host":"http://openfaas:8080","cfg":"1.0"}]},{"id":"029@1.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0","rules":[{"id":"003@1.0","host":"http://openfaas:8080","cfg":"1.0"},{"id":"005@1.0","host":"http://openfaas:8080","cfg":"1.0"}]}]}]}]}',
+        '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { id: '', cfg: '', result: true, reason: 'reason', subRuleRef: 'ref1' };
+      const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
       const result = await handleTransaction(expectedReq, networkMap, ruleResult);
       if (result) test = true;
       expect(test).toBeTruthy();
     });
 
-    it('should handle successful request, with a matched number', async () => {
+    it('should handle successful request, with a unmatched ruleId', async () => {
       const expectedReq = getMockRequest();
       let test = false;
       const jNetworkMap = JSON.parse(
-        '{"messages":[{"id":"001@1.0","host":"http://openfaas:8080","cfg":"1.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0","host":"http://openfaas:8080","cfg":"1.0","typologies":[{"id":"028@1.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0","rules":[{"id":"003@1.0","host":"http://openfaas:8080","cfg":"1.0"},{"id":"004@1.0","host":"http://openfaas:8080","cfg":"1.0"}]},{"id":"029@1.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0","rules":[{"id":"003@1.0","host":"http://openfaas:8080","cfg":"1.0"},{"id":"005@1.0","host":"http://openfaas:8080","cfg":"1.0"}]}]}]}]}',
+        '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"005@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
 
-      const ruleResult: RuleResult = { result: true, id: '', cfg: '',  reason: 'reason', subRuleRef: 'ref1' };
+      const ruleResult: RuleResult = { result: true, id: '001_Derived_account_age_payee', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      if (result) test = true;
+      expect(test).toBeTruthy();
+    });
+
+    it('should test typology expression', async () => {
+      const expectedReq = getMockRequest();
+      let test = false;
+      const jNetworkMap = JSON.parse(
+        '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"005@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
+      );
+      const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
+      const ruleResult: RuleResult = { result: true, id: '001_Derived_account_age_payee', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
       const result = await handleTransaction(expectedReq, networkMap, ruleResult);
       if (result) test = true;
       expect(test).toBeTruthy();
     });
   });
 });
+

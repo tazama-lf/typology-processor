@@ -15,12 +15,13 @@ import axios from 'axios';
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
   for (const rule in typologyExpression.terms) {
-    const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg)?.result ?? false;
+    const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg);
     let ruleVal = 0.0;
-    if (ruleResult)
-      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg)?.true ?? 0.0;
+    if (!ruleResult) return ruleVal;
+    if (ruleResult.result)
+      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.true ?? 0.0;
     else
-      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg)?.false ?? 0.0;
+      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.false ?? 0.0;
 
     switch (typologyExpression.operator) {
       case '+':
@@ -60,7 +61,7 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
 };
 
 const executeRequest = async (
-  request: Pain001V11Transaction,
+  transaction: any,
   typology: Typology,
   ruleResult: RuleResult,
   networkMap: NetworkMap,
@@ -69,11 +70,12 @@ const executeRequest = async (
   let typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
-    transaction: request,
+    transaction: transaction,
     networkMap: networkMap
   };
   try {
-    const transactionID = request.CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.PmtId.EndToEndId;
+    let transactionType = Object.keys(transaction).find(k => k !== "TxTp") ?? "";
+    const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `${transactionID}_${typology.id}_${typology.cfg}`;
     const jruleResults = await cacheClient.getJson(cacheKey);
     const ruleResults: RuleResult[] = [];
@@ -141,11 +143,12 @@ const executeRequest = async (
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
     return cadpReqBody;
   } finally {
+    LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
   }
 };
 
 export const handleTransaction = async (
-  transaction: Pain001V11Transaction,
+  transaction: any,
   networkMap: NetworkMap,
   ruleResult: RuleResult,
 ): Promise<CombinedResult> => {
@@ -168,8 +171,10 @@ export const handleTransaction = async (
 
   // Response for CRSP - How many typologies have kicked off?
   // Let CRSP know that we have finished processing this transaction
-  const result = `${typologyCounter} typologies initiated for transaction ID: ${transaction.CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.PmtId.EndToEndId}`;
-  LoggerService.log(result);
+  let transactionType = Object.keys(transaction).find(k => k !== "TxTp") ?? "";
+  const transactionID = transaction[transactionType].GrpHdr.MsgId;
+  const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
+  LoggerService.log(`${result} for Rule ${ruleResult.id}`);
   toReturn.typologyResult = result;
   return toReturn;
 };
