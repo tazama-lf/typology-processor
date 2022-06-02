@@ -109,9 +109,24 @@ const executeRequest = async (
     const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
     typologyResult.result = typologyResultValue;
+    cadpReqBody.typologyResult = typologyResult;
+
+    //Interdiction
+    //Send Result to CMS
+    if (expression?.threshold && (typologyResultValue > expression.threshold)) {
+      try {
+        span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
+        // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
+        await executePost(configuration.cmsEndpoint, cadpReqBody);
+        span?.end();
+      } catch (error) {
+        span?.end();
+        LoggerService.error('Error while sending Typology result to CMS', error as Error);
+      }
+    }
+
     // Send CADP request with this Typology's result
     try {
-      cadpReqBody.typologyResult = typologyResult;
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
       await executePost(configuration.cadpEndpoint, cadpReqBody);

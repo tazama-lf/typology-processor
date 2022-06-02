@@ -24,5 +24,6 @@ export interface ITypologyExpression {
   id: string;
   cfg: string;
   rules: IRuleValue[];
+  threshold: number;
   expression: IExpression;
 }

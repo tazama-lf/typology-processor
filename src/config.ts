@@ -26,6 +26,7 @@ export interface IConfig {
     collectionName: string;
   };
   cadpEndpoint: string;
+  cmsEndpoint: string;
   cacheTTL: number;
   logstash: {
     host: string;
@@ -53,6 +54,7 @@ export const configuration: IConfig = {
     active: <string>process.env.APM_ACTIVE,
   },
   cadpEndpoint: <string>process.env.CADP_ENDPOINT,
+  cmsEndpoint: <string>process.env.CMS_ENDPOINT,
   cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
   db: {
     name: <string>process.env.DATABASE_NAME,

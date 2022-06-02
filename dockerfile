@@ -49,6 +49,7 @@ ENV FUNCTION_NAME=typology-processor-rel-1-0-0
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV CADP_ENDPOINT=http://gateway.openfaas:8080/function/off-channel-aggregation-decisioning-processor-rel-1-0-0.openfaas-fn/execute
+ENV CMS_ENDPOINT=http://gateway.openfaas:8080/function/off-cms-service.openfaas-fn/execute
 ENV CACHE_TTL=0
 
 ENV REDIS_DB=0
