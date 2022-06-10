@@ -67,7 +67,7 @@ const executeRequest = async (
   networkMap: NetworkMap,
 ): Promise<CADPRequest> => {
 
-  let typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, ruleResults: [] };
+  let typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, theshold: 0.0, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: transaction,
@@ -102,13 +102,17 @@ const executeRequest = async (
     // else means we have all results for Typology, so lets evaluate result
 
     const expressionRes = await databaseClient.getTypologyExpression(typology);
-    if (!expressionRes) return cadpReqBody;
+    if (!expressionRes) {
+      LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
+      return cadpReqBody;
+    }
 
     const expression: ITypologyExpression = expressionRes!;
     let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
     const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
     typologyResult.result = typologyResultValue;
+    typologyResult.theshold = expression?.threshold ?? 0.0;
     cadpReqBody.typologyResult = typologyResult;
 
     //Interdiction
