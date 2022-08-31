@@ -82,20 +82,27 @@ const executeRequest = async (
 
     // Get cache from Redis if we have
     if (jruleResults && jruleResults.length > 0) {
-      Object.assign(ruleResults, JSON.parse(jruleResults));
+      for (const jruleResult of jruleResults) {
+        let ruleRes: RuleResult = new RuleResult();
+        Object.assign(ruleRes, JSON.parse(jruleResult));
+        ruleResults.push(ruleRes);
+      }
     }
+
     cadpReqBody.typologyResult = typologyResult;
     cadpReqBody.typologyResult.ruleResults = ruleResults;
-    if (ruleResults.some((r) => r.id === ruleResult.id && r.cfg === ruleResult.cfg)) return cadpReqBody;
+    let tempRuleResult: RuleResult = new RuleResult();
 
-    ruleResults.push({ id: ruleResult.id, result: ruleResult.result, cfg: ruleResult.cfg, reason: ruleResult.reason, subRuleRef: ruleResult.subRuleRef });
+    if (ruleResults.some((r) => r.id === ruleResult.id && r.cfg === ruleResult.cfg)) return cadpReqBody;
+    tempRuleResult = { id: ruleResult.id, result: ruleResult.result, cfg: ruleResult.cfg, reason: ruleResult.reason, subRuleRef: ruleResult.subRuleRef }
+    ruleResults.push(tempRuleResult);
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
       const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`);
       // Save Typology interim rule results to Cache
-      await cacheClient.setJson(cacheKey, JSON.stringify(ruleResults));
+      await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
       span?.end();
       return cadpReqBody;
     }

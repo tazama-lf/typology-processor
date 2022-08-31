@@ -20,13 +20,13 @@ export class RedisService {
     });
   }
 
-  getJson = (key: string): Promise<string> =>
+  getJson = (key: string): Promise<string[]> =>
     new Promise((resolve) => {
-      this.client.get(key, (err, res) => {
+      this.client.LRANGE(key, 0, -1, (err, res) => {
         if (err) {
           LoggerService.error('Error while getting key from redis with message:', err, 'RedisService');
 
-          resolve('');
+          resolve([]);
         }
         resolve(res ?? '');
       });
@@ -34,13 +34,13 @@ export class RedisService {
 
   setJson = (key: string, value: string): Promise<string> =>
     new Promise((resolve) => {
-      this.client.SET(key, value, (err, res) => {
+      this.client.LPUSH(key, value, (err, res) => {
         if (err) {
           LoggerService.error('Error while setting key to redis with message:', err, 'RedisService');
 
           resolve('');
         }
-        resolve(res);
+        resolve(res.toString());
       });
     });
 
