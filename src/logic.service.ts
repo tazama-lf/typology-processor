@@ -78,7 +78,7 @@ const executeRequest = async (
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `${transactionID}_${typology.id}_${typology.cfg}`;
     const jruleResults = await cacheClient.getJson(cacheKey);
-    const ruleResults: RuleResult[] = [];
+    let ruleResults: RuleResult[] = [];
 
     // Get cache from Redis if we have
     if (jruleResults && jruleResults.length > 0) {
@@ -104,7 +104,18 @@ const executeRequest = async (
       // Save Typology interim rule results to Cache
       await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
       span?.end();
-      return cadpReqBody;
+      ruleResults = [];
+      // Get cache from Redis if we have
+      if (jruleResults && jruleResults.length > 0) {
+        for (const jruleResult of jruleResults) {
+          let ruleRes: RuleResult = new RuleResult();
+          Object.assign(ruleRes, JSON.parse(jruleResult));
+          ruleResults.push(ruleRes);
+        }
+      }
+      if (ruleResults.length < typology.rules.length) {
+        return cadpReqBody;
+      }
     }
     // else means we have all results for Typology, so lets evaluate result
 
