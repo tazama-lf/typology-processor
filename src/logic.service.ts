@@ -77,7 +77,7 @@ const executeRequest = async (
     let transactionType = Object.keys(transaction).find(k => k !== "TxTp") ?? "";
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `${transactionID}_${typology.id}_${typology.cfg}`;
-    const jruleResults = await cacheClient.getJson(cacheKey);
+    let jruleResults = await cacheClient.getJson(cacheKey);
     let ruleResults: RuleResult[] = [];
 
     // Get cache from Redis if we have
@@ -105,6 +105,7 @@ const executeRequest = async (
       await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
       span?.end();
       ruleResults = [];
+      jruleResults = await cacheClient.getJson(cacheKey);
       // Get cache from Redis if we have
       if (jruleResults && jruleResults.length > 0) {
         for (const jruleResult of jruleResults) {
