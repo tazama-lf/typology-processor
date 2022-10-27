@@ -19,9 +19,9 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
     let ruleVal = 0.0;
     if (!ruleResult) return ruleVal;
     if (ruleResult.result)
-      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.true ?? 0.0;
+      ruleVal = Number(ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.true ?? 0.0);
     else
-      ruleVal = ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.false ?? 0.0;
+      ruleVal = Number(ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.false ?? 0.0);
 
     switch (typologyExpression.operator) {
       case '+':
