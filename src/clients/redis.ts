@@ -32,15 +32,15 @@ export class RedisService {
       });
     });
 
-  setJson = (key: string, value: string): Promise<string> =>
+  setJson = (key: string, value: string): Promise<number> =>
     new Promise((resolve) => {
       this.client.LPUSH(key, value, (err, res) => {
         if (err) {
           LoggerService.error('Error while setting key to redis with message:', err, 'RedisService');
 
-          resolve('');
+          resolve(-1);
         }
-        resolve(res.toString());
+        resolve(res);
       });
     });
 

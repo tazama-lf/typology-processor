@@ -76,7 +76,7 @@ const executeRequest = async (
   try {
     let transactionType = Object.keys(transaction).find(k => k !== "TxTp") ?? "";
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
-    const cacheKey = `${transactionID}_${typology.id}_${typology.cfg}`;
+    const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
     let jruleResults = await cacheClient.getJson(cacheKey);
     let ruleResults: RuleResult[] = [];
 
@@ -101,8 +101,12 @@ const executeRequest = async (
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
       const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`);
-      // Save Typology interim rule results to Cache
-      await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
+      // Save Typology interim rule results to Cache and check if we have all rule results again
+      let resCount = await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
+      if (resCount < typology.rules.length) {
+        return cadpReqBody;
+      }
+
       span?.end();
       ruleResults = [];
       jruleResults = await cacheClient.getJson(cacheKey);
