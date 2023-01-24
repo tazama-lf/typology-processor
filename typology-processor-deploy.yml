@@ -11,5 +11,6 @@ functions:
     annotations:
       com.openfaas.health.http.path: /health
       com.openfaas.health.http.initialDelay: "45s"
+      com.openfaas.profile: nodeselector
     secrets:
       - frmpullsecret
