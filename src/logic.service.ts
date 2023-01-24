@@ -1,16 +1,13 @@
-import http from 'http';
-
-import { LoggerService } from './logger.service';
-import { Pain001V11Transaction } from './classes/Pain.001.001.11/iPain001Transaction';
 import { NetworkMap, Typology } from './classes/network-map';
-
-import { RuleResult } from './classes/rule-result';
-import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
+import { LoggerService } from './logger.service';
+import axios from 'axios';
 import apm from 'elastic-apm-node';
-import { configuration } from './config';
 import { cacheClient, databaseClient } from '.';
 import { CADPRequest, CombinedResult, TypologyResult } from './classes/cadp-request';
-import axios from 'axios';
+import { addRuleResult, containsRuleResult, RuleResult } from './classes/rule-result';
+import { configuration } from './config';
+import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
+import { resolve } from 'path';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -19,9 +16,23 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
     let ruleVal = 0.0;
     if (!ruleResult) return ruleVal;
     if (ruleResult.result)
-      ruleVal = Number(ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.true ?? 0.0);
+      ruleVal = Number(
+        ruleValues.find(
+          (rv) =>
+            rv.id === typologyExpression.terms[rule].id &&
+            rv.cfg === typologyExpression.terms[rule].cfg &&
+            rv.ref === ruleResult.subRuleRef,
+        )?.true ?? 0.0,
+      );
     else
-      ruleVal = Number(ruleValues.find((rv) => rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef)?.false ?? 0.0);
+      ruleVal = Number(
+        ruleValues.find(
+          (rv) =>
+            rv.id === typologyExpression.terms[rule].id &&
+            rv.cfg === typologyExpression.terms[rule].cfg &&
+            rv.ref === ruleResult.subRuleRef,
+        )?.false ?? 0.0,
+      );
 
     switch (typologyExpression.operator) {
       case '+':
@@ -66,17 +77,16 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
 ): Promise<CADPRequest> => {
-
   let typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, theshold: 0.0, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: transaction,
-    networkMap: networkMap
+    networkMap: networkMap,
   };
   try {
-    let transactionType = Object.keys(transaction).find(k => k !== "TxTp") ?? "";
+    let transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
-    const cacheKey = `${transactionID}_${typology.id}_${typology.cfg}`;
+    const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
     let jruleResults = await cacheClient.getJson(cacheKey);
     let ruleResults: RuleResult[] = [];
 
@@ -89,19 +99,25 @@ const executeRequest = async (
       }
     }
 
-    cadpReqBody.typologyResult = typologyResult;
     cadpReqBody.typologyResult.ruleResults = ruleResults;
-    let tempRuleResult: RuleResult = new RuleResult();
 
-    if (ruleResults.some((r) => r.id === ruleResult.id && r.cfg === ruleResult.cfg)) return cadpReqBody;
-    tempRuleResult = { id: ruleResult.id, result: ruleResult.result, cfg: ruleResult.cfg, reason: ruleResult.reason, subRuleRef: ruleResult.subRuleRef }
-    ruleResults.push(tempRuleResult);
-    cadpReqBody.typologyResult.ruleResults = ruleResults;
+    if (containsRuleResult(ruleResults, ruleResult)) return cadpReqBody;
+
+    let tempRuleResult: RuleResult = new RuleResult();
+    Object.assign(tempRuleResult, {
+      id: ruleResult.id,
+      result: ruleResult.result,
+      cfg: ruleResult.cfg,
+      reason: ruleResult.reason,
+      subRuleRef: ruleResult.subRuleRef,
+    });
+
+    addRuleResult(ruleResults, tempRuleResult);
 
     // check if all results for this typology are found
     if (ruleResults.length < typology.rules.length) {
       const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`);
-      // Save Typology interim rule results to Cache
+      // Save Typology interim rule results to Cache and check if we have all rule results again
       await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
       span?.end();
       ruleResults = [];
@@ -119,54 +135,61 @@ const executeRequest = async (
       }
     }
     // else means we have all results for Typology, so lets evaluate result
+    const evaluationLock = await cacheClient.getEvaluationLock(cacheKey);
+    if (evaluationLock) {
+      cadpReqBody.typologyResult.ruleResults = ruleResults;
+      const expressionRes = await databaseClient.getTypologyExpression(typology);
+      if (!expressionRes) {
+        LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
+        return cadpReqBody;
+      }
 
-    const expressionRes = await databaseClient.getTypologyExpression(typology);
-    if (!expressionRes) {
-      LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
-      return cadpReqBody;
-    }
+      const expression: ITypologyExpression = expressionRes!;
+      let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
+      const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
+      span?.end();
+      typologyResult.result = typologyResultValue;
+      typologyResult.theshold = expression?.threshold ?? 0.0;
+      cadpReqBody.typologyResult = typologyResult;
 
-    const expression: ITypologyExpression = expressionRes!;
-    let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
-    const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
-    span?.end();
-    typologyResult.result = typologyResultValue;
-    typologyResult.theshold = expression?.threshold ?? 0.0;
-    cadpReqBody.typologyResult = typologyResult;
+      //Interdiction
+      //Send Result to CMS
+      if (expression?.threshold && typologyResultValue > expression.threshold) {
+        try {
+          span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
+          // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
+          await executePost(configuration.cmsEndpoint, cadpReqBody);
+          span?.end();
+        } catch (error) {
+          span?.end();
+          LoggerService.error('Error while sending Typology result to CMS', error as Error);
+        }
+      }
 
-    //Interdiction
-    //Send Result to CMS
-    if (expression?.threshold && (typologyResultValue > expression.threshold)) {
+      // Send CADP request with this Typology's result
       try {
-        span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
-        // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
-        await executePost(configuration.cmsEndpoint, cadpReqBody);
+        span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
+        //LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
+        await executePost(configuration.cadpEndpoint, cadpReqBody);
         span?.end();
       } catch (error) {
         span?.end();
-        LoggerService.error('Error while sending Typology result to CMS', error as Error);
+        LoggerService.error('Error while sending Typology result to CADP', error as Error);
       }
-    }
 
-    // Send CADP request with this Typology's result
-    try {
-      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
-      // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
-      await executePost(configuration.cadpEndpoint, cadpReqBody);
+      span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
+      await cacheClient.deleteKey(cacheKey);
+      await cacheClient.deleteEvaluationLock(cacheKey);
       span?.end();
-    } catch (error) {
-      span?.end();
-      LoggerService.error('Error while sending Typology result to CADP', error as Error);
+      return cadpReqBody;
+    } else {
+      LoggerService.log(`Failed Lock gain from concluded Rule: ${ruleResult.id} with transaction ID: ${cacheKey} attempted`);
     }
-    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
-    await cacheClient.deleteKey(cacheKey);
-    span?.end();
-    return cadpReqBody;
   } catch (error) {
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
-    return cadpReqBody;
   } finally {
     LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
+    return cadpReqBody;
   }
 };
 
@@ -182,19 +205,15 @@ export const handleTransaction = async (
     for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
       typologyCounter++;
-      // for (const rule of typology.rules) {
-      // determine rule completion
-      // }
+
       const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap);
-      //typoRes.transaction = new Pain001V11Transaction({});
       toReturn.cadpRequests.push(cadpRes);
-      // toReturn.push(`{"Typology": "${typology.id}", "cfg": "${typology.cfg}"}, "Result":${typoRes.typologyResult.result}}`);
     }
   }
 
   // Response for CRSP - How many typologies have kicked off?
   // Let CRSP know that we have finished processing this transaction
-  let transactionType = Object.keys(transaction).find(k => k !== "TxTp") ?? "";
+  let transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
   const transactionID = transaction[transactionType].GrpHdr.MsgId;
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
   LoggerService.log(`${result} for Rule ${ruleResult.id}`);
@@ -210,7 +229,7 @@ const executePost = async (endpoint: string, request: CADPRequest) => {
       LoggerService.error(`CADP Response StatusCode != 200, request:\r\n${request}`);
     }
   } catch (error) {
-    LoggerService.error(`Error while sending request to CADP at ${endpoint ?? ""} with message: ${error}`);
+    LoggerService.error(`Error while sending request to CADP at ${endpoint ?? ''} with message: ${error}`);
     LoggerService.trace(`CADP Error Request:\r\n${request}`);
   }
 };

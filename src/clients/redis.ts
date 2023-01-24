@@ -28,19 +28,19 @@ export class RedisService {
 
           resolve([]);
         }
-        resolve(res ?? '');
+        resolve(res ?? ['']);
       });
     });
 
-  setJson = (key: string, value: string): Promise<string> =>
+  setJson = (key: string, value: string): Promise<number> =>
     new Promise((resolve) => {
       this.client.LPUSH(key, value, (err, res) => {
         if (err) {
           LoggerService.error('Error while setting key to redis with message:', err, 'RedisService');
 
-          resolve('');
+          resolve(-1);
         }
-        resolve(res.toString());
+        resolve(res);
       });
     });
 
@@ -50,6 +50,33 @@ export class RedisService {
         if (err) {
           LoggerService.error('Error while deleting key from redis with message:', err, 'RedisService');
 
+          resolve(0);
+        }
+        resolve(res);
+      });
+    });
+
+  getEvaluationLock = (key: string): Promise<boolean> =>
+    new Promise((resolve) => {
+      this.client.set(`${key}_LCK`, 'EvaluateRule', 'NX', 'EX', 60, (err, res) => {
+        if (res === 'OK') {
+          LoggerService.log(`Evaluation Lock has been set for key: ${key}`);
+
+          resolve(true);
+        }
+        if (err) {
+          LoggerService.error(`Error while attempting to set evaluation lock from redis with message:`, err, 'RedisService');
+        }
+        resolve(false);
+      });
+    });
+
+  deleteEvaluationLock = (key: string): Promise<number> =>
+    new Promise((resolve) => {
+      this.client.DEL(`${key}_LCK`, (err, res) => {
+        if (err) {
+          LoggerService.error('Error while deleting evaluation lock from redis with message:', err, 'RedisService');
+          
           resolve(0);
         }
         resolve(res);

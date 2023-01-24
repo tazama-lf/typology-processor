@@ -11,14 +11,14 @@ export const handleExecute = async (ctx: Context, next: Next): Promise<Context |
   LoggerService.log('Start - Handle execute request');
   const span = apm.startSpan('Handle execute request');
 
-  const request = ctx.request.body;
+  const request:unknown|any = ctx.request.body;
 
   let networkMap: NetworkMap = new NetworkMap();
   let ruleResult: RuleResult = new RuleResult();
 
   try {
-    networkMap = request.networkMap;
-    ruleResult = request.ruleResult;
+    networkMap = request.networkMap as NetworkMap;
+    ruleResult = request.ruleResult as RuleResult;
   } catch (parseError) {
     const failMessage = 'Failed to parse execution request';
 
