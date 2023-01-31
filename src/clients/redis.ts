@@ -41,7 +41,7 @@ export class RedisService {
 
           resolve(-1);
         }
-        resolve(res);
+        resolve(res as number);
       });
     });
 
@@ -53,7 +53,7 @@ export class RedisService {
 
           resolve(0);
         }
-        resolve(res);
+        resolve(res as number);
       });
     });
   
