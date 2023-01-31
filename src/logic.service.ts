@@ -1,13 +1,12 @@
-import { NetworkMap, Typology } from './classes/network-map';
-import { LoggerService } from './logger.service';
 import axios from 'axios';
 import apm from 'elastic-apm-node';
 import { cacheClient, databaseClient } from '.';
 import { CADPRequest, CombinedResult, TypologyResult } from './classes/cadp-request';
-import { addRuleResult, containsRuleResult, RuleResult } from './classes/rule-result';
+import { NetworkMap, Typology } from './classes/network-map';
+import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
-import { resolve } from 'path';
+import { LoggerService } from './logger.service';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -87,7 +86,7 @@ const executeRequest = async (
     let transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
-    let jruleResults = await cacheClient.getJson(cacheKey);
+    let jruleResults = await cacheClient.addOneGetAll(`${cacheKey}`, JSON.stringify(ruleResult))
     let ruleResults: RuleResult[] = [];
 
     // Get cache from Redis if we have
@@ -101,90 +100,54 @@ const executeRequest = async (
 
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
-    if (containsRuleResult(ruleResults, ruleResult)) return cadpReqBody;
-
-    let tempRuleResult: RuleResult = new RuleResult();
-    Object.assign(tempRuleResult, {
-      id: ruleResult.id,
-      result: ruleResult.result,
-      cfg: ruleResult.cfg,
-      reason: ruleResult.reason,
-      subRuleRef: ruleResult.subRuleRef,
-    });
-
-    addRuleResult(ruleResults, tempRuleResult);
-
-    // check if all results for this typology are found
-    if (ruleResults.length < typology.rules.length) {
-      const span = apm.startSpan(`[${transactionID}] Save Typology interim rule results to Cache`);
-      // Save Typology interim rule results to Cache and check if we have all rule results again
-      await cacheClient.setJson(cacheKey, JSON.stringify(ruleResult));
-      span?.end();
-      ruleResults = [];
-      jruleResults = await cacheClient.getJson(cacheKey);
-      // Get cache from Redis if we have
-      if (jruleResults && jruleResults.length > 0) {
-        for (const jruleResult of jruleResults) {
-          let ruleRes: RuleResult = new RuleResult();
-          Object.assign(ruleRes, JSON.parse(jruleResult));
-          ruleResults.push(ruleRes);
-        }
-      }
-      if (ruleResults.length < typology.rules.length) {
-        return cadpReqBody;
-      }
+    if (ruleResults && ruleResults.length < typology.rules.length) {
+      return cadpReqBody;
     }
-    // else means we have all results for Typology, so lets evaluate result
-    const evaluationLock = await cacheClient.getEvaluationLock(cacheKey);
-    if (evaluationLock) {
-      cadpReqBody.typologyResult.ruleResults = ruleResults;
-      const expressionRes = await databaseClient.getTypologyExpression(typology);
-      if (!expressionRes) {
-        LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
-        return cadpReqBody;
-      }
 
-      const expression: ITypologyExpression = expressionRes!;
-      let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
-      const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
-      span?.end();
-      typologyResult.result = typologyResultValue;
-      typologyResult.theshold = expression?.threshold ?? 0.0;
-      cadpReqBody.typologyResult = typologyResult;
+    const expressionRes = await databaseClient.getTypologyExpression(typology);
+    if (!expressionRes) {
+      LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
+      return cadpReqBody;
+    }
 
-      //Interdiction
-      //Send Result to CMS
-      if (expression?.threshold && typologyResultValue > expression.threshold) {
-        try {
-          span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
-          // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
-          await executePost(configuration.cmsEndpoint, cadpReqBody);
-          span?.end();
-        } catch (error) {
-          span?.end();
-          LoggerService.error('Error while sending Typology result to CMS', error as Error);
-        }
-      }
+    const expression: ITypologyExpression = expressionRes!;
+    let span = apm.startSpan(`[${transactionID}] Evaluate Typology Expression`);
+    const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
+    span?.end();
+    typologyResult.result = typologyResultValue;
+    typologyResult.theshold = expression?.threshold ?? 0.0;
+    cadpReqBody.typologyResult = typologyResult;
 
-      // Send CADP request with this Typology's result
+    //Interdiction
+    //Send Result to CMS
+    if (expression?.threshold && typologyResultValue > expression.threshold) {
       try {
-        span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
-        //LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-        await executePost(configuration.cadpEndpoint, cadpReqBody);
+        span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
+        // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
+        await executePost(configuration.cmsEndpoint, cadpReqBody);
         span?.end();
       } catch (error) {
         span?.end();
-        LoggerService.error('Error while sending Typology result to CADP', error as Error);
+        LoggerService.error('Error while sending Typology result to CMS', error as Error);
       }
-
-      span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
-      await cacheClient.deleteKey(cacheKey);
-      await cacheClient.deleteEvaluationLock(cacheKey);
-      span?.end();
-      return cadpReqBody;
-    } else {
-      LoggerService.log(`Failed Lock gain from concluded Rule: ${ruleResult.id} with transaction ID: ${cacheKey} attempted`);
     }
+
+    // Send CADP request with this Typology's result
+    try {
+      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
+      //LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
+      await executePost(configuration.cadpEndpoint, cadpReqBody);
+      span?.end();
+    } catch (error) {
+      span?.end();
+      LoggerService.error('Error while sending Typology result to CADP', error as Error);
+    }
+
+    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
+    await cacheClient.deleteKey(cacheKey);
+    span?.end();
+    return cadpReqBody;
+
   } catch (error) {
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
   } finally {
@@ -193,11 +156,7 @@ const executeRequest = async (
   }
 };
 
-export const handleTransaction = async (
-  transaction: any,
-  networkMap: NetworkMap,
-  ruleResult: RuleResult,
-): Promise<CombinedResult> => {
+export const handleTransaction = async (transaction: any, networkMap: NetworkMap, ruleResult: RuleResult): Promise<CombinedResult> => {
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
 
