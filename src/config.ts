@@ -35,7 +35,7 @@ export interface IConfig {
   redis: {
     auth: string;
     connection: boolean;
-    db: string;
+    db: number;
     host: string;
     port: number;
   };
@@ -73,7 +73,7 @@ export const configuration: IConfig = {
   redis: {
     auth: <string>process.env.REDIS_AUTH,
     connection: <boolean>(process.env.REDIS_CONNECTION === 'true'),
-    db: <string>process.env.REDIS_DB,
+    db: parseInt(process.env.REDIS_DB, 10) || 0,
     host: <string>process.env.REDIS_HOST,
     port: parseInt(process.env.REDIS_PORT!, 10),
   },

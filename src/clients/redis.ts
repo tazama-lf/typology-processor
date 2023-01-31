@@ -1,17 +1,18 @@
-import redis from 'redis';
+import Redis from 'ioredis';
 import { configuration } from '../config';
 import { LoggerService } from '../logger.service';
 
 export class RedisService {
-  client: redis.RedisClient;
+  client: Redis;
 
   constructor() {
-    this.client = redis.createClient({
+    this.client = new Redis({
       db: configuration.redis?.db,
       host: configuration.redis?.host,
       port: configuration.redis?.port,
-      auth_pass: configuration.redis?.auth,
+      password: configuration.redis?.auth
     });
+
     this.client.on('connect', () => {
       LoggerService.log('✅ Redis connection is ready');
     });
@@ -22,7 +23,7 @@ export class RedisService {
 
   getJson = (key: string): Promise<string[]> =>
     new Promise((resolve) => {
-      this.client.LRANGE(key, 0, -1, (err, res) => {
+      this.client.smembers(key, (err, res) => {
         if (err) {
           LoggerService.error('Error while getting key from redis with message:', err, 'RedisService');
 
@@ -34,9 +35,9 @@ export class RedisService {
 
   setJson = (key: string, value: string): Promise<number> =>
     new Promise((resolve) => {
-      this.client.LPUSH(key, value, (err, res) => {
+      this.client.sadd(key, value, (err, res) => {
         if (err) {
-          LoggerService.error('Error while setting key to redis with message:', err, 'RedisService');
+          LoggerService.error('Error while adding key to redis with message:', err, 'RedisService');
 
           resolve(-1);
         }
@@ -46,7 +47,7 @@ export class RedisService {
 
   deleteKey = (key: string): Promise<number> =>
     new Promise((resolve) => {
-      this.client.DEL(key, (err, res) => {
+      this.client.del(key, (err, res) => {
         if (err) {
           LoggerService.error('Error while deleting key from redis with message:', err, 'RedisService');
 
@@ -55,31 +56,23 @@ export class RedisService {
         resolve(res);
       });
     });
-
-  getEvaluationLock = (key: string): Promise<boolean> =>
+  
+  addOneGetAll = (key: string, value: string): Promise<string[] | null> => 
     new Promise((resolve) => {
-      this.client.set(`${key}_LCK`, 'EvaluateRule', 'NX', 'EX', 60, (err, res) => {
-        if (res === 'OK') {
-          LoggerService.log(`Evaluation Lock has been set for key: ${key}`);
+      this.client.multi()
+      .sadd(key, value)
+      .smembers(key)
+      .exec((err, res) => {
+        // smembers result
+        if (res && res[1] && res[1][1]) {
+          resolve(res[1][1] as string[])
+        } 
 
-          resolve(true);
-        }
         if (err) {
-          LoggerService.error(`Error while attempting to set evaluation lock from redis with message:`, err, 'RedisService');
+          LoggerService.error('Error while executing transaction on redis with message:', err, 'RedisService');
         }
-        resolve(false);
-      });
-    });
 
-  deleteEvaluationLock = (key: string): Promise<number> =>
-    new Promise((resolve) => {
-      this.client.DEL(`${key}_LCK`, (err, res) => {
-        if (err) {
-          LoggerService.error('Error while deleting evaluation lock from redis with message:', err, 'RedisService');
-          
-          resolve(0);
-        }
-        resolve(res);
+        resolve(null);
       });
     });
 }
