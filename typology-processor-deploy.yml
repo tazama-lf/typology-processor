@@ -8,8 +8,7 @@ functions:
     lang: dockerfile
     handler: .
     image: actio.azurecr.io/off-typology-processor-rel-1-0-0:latest
-    annotations:
-      com.openfaas.health.http.path: /health
+    labels:
       com.openfaas.health.http.initialDelay: "45s"
       com.openfaas.profile: nodeselector
       com.openfaas.scale.type: rps
