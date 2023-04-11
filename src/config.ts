@@ -9,6 +9,7 @@ dotenv.config({
 });
 
 export interface IConfig {
+  maxCPU: number;
   env: string;
   functionName: string;
   port: number;
@@ -47,6 +48,7 @@ export interface IConfig {
 }
 
 export const configuration: IConfig = {
+  maxCPU: parseInt(process.env.MAX_CPU!, 10) || Number.MAX_SAFE_INTEGER,
   apm: {
     serviceName: <string>process.env.APM_SERVICE_NAME,
     url: <string>process.env.APM_URL,
