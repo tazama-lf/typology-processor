@@ -7,6 +7,7 @@ import NodeCache from 'node-cache';
 import { ArangoDBService, RedisService } from './clients';
 import cluster from 'cluster';
 import os from 'os';
+import { Services } from './services';
 
 /*
  * Initialize the APM Logging
@@ -20,9 +21,10 @@ if (configuration.apm.active === 'true') {
     active: Boolean(configuration.apm?.active),
   });
 }
-export const cache = new NodeCache();
-export const databaseClient = new ArangoDBService();
-export const cacheClient = new RedisService();
+
+export const cache = Services.getCacheInstance();
+export const databaseClient = Services.getDatabaseInstance();
+export const cacheClient = Services.getCacheClientInstance();
 
 export const runServer = (): void => {
   const app = new App();
@@ -69,9 +71,9 @@ export const runServer = (): void => {
   }
 };
 
-const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU : os.cpus().length;
+const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
 
-if (cluster.isPrimary) {
+if (cluster.isPrimary && configuration.maxCPU !== 1) {
   console.log(`Primary ${process.pid} is running`);
 
   // Fork workers.

@@ -11,7 +11,7 @@ export interface IRuleValue {
 export interface IRule {
   id: string;
   cfg: string;
-  ref: string;
+  ref?: string;
 }
 
 export interface IExpression {
