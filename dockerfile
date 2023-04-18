@@ -43,7 +43,7 @@ ENV read_timeout="15s"
 
 ENV prefix_logs="false"
 
-ENV FUNCTION_NAME=typology-processor-rel-1-0-0
+ENV FUNCTION_NAME="typology-processor-rel-1-1-0"
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV CADP_ENDPOINT=
