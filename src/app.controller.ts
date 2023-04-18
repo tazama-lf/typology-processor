@@ -11,7 +11,7 @@ export const handleExecute = async (ctx: Context, next: Next): Promise<Context |
   LoggerService.log('Start - Handle execute request');
   const span = apm.startSpan('Handle execute request');
 
-  const request:unknown|any = ctx.request.body;
+  const request: unknown | any = ctx.request.body; // eslint-disable-line
 
   let networkMap: NetworkMap = new NetworkMap();
   let ruleResult: RuleResult = new RuleResult();

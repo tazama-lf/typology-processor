@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 // config settings, env variables
-import * as path from 'path';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 
 // Load .env file into process.env if it exists. This is convenient for running locally.
 dotenv.config({
@@ -48,7 +48,7 @@ export interface IConfig {
 }
 
 export const configuration: IConfig = {
-  maxCPU: parseInt(process.env.MAX_CPU!, 10) || Number.MAX_SAFE_INTEGER,
+  maxCPU: parseInt(process.env.MAX_CPU, 10) || Number.MAX_SAFE_INTEGER,
   apm: {
     serviceName: <string>process.env.APM_SERVICE_NAME,
     url: <string>process.env.APM_URL,

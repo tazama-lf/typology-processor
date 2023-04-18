@@ -1,12 +1,10 @@
-import App from './app';
-import { Context } from 'koa';
-import { configuration } from './config';
-import apm from 'elastic-apm-node';
-import { LoggerService } from './logger.service';
-import NodeCache from 'node-cache';
-import { ArangoDBService, RedisService } from './clients';
 import cluster from 'cluster';
+import apm from 'elastic-apm-node';
+import { Context } from 'koa';
 import os from 'os';
+import App from './app';
+import { configuration } from './config';
+import { LoggerService } from './logger.service';
 import { Services } from './services';
 
 /*
@@ -26,13 +24,15 @@ export const cache = Services.getCacheInstance();
 export const databaseClient = Services.getDatabaseInstance();
 export const cacheClient = Services.getCacheClientInstance();
 
-export const runServer = (): void => {
-  const app = new App();
+let app: App;
+
+const runServer = (): App => {
+  const koaApp = new App();
 
   /*
    * Centralized error handling
    **/
-  app.on('error', handleError);
+  koaApp.on('error', handleError);
 
   function handleError(err: Error, ctx: Context): void {
     if (ctx == null) {
@@ -42,7 +42,7 @@ export const runServer = (): void => {
 
   function terminate(signal: NodeJS.Signals): void {
     try {
-      app.terminate();
+      koaApp.terminate();
     } finally {
       LoggerService.log('App is terminated');
       process.kill(process.pid, signal);
@@ -53,7 +53,7 @@ export const runServer = (): void => {
    * Start server
    **/
   if (Object.values(require.cache).filter(async (m) => m?.children.includes(module))) {
-    const server = app.listen(configuration.port, () => {
+    const server = koaApp.listen(configuration.port, () => {
       LoggerService.log(`API server listening on PORT ${configuration.port}`, 'execute');
     });
     server.on('error', handleError);
@@ -69,6 +69,8 @@ export const runServer = (): void => {
       process.once(signal, () => terminate(signal));
     });
   }
+
+  return koaApp;
 };
 
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
@@ -89,9 +91,11 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   // Workers can share any TCP connection
   // In this case it is an HTTP server
   try {
-    runServer();
+    app = runServer();
   } catch (err) {
     LoggerService.error(`Error while starting HTTP server on Worker ${process.pid}`, err);
   }
   console.log(`Worker ${process.pid} started`);
 }
+
+export { app };
