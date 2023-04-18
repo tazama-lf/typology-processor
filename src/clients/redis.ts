@@ -10,7 +10,7 @@ export class RedisService {
       db: configuration.redis?.db,
       host: configuration.redis?.host,
       port: configuration.redis?.port,
-      password: configuration.redis?.auth
+      password: configuration.redis?.auth,
     });
 
     this.client.on('connect', () => {
@@ -56,23 +56,24 @@ export class RedisService {
         resolve(res as number);
       });
     });
-  
-  addOneGetAll = (key: string, value: string): Promise<string[] | null> => 
+
+  addOneGetAll = (key: string, value: string): Promise<string[] | null> =>
     new Promise((resolve) => {
-      this.client.multi()
-      .sadd(key, value)
-      .smembers(key)
-      .exec((err, res) => {
-        // smembers result
-        if (res && res[1] && res[1][1]) {
-          resolve(res[1][1] as string[])
-        } 
+      this.client
+        .multi()
+        .sadd(key, value)
+        .smembers(key)
+        .exec((err, res) => {
+          // smembers result
+          if (res && res[1] && res[1][1]) {
+            resolve(res[1][1] as string[]);
+          }
 
-        if (err) {
-          LoggerService.error('Error while executing transaction on redis with message:', err, 'RedisService');
-        }
+          if (err) {
+            LoggerService.error('Error while executing transaction on redis with message:', err, 'RedisService');
+          }
 
-        resolve(null);
-      });
+          resolve(null);
+        });
     });
 }

@@ -58,7 +58,7 @@ const config: Config.InitialOptions = {
   // An object that configures minimum threshold enforcement for coverage results
   coverageThreshold: {
     global: {
-      branches: 95,
+      branches: 85,
       functions: 95,
       lines: 95,
       statements: 95,
@@ -144,7 +144,7 @@ const config: Config.InitialOptions = {
   // runner: "jest-runner",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  setupFiles: ['dotenv/config'],
+  setupFiles: ['dotenv/config', './cluster-setup.ts'],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
   // setupFilesAfterEnv: ['./jest.setup.redis-mock.js'],

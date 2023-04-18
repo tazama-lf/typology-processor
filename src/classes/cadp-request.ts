@@ -1,32 +1,29 @@
-import { NetworkMap } from "./network-map";
-import { Pain001V11Transaction } from "./Pain.001.001.11/iPain001Transaction";
-import { RuleResult } from "./rule-result";
+import { NetworkMap } from './network-map';
+import { Pain001V11Transaction } from './Pain.001.001.11/iPain001Transaction';
+import { RuleResult } from './rule-result';
 
 export class TypologyResult {
-    id = '';
-    cfg = '';
-    result = 0.0;
-    theshold = 0.0;
-    ruleResults: RuleResult[] = [];
+  id = '';
+  cfg = '';
+  result = 0.0;
+  threshold = 0.0;
+  ruleResults: RuleResult[] = [];
 }
 
 export class CADPRequest {
-    typologyResult: TypologyResult;
-    transaction: Pain001V11Transaction;
-    networkMap: NetworkMap;
+  typologyResult: TypologyResult;
+  transaction: Pain001V11Transaction;
+  networkMap: NetworkMap;
 
-    constructor(typologyResult: TypologyResult,
-        transaction: Pain001V11Transaction,
-        networkMap: NetworkMap,
-        ruleResults: RuleResult[]) {
-        this.typologyResult = typologyResult;
-        this.transaction = transaction;
-        this.networkMap = networkMap;
-        this.typologyResult.ruleResults = ruleResults;
-    }
+  constructor(typologyResult: TypologyResult, transaction: Pain001V11Transaction, networkMap: NetworkMap, ruleResults: RuleResult[]) {
+    this.typologyResult = typologyResult;
+    this.transaction = transaction;
+    this.networkMap = networkMap;
+    this.typologyResult.ruleResults = ruleResults;
+  }
 }
 
 export class CombinedResult {
-    typologyResult: string = "";
-    cadpRequests: CADPRequest[] = [];
+  typologyResult = '';
+  cadpRequests: CADPRequest[] = [];
 }

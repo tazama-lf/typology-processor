@@ -28,5 +28,5 @@ export function addRuleResult(ruleResults: RuleResult[], newRuleResult: RuleResu
  * @return {boolean} result
  */
 export function containsRuleResult(ruleResults: RuleResult[], ruleResult: RuleResult): boolean {
-  return ruleResults.some((r) => r.id === ruleResult.id && r.cfg === ruleResult.cfg)
+  return ruleResults.some((r) => r.id === ruleResult.id && r.cfg === ruleResult.cfg);
 }
