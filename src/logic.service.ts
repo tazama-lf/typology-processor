@@ -76,12 +76,15 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
 ): Promise<CADPRequest> => {
-  const typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, threshold: 0.0, ruleResults: [] };
+  const typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, desc: '', threshold: 0.0, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: transaction,
     networkMap: networkMap,
   };
+
+  typologyResult.desc = typology?.desc?.length ? typology.desc : 'No description provided in typology config.';
+
   try {
     const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
