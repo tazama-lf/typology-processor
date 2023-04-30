@@ -55,6 +55,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '028@1.0.0',
+            desc:'',
             threshold: 50,
             rules: [
               { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -101,6 +102,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
+            desc:'',
             threshold: 50,
             rules: [
               { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -207,7 +209,7 @@ describe('Logic Service', () => {
       expect(test).toBeTruthy();
     });
 
-    it('should handle successful request, different typology operators', async () => {
+    it('should handle description element from config in 3 different states', async () => {
       const expectedReq = getMockRequest();
       databaseServiceSpy = jest
         .spyOn(databaseClient, 'getTypologyExpression')
@@ -216,6 +218,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              //No desc element present in this config
               threshold: 50,
               rules: [
                 { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -250,6 +253,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'', // Empty string is found as a value of desc element
               threshold: 50,
               rules: [
                 {
@@ -290,6 +294,160 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'Typology 029 Description from mock db config.', // Valid Value
+              threshold: 50,
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  ref: '.01',
+                  true: 100,
+                  false: 2,
+                },
+                {
+                  id: '004@1.0.0',
+                  cfg: '1.0.0',
+                  ref: '.01',
+                  true: 50,
+                  false: 2,
+                },
+              ],
+              expression: {
+                operator: '*',
+                terms: [
+                  { id: '003@1.0.0', cfg: '1.0.0' },
+                  { id: '004@1.0.0', cfg: '1.0.0' },
+                ],
+                expression: {
+                  operator: '*',
+                  terms: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: '004@1.0.0', cfg: '1.0.0' },
+                  ],
+                  expression: undefined,
+                },
+              },
+            }),
+          );
+        });
+        addOneGetAllSpy = jest
+        .spyOn(cacheClient, 'addOneGetAll')
+        .mockImplementation((key: string, value: string): Promise<string[] | null> => {
+          return new Promise<string[] | null>((resolve, reject) => {
+            cacheString = value;
+            resolve([
+              '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+              '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+            ]);
+          });
+        });
+
+      let test = false;
+      const jNetworkMap = JSON.parse(
+        '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
+      );
+      const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
+      const ruleResult03: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
+
+      mockedAxios.post.mockResolvedValue({ status: 200 });
+
+      //Case of no element of desc and element found with empty string (Negetive Testing)
+      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      expect(result.cadpRequests[0].typologyResult.desc).toBe("No description provided in typology config.");
+      expect(result.cadpRequests[1].typologyResult.desc).toBe("No description provided in typology config.");
+
+      //Test the desc value that is similar to the one found in config file (Positive Testing)
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      expect(result.cadpRequests[0].typologyResult.desc).toBe("Typology 029 Description from mock db config.");
+    });
+
+
+    it('should handle successful request, different typology operators', async () => {
+      const expectedReq = getMockRequest();
+      databaseServiceSpy = jest
+        .spyOn(databaseClient, 'getTypologyExpression')
+        .mockImplementationOnce(async (typology: Typology) => {
+          return new Promise((resolve, reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '029@1.0.0',
+              desc:'',
+              threshold: 50,
+              rules: [
+                { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+                {
+                  id: '004@1.0.0',
+                  cfg: '1.0.0',
+                  ref: '.01',
+                  true: 50,
+                  false: 2,
+                },
+              ],
+              expression: {
+                operator: '-',
+                terms: [
+                  { id: '003@1.0.0', cfg: '1.0.0' },
+                  { id: '004@1.0.0', cfg: '1.0.0' },
+                ],
+                expression: {
+                  operator: '-',
+                  terms: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: '004@1.0.0', cfg: '1.0.0' },
+                  ],
+                  expression: undefined,
+                },
+              },
+            }),
+          );
+        })
+        .mockImplementationOnce(async (typology: Typology) => {
+          return new Promise((resolve, reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '029@1.0.0',
+              desc:'',
+              threshold: 50,
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  ref: '.01',
+                  true: 100,
+                  false: 2,
+                },
+                {
+                  id: '004@1.0.0',
+                  cfg: '1.0.0',
+                  ref: '.01',
+                  true: 50,
+                  false: 2,
+                },
+              ],
+              expression: {
+                operator: '+',
+                terms: [
+                  { id: '003@1.0.0', cfg: '1.0.0' },
+                  { id: '004@1.0.0', cfg: '1.0.0' },
+                ],
+                expression: {
+                  operator: '/',
+                  terms: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: '004@1.0.0', cfg: '1.0.0' },
+                  ],
+                  expression: undefined,
+                },
+              },
+            }),
+          );
+        })
+        .mockImplementationOnce(async (typology: Typology) => {
+          return new Promise((resolve, reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '029@1.0.0',
+              desc:'',
               threshold: 50,
               rules: [
                 {
@@ -330,6 +488,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'',
               threshold: 50,
               rules: [
                 {
@@ -409,6 +568,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
+            desc:'',
             threshold: 50,
             rules: [
               {
@@ -467,6 +627,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
+            desc:'',
             threshold: 50,
             rules: [
               {
@@ -616,6 +777,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'',
               threshold: 50,
               rules: [
                 { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -650,6 +812,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'',
               threshold: 50,
               rules: [
                 {
@@ -690,6 +853,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'',
               threshold: 50,
               rules: [
                 {
@@ -730,6 +894,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
+              desc:'',
               threshold: 50,
               rules: [
                 {

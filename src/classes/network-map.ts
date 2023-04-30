@@ -14,7 +14,6 @@ export class Typology {
   id = '';
   host = '';
   cfg = '';
-  desc = '';
   rules: Array<Rule> = [];
 
   constructor(typology_id: string, cfg: string, host: string) {

@@ -8,6 +8,7 @@ import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
 
+
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
   for (const rule in typologyExpression.terms) {
@@ -83,7 +84,7 @@ const executeRequest = async (
     networkMap: networkMap,
   };
 
-  typologyResult.desc = typology?.desc?.length ? typology.desc : 'No description provided in typology config.';
+
 
   try {
     const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
@@ -122,9 +123,14 @@ const executeRequest = async (
     typologyResult.threshold = expression?.threshold ?? 0.0;
     cadpReqBody.typologyResult = typologyResult;
 
+
+    //Check whether desc element exist with length above 0
+    //if true return the desc or else return "No descri ..."
+    typologyResult.desc = expression.desc?.length ? expression.desc : 'No description provided in typology config.';
+
     // Interdiction
     // Send Result to CMS
-    if (expression?.threshold && typologyResultValue > expression.threshold) {
+    if (expression.threshold && typologyResultValue > expression.threshold) {
       try {
         span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
         // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
