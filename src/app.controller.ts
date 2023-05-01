@@ -1,11 +1,9 @@
-import { Pain001V11Transaction } from './classes/Pain.001.001.11/iPain001Transaction';
 import { NetworkMap } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
 import { LoggerService } from './logger.service';
 import { handleTransaction } from './logic.service';
 import { Context, Next } from 'koa';
 import apm from 'elastic-apm-node';
-import { configuration } from './config';
 
 export const handleExecute = async (ctx: Context, next: Next): Promise<Context | undefined> => {
   LoggerService.log('Start - Handle execute request');

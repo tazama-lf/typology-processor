@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
 import { cacheClient, databaseClient } from '.';
@@ -7,7 +8,6 @@ import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
-
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -84,8 +84,6 @@ const executeRequest = async (
     networkMap: networkMap,
   };
 
-
-
   try {
     const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
@@ -123,9 +121,8 @@ const executeRequest = async (
     typologyResult.threshold = expression?.threshold ?? 0.0;
     cadpReqBody.typologyResult = typologyResult;
 
-
-    //Check whether desc element exist with length above 0
-    //if true return the desc or else return "No descri ..."
+    // Check whether desc element exist with length above 0
+    // if true return the desc or else return "No descri ..."
     typologyResult.desc = expression.desc?.length ? expression.desc : 'No description provided in typology config.';
 
     // Interdiction
@@ -165,6 +162,7 @@ const executeRequest = async (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const handleTransaction = async (transaction: any, networkMap: NetworkMap, ruleResult: RuleResult): Promise<CombinedResult> => {
   // eslint-disable-line
   let typologyCounter = 0;
