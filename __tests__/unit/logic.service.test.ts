@@ -221,7 +221,13 @@ describe('Logic Service', () => {
               //No desc element present in this config
               threshold: 50,
               rules: [
-                { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  ref: '.01',
+                  true: 100,
+                  false: 2
+                },
                 {
                   id: '004@1.0.0',
                   cfg: '1.0.0',
