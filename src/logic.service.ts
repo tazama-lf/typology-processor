@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
 import { cacheClient, databaseClient } from '.';
@@ -76,12 +77,13 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
 ): Promise<CADPRequest> => {
-  const typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, threshold: 0.0, ruleResults: [] };
+  const typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, desc: '', threshold: 0.0, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: transaction,
     networkMap: networkMap,
   };
+
   try {
     const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
@@ -101,6 +103,7 @@ const executeRequest = async (
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     if (ruleResults && ruleResults.length < typology.rules.length) {
+      typologyResult.desc = typology.desc ? typology.desc : 'No description provided in typology config.';
       return cadpReqBody;
     }
 
@@ -119,9 +122,13 @@ const executeRequest = async (
     typologyResult.threshold = expression?.threshold ?? 0.0;
     cadpReqBody.typologyResult = typologyResult;
 
+    // Check whether desc element exist with length above 0
+    // if true return the desc or else return "No descri ..."
+    typologyResult.desc = expression.desc?.length ? expression.desc : 'No description provided in typology config.';
+
     // Interdiction
     // Send Result to CMS
-    if (expression?.threshold && typologyResultValue > expression.threshold) {
+    if (expression.threshold && typologyResultValue > expression.threshold) {
       try {
         span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
         // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
@@ -156,6 +163,7 @@ const executeRequest = async (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const handleTransaction = async (transaction: any, networkMap: NetworkMap, ruleResult: RuleResult): Promise<CombinedResult> => {
   // eslint-disable-line
   let typologyCounter = 0;

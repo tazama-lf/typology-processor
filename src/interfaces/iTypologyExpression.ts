@@ -23,6 +23,7 @@ export interface IExpression {
 export interface ITypologyExpression {
   id: string;
   cfg: string;
+  desc?: string | undefined;
   rules: IRuleValue[];
   threshold: number;
   expression: IExpression;
