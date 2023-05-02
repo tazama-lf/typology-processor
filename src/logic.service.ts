@@ -103,6 +103,7 @@ const executeRequest = async (
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     if (ruleResults && ruleResults.length < typology.rules.length) {
+      typologyResult.desc = typology.desc ? typology.desc : 'No description provided in typology config.';
       return cadpReqBody;
     }
 
