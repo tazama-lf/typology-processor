@@ -76,6 +76,7 @@ const executeRequest = async (
   typology: Typology,
   ruleResult: RuleResult,
   networkMap: NetworkMap,
+  channelHost: string,
 ): Promise<CADPRequest> => {
   const typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, desc: '', threshold: 0.0, ruleResults: [] };
   const cadpReqBody: CADPRequest = {
@@ -144,7 +145,7 @@ const executeRequest = async (
     try {
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-      await executePost(configuration.cadpEndpoint, cadpReqBody);
+      await executePost(`${channelHost}/execute`, cadpReqBody);
       span?.end();
     } catch (error) {
       span?.end();
@@ -173,8 +174,9 @@ export const handleTransaction = async (transaction: any, networkMap: NetworkMap
     for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
       typologyCounter++;
+      const channelHost = channel.host;
 
-      const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap);
+      const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap, channelHost);
       toReturn.cadpRequests.push(cadpRes);
     }
   }
