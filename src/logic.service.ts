@@ -145,7 +145,7 @@ const executeRequest = async (
     try {
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-      await executePost(`${channelHost}/execute`, cadpReqBody); // JP
+      await executePost(`${channelHost}/execute`, cadpReqBody);
       span?.end();
     } catch (error) {
       span?.end();
