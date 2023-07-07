@@ -30,7 +30,7 @@ let app: App;
 export const runServer = async () => {
   // await dbinit();
   server = new StartupFactory();
-  if (configuration.env !== "test")
+  if (configuration.env !== 'test')
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       console.log('Connecting to nats server...');
       if (!(await server.init(handleTransaction))) {
@@ -61,7 +61,9 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   // In this case it is an HTTP server
   try {
     if (configuration.env !== 'test') {
-      runServer();
+      (async () => {
+        await runServer();
+      })();
     }
   } catch (err) {
     LoggerService.error(`Error while starting HTTP server on Worker ${process.pid}`, err);
