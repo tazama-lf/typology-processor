@@ -122,7 +122,7 @@ jobs:
         run: |
           # Generate Changelog Script
           # Constants
-          CHANGELOG_FILE="/home/runner/work/ReleaseManagement/changelog.txt"
+          CHANGELOG_FILE="/home/runner/work/changelog.txt"
           LABEL_BUG="fix:"
           LABEL_FEATURE="feat:"
           LABEL_ENHANCEMENT="enhancement:"
@@ -170,18 +170,18 @@ jobs:
       - name: Read Changelog Contents
         id: read_changelog
         run: |
-          echo "::set-output name=changelog_contents::$(cat /home/runner/work/ReleaseManagement/changelog.txt)"
+          echo "::set-output name=changelog_contents::$(cat /home/runner/work/changelog.txt)"
       
       # Display changelog
       - name: Display Changelog
-        run: cat /home/runner/work/ReleaseManagement/changelog.txt
+        run: cat /home/runner/work/changelog.txt
       
       # Attach changelog as an artifact
       - name: Attach Changelog to Release
         uses: actions/upload-artifact@v2
         with:
           name: Changelog
-          path: /home/runner/work/ReleaseManagement/changelog.txt
+          path: /home/runner/work/changelog.txt
       
       # Create release while including the changelog
       - name: Create Release
@@ -192,6 +192,6 @@ jobs:
         with:
           tag_name: ${{ steps.bump_version.outputs.new_version }}
           release_name: Release ${{ steps.bump_version.outputs.new_version }}
-          body_path: /home/runner/work/ReleaseManagement/changelog.txt
+          body_path: /home/runner/work/changelog.txt
           draft: false
           prerelease: false
