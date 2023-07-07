@@ -5,7 +5,7 @@ import App from './app';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
 import { Services } from './services';
-import { StartupFactory, IStartupService } from 'startup';
+import { StartupFactory, IStartupService } from '@frmscoe/frms-coe-startup-lib';
 import { handleTransaction } from './logic.service';
 
 /*
