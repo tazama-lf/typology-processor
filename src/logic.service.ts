@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
-import { cacheClient, databaseClient } from '.';
+import { cacheClient, databaseClient, server } from '.';
 import { CADPRequest, CombinedResult, TypologyResult } from './classes/cadp-request';
 import { NetworkMap, Typology } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
-import { handleResponse } from '@frmscoe/frms-coe-startup-lib';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -146,7 +145,7 @@ const executeRequest = async (
     try {
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-      const result = await handleResponse(JSON.stringify(cadpReqBody));
+      const result = await server.handleResponse(JSON.stringify(cadpReqBody));
       span?.end();
     } catch (error) {
       span?.end();

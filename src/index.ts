@@ -5,7 +5,7 @@ import App from './app';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
 import { Services } from './services';
-import { init } from '@frmscoe/frms-coe-startup-lib';
+import { StartupFactory, IStartupService } from 'startup';
 import { handleTransaction } from './logic.service';
 
 /*
@@ -24,21 +24,22 @@ if (configuration.apm.active === 'true') {
 export const cache = Services.getCacheInstance();
 export const databaseClient = Services.getDatabaseInstance();
 export const cacheClient = Services.getCacheClientInstance();
-
+export let server: IStartupService;
 let app: App;
 
 export const runServer = async () => {
   // await dbinit();
-
-  for (let retryCount = 0; retryCount < 10; retryCount++) {
-    console.log('Connecting to nats server...');
-    if (!(await init(handleTransaction))) {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    } else {
-      console.log('Connected to nats');
-      break;
+  server = new StartupFactory();
+  if (configuration.env !== "test")
+    for (let retryCount = 0; retryCount < 10; retryCount++) {
+      console.log('Connecting to nats server...');
+      if (!(await server.init(handleTransaction))) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      } else {
+        console.log('Connected to nats');
+        break;
+      }
     }
-  }
 };
 
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;

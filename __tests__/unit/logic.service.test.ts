@@ -1,7 +1,6 @@
 /* eslint-disable */
-import * as startUpLib from '@frmscoe/frms-coe-startup-lib';
 import apm from 'elastic-apm-node';
-import { cache, cacheClient, databaseClient } from '../../src';
+import { cache, cacheClient, databaseClient, runServer, server } from '../../src';
 import { Pain001V11Transaction } from '../../src/classes/Pain.001.001.11/iPain001Transaction';
 import { NetworkMap, Typology } from '../../src/classes/network-map';
 import { RuleResult } from '../../src/classes/rule-result';
@@ -31,6 +30,10 @@ const getMockRequest = () => {
   return quote;
 };
 
+beforeAll(() => {
+  runServer();
+});
+
 afterAll(() => {
   cache.close();
   cacheClient.client.quit();
@@ -40,15 +43,10 @@ afterAll(() => {
 let cacheString = '';
 
 describe('Logic Service', () => {
-  let databaseServiceSpy: jest.SpyInstance;
-  let getJsonSpy: jest.SpyInstance;
-  let setJsonSpy: jest.SpyInstance;
-  let addOneGetAllSpy: jest.SpyInstance;
-  let deleteJsonSpy: jest.SpyInstance;
   let responseSpy: jest.SpyInstance;
 
   beforeEach(async () => {
-    databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
+    jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
       return new Promise((resolve, reject) => {
         if (typology.id === '028@1.0.0')
           resolve({
@@ -147,34 +145,34 @@ describe('Logic Service', () => {
       });
     });
 
-    getJsonSpy = jest.spyOn(cacheClient, 'getJson').mockImplementation((key: string): Promise<string[]> => {
+    jest.spyOn(cacheClient, 'getJson').mockImplementation((key: string): Promise<string[]> => {
       return new Promise<string[]>((resolve, reject) => {
         resolve([cacheString]);
       });
     });
 
-    setJsonSpy = jest.spyOn(cacheClient, 'setJson').mockImplementation((key: string, value: string): Promise<number> => {
+    jest.spyOn(cacheClient, 'setJson').mockImplementation((key: string, value: string): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
         cacheString = value;
         resolve(0);
       });
     });
 
-    addOneGetAllSpy = jest.spyOn(cacheClient, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[] | null> => {
+    jest.spyOn(cacheClient, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[] | null> => {
       return new Promise<string[] | null>((resolve, reject) => {
         cacheString = value;
         resolve([cacheString]);
       });
     });
 
-    deleteJsonSpy = jest.spyOn(cacheClient, 'deleteKey').mockImplementation((key: string): Promise<number> => {
+    responseSpy = jest.spyOn(cacheClient, 'deleteKey').mockImplementation((key: string): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
         cacheString = '';
         resolve(0);
       });
     });
 
-    responseSpy = jest.spyOn(startUpLib, 'handleResponse').mockImplementation(jest.fn());
+    jest.spyOn(server, 'handleResponse').mockImplementation(jest.fn());
   });
 
   describe('Handle Transaction', () => {
@@ -218,7 +216,7 @@ describe('Logic Service', () => {
 
     it('should handle description element from config in 3 different states', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest
+      jest
         .spyOn(databaseClient, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
@@ -343,7 +341,7 @@ describe('Logic Service', () => {
             }),
           );
         });
-      addOneGetAllSpy = jest
+      jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -375,7 +373,7 @@ describe('Logic Service', () => {
 
     it('should handle successful request, different typology operators', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest
+      jest
         .spyOn(databaseClient, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
@@ -536,7 +534,7 @@ describe('Logic Service', () => {
           );
         });
 
-      addOneGetAllSpy = jest
+      jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -585,7 +583,7 @@ describe('Logic Service', () => {
 
     it('should handle successful request, division operator defaults', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
           resolve({
             cfg: '1.0.0',
@@ -648,7 +646,7 @@ describe('Logic Service', () => {
 
     it('should handle successful request, typology evaluation defaults', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
           resolve({
             cfg: '1.0.0',
@@ -754,7 +752,7 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockRejectedValue(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockRejectedValue(async (typology: Typology) => {
         return new Promise((resolve, reject) => {
           resolve(new Error('Test'));
         });
@@ -776,7 +774,7 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
         return new Promise((resolve, reject) => {
           resolve(undefined);
         });
@@ -797,7 +795,7 @@ describe('Logic Service', () => {
 
     it('should handle successful request, cms and cadproc result error', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest
+      jest
         .spyOn(databaseClient, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
@@ -958,7 +956,7 @@ describe('Logic Service', () => {
           );
         });
 
-      addOneGetAllSpy = jest
+      jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -1032,7 +1030,7 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      responseSpy = jest.spyOn(startUpLib, 'handleResponse').mockRejectedValue(() => {
+      responseSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
         throw new Error('Testing purposes');
       });
 

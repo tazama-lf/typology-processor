@@ -33,8 +33,8 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@frmscoe/frms-coe-startup-lib": "^0.0.7",
     "@log4js-node/logstash-http": "^1.1.0",
+    "startup": "file:../frms-coe-startup-lib/lib",
     "arangojs": "^7.5.0",
     "axios": "^0.21.2",
     "dotenv": "^8.6.0",
