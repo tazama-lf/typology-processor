@@ -1,7 +1,6 @@
 import cluster from 'cluster';
 import apm from 'elastic-apm-node';
 import os from 'os';
-import App from './app';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
 import { Services } from './services';
@@ -25,7 +24,6 @@ export const cache = Services.getCacheInstance();
 export const databaseClient = Services.getDatabaseInstance();
 export const cacheClient = Services.getCacheClientInstance();
 export let server: IStartupService;
-let app: App;
 
 export const runServer = async () => {
   // await dbinit();
@@ -70,5 +68,3 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   })();
   console.log(`Worker ${process.pid} started`);
 }
-
-export { app };
