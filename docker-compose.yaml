@@ -1,5 +1,8 @@
-version: "2"
 services:
   node:
-    image: channel_orchestrator
+    container_name: typology-processor
+    build:
+      context: .
+      args:
+        - GH_TOKEN
     restart: "no"
