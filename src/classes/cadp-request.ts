@@ -6,6 +6,7 @@ export class TypologyResult {
   id = '';
   cfg = '';
   desc = '';
+  prcgTm = -1;
   result = 0.0;
   threshold = 0.0;
   ruleResults: RuleResult[] = [];
