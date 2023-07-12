@@ -1,40 +1,42 @@
-FROM node:16 AS builder
+ARG BUILD_IMAGE=node:16
+ARG RUN_IMAGE=gcr.io/distroless/nodejs16-debian11:nonroot
+
+FROM ${BUILD_IMAGE} AS builder
 LABEL stage=build
+# TS -> JS stage
 
-# Create a folder named function
-RUN mkdir -p /home/app
-
-# Wrapper/boot-strapper
 WORKDIR /home/app
-
 COPY ./src ./src
-COPY ./package.json ./
-COPY ./package-lock.json ./
+COPY ./package*.json ./
 COPY ./tsconfig.json ./
-COPY ./.npmrc ./
-ARG GH_TOKEN=
+COPY .npmrc ./
+ARG GH_TOKEN
 
-# Install dependencies for production
-RUN npm ci --omit=dev --ignore-scripts
-
-# Build the project
+RUN npm ci --ignore-scripts
 RUN npm run build
 
-FROM gcr.io/distroless/nodejs16-debian11:nonroot
+FROM ${BUILD_IMAGE} AS dep-resolver
+LABEL stage=pre-prod
+# To filter out dev dependencies from final build
+
+COPY package*.json ./
+COPY .npmrc ./
+ARG GH_TOKEN
+RUN npm ci --omit=dev --ignore-scripts
+
+FROM ${RUN_IMAGE} AS run-env
 USER nonroot
 
-COPY --from=builder /home/app /home/app
+WORKDIR /home/app
+COPY --from=dep-resolver /node_modules ./node_modules
+COPY --from=builder /home/app/build ./build
+COPY package.json ./
 
 # Turn down the verbosity to default level.
 ENV NPM_CONFIG_LOGLEVEL warn
 
-WORKDIR /home/app
-
 ENV mode="http"
 ENV upstream_url="http://127.0.0.1:3000"
-ENV exec_timeout="10s"
-ENV write_timeout="15s"
-ENV read_timeout="15s"
 ENV prefix_logs="false"
 ENV FUNCTION_NAME=typology-processor-rel-1-0-0
 ENV NODE_ENV=production
