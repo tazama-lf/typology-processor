@@ -9,6 +9,12 @@ import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
 
+const calculateDuration = (startHrTime: Array<number>, endHrTime: Array<number>): number => {
+  return (endHrTime[0] - startHrTime[0]) * 1000 + (endHrTime[1] - startHrTime[1]) / 1000000;
+};
+
+const noDescription = 'No description provided in typology config.';
+
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
   for (const rule in typologyExpression.terms) {
@@ -78,7 +84,17 @@ const executeRequest = async (
   networkMap: NetworkMap,
   channelHost: string,
 ): Promise<CADPRequest> => {
-  const typologyResult: TypologyResult = { result: 0.0, id: typology.id, cfg: typology.cfg, desc: '', threshold: 0.0, ruleResults: [] };
+  const typologyResult: TypologyResult = {
+    result: 0.0,
+    id: typology.id,
+    cfg: typology.cfg,
+    desc: '',
+    threshold: 0.0,
+    prcgTm: 0,
+    ruleResults: [],
+  };
+
+  const startHrTime = process.hrtime();
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: transaction,
@@ -104,13 +120,15 @@ const executeRequest = async (
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     if (ruleResults && ruleResults.length < typology.rules.length) {
-      typologyResult.desc = typology.desc ? typology.desc : 'No description provided in typology config.';
+      typologyResult.desc = typology.desc ? typology.desc : noDescription;
+      typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
       return cadpReqBody;
     }
 
     const expressionRes = await databaseClient.getTypologyExpression(typology);
     if (!expressionRes) {
       LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
+      typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
       return cadpReqBody;
     }
 
@@ -121,11 +139,9 @@ const executeRequest = async (
     span?.end();
     typologyResult.result = typologyResultValue;
     typologyResult.threshold = expression?.threshold ?? 0.0;
+    typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
+    typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
     cadpReqBody.typologyResult = typologyResult;
-
-    // Check whether desc element exist with length above 0
-    // if true return the desc or else return "No descri ..."
-    typologyResult.desc = expression.desc?.length ? expression.desc : 'No description provided in typology config.';
 
     // Interdiction
     // Send Result to CMS
@@ -169,7 +185,6 @@ export const handleTransaction = async (transaction: any, networkMap: NetworkMap
   // eslint-disable-line
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
-
   for (const channel of networkMap.messages[0].channels) {
     for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
@@ -177,6 +192,7 @@ export const handleTransaction = async (transaction: any, networkMap: NetworkMap
       const channelHost = channel.host;
 
       const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap, channelHost);
+
       toReturn.cadpRequests.push(cadpRes);
     }
   }
