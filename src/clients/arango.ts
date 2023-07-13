@@ -11,8 +11,8 @@ export class ArangoDBService {
   client: Database;
 
   constructor() {
-    const caOption = fs.existsSync('/usr/local/share/ca-certificates/ca-certificates.crt')
-      ? [fs.readFileSync('/usr/local/share/ca-certificates/ca-certificates.crt')]
+    const caOption = fs.existsSync(configuration.db.dbCertPath)
+      ? [fs.readFileSync(configuration.db.dbCertPath)]
       : [];
     this.client = new Database({
       url: 'https://frmarango-sandbox.sybrin.com/',
