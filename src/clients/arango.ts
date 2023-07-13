@@ -15,11 +15,11 @@ export class ArangoDBService {
       ? [fs.readFileSync('/usr/local/share/ca-certificates/ca-certificates.crt')]
       : [];
     this.client = new Database({
-      url: 'https://frmarango-sandbox.sybrin.com/',
-      databaseName: 'Configuration',
+      url: configuration.db.url,
+      databaseName: configuration.db.name,
       auth: {
-        username: 'root',
-        password: '8eaAfEZWNJWI',
+        username: configuration.db.user,
+        password: configuration.db.password,
       },
       agentOptions: {
         ca: caOption,
