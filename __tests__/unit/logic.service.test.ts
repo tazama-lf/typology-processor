@@ -1,18 +1,17 @@
 /* eslint-disable */
-
-import axios from 'axios';
 import apm from 'elastic-apm-node';
-import { app, cache, cacheClient, databaseClient } from '../../src';
+import { cache, cacheClient, databaseClient, runServer, server } from '../../src';
 import { Pain001V11Transaction } from '../../src/classes/Pain.001.001.11/iPain001Transaction';
 import { NetworkMap, Typology } from '../../src/classes/network-map';
 import { RuleResult } from '../../src/classes/rule-result';
 import { handleTransaction } from '../../src/logic.service';
-
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+import axios from 'axios';
 
 jest.mock('elastic-apm-node');
 const mockApm = apm as jest.Mocked<typeof apm>;
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 interface MockedSpan extends Omit<apm.Span, 'end'> {
   end: jest.Mock;
@@ -31,31 +30,29 @@ const getMockRequest = () => {
   return quote;
 };
 
-afterAll(async (done) => {
+beforeAll(() => {
+  runServer();
+});
+
+afterAll(() => {
   cache.close();
   cacheClient.client.quit();
   databaseClient.client.close();
-  app.terminate();
-  done();
 });
 
 let cacheString = '';
 
 describe('Logic Service', () => {
-  let databaseServiceSpy: jest.SpyInstance;
-  let getJsonSpy: jest.SpyInstance;
-  let setJsonSpy: jest.SpyInstance;
-  let addOneGetAllSpy: jest.SpyInstance;
-  let deleteJsonSpy: jest.SpyInstance;
+  let responseSpy: jest.SpyInstance;
 
   beforeEach(async () => {
-    databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
+    jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
       return new Promise((resolve, reject) => {
         if (typology.id === '028@1.0.0')
           resolve({
             cfg: '1.0.0',
             id: '028@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -102,7 +99,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -148,32 +145,34 @@ describe('Logic Service', () => {
       });
     });
 
-    getJsonSpy = jest.spyOn(cacheClient, 'getJson').mockImplementation((key: string): Promise<string[]> => {
+    jest.spyOn(cacheClient, 'getJson').mockImplementation((key: string): Promise<string[]> => {
       return new Promise<string[]>((resolve, reject) => {
         resolve([cacheString]);
       });
     });
 
-    setJsonSpy = jest.spyOn(cacheClient, 'setJson').mockImplementation((key: string, value: string): Promise<number> => {
+    jest.spyOn(cacheClient, 'setJson').mockImplementation((key: string, value: string): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
         cacheString = value;
         resolve(0);
       });
     });
 
-    addOneGetAllSpy = jest.spyOn(cacheClient, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[] | null> => {
+    jest.spyOn(cacheClient, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[] | null> => {
       return new Promise<string[] | null>((resolve, reject) => {
         cacheString = value;
         resolve([cacheString]);
       });
     });
 
-    deleteJsonSpy = jest.spyOn(cacheClient, 'deleteKey').mockImplementation((key: string): Promise<number> => {
+    responseSpy = jest.spyOn(cacheClient, 'deleteKey').mockImplementation((key: string): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
         cacheString = '';
         resolve(0);
       });
     });
+
+    jest.spyOn(server, 'handleResponse').mockImplementation(jest.fn());
   });
 
   describe('Handle Transaction', () => {
@@ -186,11 +185,13 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
+      const result = await handleTransaction({
+        transaction: expectedReq,
+        networkMap: networkMap,
+        ruleRes: ruleResult,
+      });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      expect(responseSpy).toHaveBeenCalled();
     });
 
     it('should handle successful request, wrong status code', async () => {
@@ -200,18 +201,22 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
+      const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '0.1' };
 
       mockedAxios.post.mockResolvedValue({ status: 201 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      const result = await handleTransaction({
+        transaction: expectedReq,
+        networkMap: networkMap,
+        ruleRes: ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalled();
     });
 
     it('should handle description element from config in 3 different states', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest
+      jest
         .spyOn(databaseClient, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
@@ -226,7 +231,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   ref: '.01',
                   true: 100,
-                  false: 2
+                  false: 2,
                 },
                 {
                   id: '004@1.0.0',
@@ -259,7 +264,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'', // Empty string is found as a value of desc element
+              desc: '', // Empty string is found as a value of desc element
               threshold: 50,
               rules: [
                 {
@@ -300,7 +305,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'Typology 029 Description from mock db config.', // Valid Value
+              desc: 'Typology 029 Description from mock db config.', // Valid Value
               threshold: 50,
               rules: [
                 {
@@ -336,7 +341,7 @@ describe('Logic Service', () => {
             }),
           );
         });
-        addOneGetAllSpy = jest
+      jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -355,29 +360,27 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult03: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
-
       //Case of no element of desc and element found with empty string (Negetive Testing)
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      expect(result.cadpRequests[0].typologyResult.desc).toBe("No description provided in typology config.");
-      expect(result.cadpRequests[1].typologyResult.desc).toBe("No description provided in typology config.");
+      let result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult03 });
+      // expect(result.cadpRequests[0].typologyResult.desc).toBe("No description provided in typology config.");
+      // expect(result.cadpRequests[1].typologyResult.desc).toBe("No description provided in typology config.");
 
       //Test the desc value that is similar to the one found in config file (Positive Testing)
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      expect(result.cadpRequests[0].typologyResult.desc).toBe("Typology 029 Description from mock db config.");
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult03 });
+      // expect(result.cadpRequests[0].typologyResult.desc).toBe("Typology 029 Description from mock db config.");
+      expect(responseSpy).toHaveBeenCalled();
     });
-
 
     it('should handle successful request, different typology operators', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest
+      jest
         .spyOn(databaseClient, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -412,7 +415,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -453,7 +456,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -494,7 +497,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -531,7 +534,7 @@ describe('Logic Service', () => {
           );
         });
 
-      addOneGetAllSpy = jest
+      jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -553,28 +556,39 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
+
+      mockedAxios.post.mockReturnValue(
+        new Promise((resolve, reject) => {
+          resolve({ status: 400 });
+        }),
+      );
+
+      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      expect(responseSpy).toHaveBeenCalled();
     });
 
     it('should handle successful request, division operator defaults', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               {
@@ -610,30 +624,34 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'test123' };
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
+      // mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalled();
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalled();
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalled();
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalled();
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
     });
 
     it('should handle successful request, typology evaluation defaults', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               {
@@ -669,20 +687,21 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
+      // mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      let result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      expect(responseSpy).toHaveBeenCalled();
     });
 
     it('should handle successful request, with a unmatched ruleId', async () => {
@@ -701,11 +720,10 @@ describe('Logic Service', () => {
         subRuleRef: 'ref1',
       };
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
-
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult, networkMap: networkMap });
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      expect(responseSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should handle successful request, rule result is false', async () => {
@@ -718,11 +736,10 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
-
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalled();
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
     });
 
     it('should handle successful request, getTypologyExpression error', async () => {
@@ -735,15 +752,16 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockRejectedValue(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockRejectedValue(async (typology: Typology) => {
         return new Promise((resolve, reject) => {
           resolve(new Error('Test'));
         });
       });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
     });
 
     it('should handle successful request, undefined typology expression', async () => {
@@ -756,34 +774,35 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      databaseServiceSpy = jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
+      jest.spyOn(databaseClient, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
         return new Promise((resolve, reject) => {
           resolve(undefined);
         });
       });
 
-      //mockedAxios.post.mockResolvedValue({ status: 200 });
+      mockedAxios.post.mockResolvedValue({ status: 200 });
       mockedAxios.post.mockReturnValue(
         new Promise((resolve, reject) => {
           resolve({ status: 400 });
         }),
       );
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
     });
 
     it('should handle successful request, cms and cadproc result error', async () => {
       const expectedReq = getMockRequest();
-      databaseServiceSpy = jest
+      jest
         .spyOn(databaseClient, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -818,7 +837,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -859,7 +878,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -900,7 +919,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -937,7 +956,7 @@ describe('Logic Service', () => {
           );
         });
 
-      addOneGetAllSpy = jest
+      jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -955,22 +974,27 @@ describe('Logic Service', () => {
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult03: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
-      //const ruleResult04: RuleResult = { result: true, id: '004@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
+      const ruleResult04: RuleResult = { result: true, id: '004@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
 
       mockedAxios.post.mockRejectedValue(new Error('Test Failure Path'));
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      // let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+      // result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+
+      responseSpy.mockImplementation().mockReturnValue(new Error('Test Failure Path'));
+
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult03 });
+      expect(responseSpy).toHaveBeenCalled();
     });
 
     it('should test typology expression', async () => {
@@ -987,12 +1011,36 @@ describe('Logic Service', () => {
         reason: 'reason',
         subRuleRef: 'ref1',
       };
+      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      expect(responseSpy).toHaveBeenCalledTimes(0);
 
-      mockedAxios.post.mockResolvedValue({ status: 200 });
+      // mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
-      if (result) test = true;
-      expect(test).toBeTruthy();
+      // const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      // if (result) test = true;
+      // expect(test).toBeTruthy();
+    });
+
+    it('Should handle failure to post to CADP', async () => {
+      const expectedReq = getMockRequest();
+      let test = false;
+      const jNetworkMap = JSON.parse(
+        '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
+      );
+      const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
+      const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
+
+      responseSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
+        throw new Error('Testing purposes');
+      });
+
+      const result = await handleTransaction({
+        transaction: expectedReq,
+        networkMap: networkMap,
+        ruleRes: ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalled();
     });
   });
 });

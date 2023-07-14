@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
-import { cacheClient, databaseClient } from '.';
+import { cacheClient, databaseClient, server } from '.';
 import { CADPRequest, CombinedResult, TypologyResult } from './classes/cadp-request';
 import { NetworkMap, Typology } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
@@ -161,7 +161,7 @@ const executeRequest = async (
     try {
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-      await executePost(`${channelHost}/execute`, cadpReqBody);
+      const result = await server.handleResponse(cadpReqBody);
       span?.end();
     } catch (error) {
       span?.end();
@@ -181,30 +181,34 @@ const executeRequest = async (
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-export const handleTransaction = async (transaction: any, networkMap: NetworkMap, ruleResult: RuleResult): Promise<CombinedResult> => {
+export const handleTransaction = async (transaction: any): Promise<void> => {
   // eslint-disable-line
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
+
+  const networkMap: NetworkMap = transaction.networkMap;
+  const ruleResult: RuleResult = transaction.ruleRes;
+  const parsedTrans = transaction.transaction;
+
   for (const channel of networkMap.messages[0].channels) {
     for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
       typologyCounter++;
       const channelHost = channel.host;
 
-      const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap, channelHost);
-
+      const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost);
       toReturn.cadpRequests.push(cadpRes);
     }
   }
 
   // Response for CRSP - How many typologies have kicked off?
   // Let CRSP know that we have finished processing this transaction
-  const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
-  const transactionID = transaction[transactionType].GrpHdr.MsgId;
+  const transactionType = Object.keys(parsedTrans).find((k) => k !== 'TxTp') ?? '';
+  const transactionID = parsedTrans[transactionType].GrpHdr.MsgId;
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
   LoggerService.log(`${result} for Rule ${ruleResult.id}`);
   toReturn.typologyResult = result;
-  return toReturn;
+  // return toReturn;
 };
 
 // Submit the score to the CADP/CMS
