@@ -25,6 +25,7 @@ export interface IConfig {
     url: string;
     user: string;
     collectionName: string;
+    dbCertPath: string;
   };
   cadpEndpoint: string;
   cmsEndpoint: string;
@@ -48,7 +49,7 @@ export interface IConfig {
 }
 
 export const configuration: IConfig = {
-  maxCPU: parseInt(process.env.MAX_CPU!, 10) || Number.MAX_SAFE_INTEGER,
+  maxCPU: parseInt(process.env.MAX_CPU!, 10) || 1,
   apm: {
     serviceName: <string>process.env.APM_SERVICE_NAME,
     url: <string>process.env.APM_URL,
@@ -64,6 +65,7 @@ export const configuration: IConfig = {
     url: <string>process.env.DATABASE_URL,
     user: <string>process.env.DATABASE_USER,
     collectionName: <string>process.env.COLLECTION_NAME,
+    dbCertPath: <string>process.env.DATABASE_CERT_PATH,
   },
   env: <string>process.env.NODE_ENV,
   functionName: <string>process.env.FUNCTION_NAME,

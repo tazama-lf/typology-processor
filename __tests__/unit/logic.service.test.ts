@@ -187,8 +187,8 @@ describe('Logic Service', () => {
 
       const result = await handleTransaction({
         transaction: expectedReq,
-        networkMap: networkMap,
-        ruleRes: ruleResult,
+        networkMap,
+        ruleResult,
       });
 
       expect(responseSpy).toHaveBeenCalled();
@@ -207,8 +207,8 @@ describe('Logic Service', () => {
 
       const result = await handleTransaction({
         transaction: expectedReq,
-        networkMap: networkMap,
-        ruleRes: ruleResult,
+        networkMap,
+        ruleResult,
       });
 
       expect(responseSpy).toHaveBeenCalled();
@@ -361,12 +361,12 @@ describe('Logic Service', () => {
       const ruleResult03: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
 
       //Case of no element of desc and element found with empty string (Negetive Testing)
-      let result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult03 });
+      let result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult: ruleResult03 });
       // expect(result.cadpRequests[0].typologyResult.desc).toBe("No description provided in typology config.");
       // expect(result.cadpRequests[1].typologyResult.desc).toBe("No description provided in typology config.");
 
       //Test the desc value that is similar to the one found in config file (Positive Testing)
-      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult03 });
+      await handleTransaction({ transaction: expectedReq, networkMap, ruleResult: ruleResult03 });
       // expect(result.cadpRequests[0].typologyResult.desc).toBe("Typology 029 Description from mock db config.");
       expect(responseSpy).toHaveBeenCalled();
     });
@@ -556,7 +556,7 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap });
 
       mockedAxios.post.mockReturnValue(
         new Promise((resolve, reject) => {
@@ -564,9 +564,9 @@ describe('Logic Service', () => {
         }),
       );
 
-      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
-      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
-      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap: networkMap });
       // if (result) test = true;
       // expect(test).toBeTruthy();
       // result = await handleTransaction(expectedReq);
@@ -626,19 +626,19 @@ describe('Logic Service', () => {
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleResult: ruleResult });
       expect(responseSpy).toHaveBeenCalled();
       // if (result) test = true;
       // expect(test).toBeTruthy();
-      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleResult: ruleResult });
       expect(responseSpy).toHaveBeenCalled();
       // if (result) test = true;
       // expect(test).toBeTruthy();
-      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleResult: ruleResult });
       expect(responseSpy).toHaveBeenCalled();
       // if (result) test = true;
       // expect(test).toBeTruthy();
-      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleResult: ruleResult });
       expect(responseSpy).toHaveBeenCalled();
       // if (result) test = true;
       // expect(test).toBeTruthy();
@@ -689,7 +689,7 @@ describe('Logic Service', () => {
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      let result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleResult: ruleResult });
       // if (result) test = true;
       // expect(test).toBeTruthy();
       // result = await handleTransaction(expectedReq);
@@ -720,7 +720,7 @@ describe('Logic Service', () => {
         subRuleRef: 'ref1',
       };
 
-      await handleTransaction({ transaction: expectedReq, ruleRes: ruleResult, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleResult, networkMap: networkMap });
       // if (result) test = true;
       // expect(test).toBeTruthy();
       expect(responseSpy).toHaveBeenCalledTimes(0);
@@ -736,7 +736,7 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       expect(responseSpy).toHaveBeenCalled();
       // if (result) test = true;
       // expect(test).toBeTruthy();
@@ -758,7 +758,7 @@ describe('Logic Service', () => {
         });
       });
 
-      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       expect(responseSpy).toHaveBeenCalledTimes(0);
       // if (result) test = true;
       // expect(test).toBeTruthy();
@@ -787,7 +787,7 @@ describe('Logic Service', () => {
         }),
       );
 
-      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       expect(responseSpy).toHaveBeenCalledTimes(0);
       // if (result) test = true;
       // expect(test).toBeTruthy();
@@ -993,7 +993,7 @@ describe('Logic Service', () => {
 
       responseSpy.mockImplementation().mockReturnValue(new Error('Test Failure Path'));
 
-      await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult03 });
+      await handleTransaction({ transaction: expectedReq, networkMap, ruleResult: ruleResult03 });
       expect(responseSpy).toHaveBeenCalled();
     });
 
@@ -1011,7 +1011,7 @@ describe('Logic Service', () => {
         reason: 'reason',
         subRuleRef: 'ref1',
       };
-      const result = await handleTransaction({ transaction: expectedReq, networkMap: networkMap, ruleRes: ruleResult });
+      const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       expect(responseSpy).toHaveBeenCalledTimes(0);
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
@@ -1036,8 +1036,8 @@ describe('Logic Service', () => {
 
       const result = await handleTransaction({
         transaction: expectedReq,
-        networkMap: networkMap,
-        ruleRes: ruleResult,
+        networkMap,
+        ruleResult,
       });
 
       expect(responseSpy).toHaveBeenCalled();
