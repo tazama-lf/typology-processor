@@ -8,15 +8,11 @@ import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
+import { MetaData } from './interfaces/metaData';
 
 const calculateDuration = (startHrTime: Array<number>, endHrTime: Array<number>): number => {
   return (endHrTime[0] - startHrTime[0]) * 1000 + (endHrTime[1] - startHrTime[1]) / 1000000;
 };
-
-interface MetaData {
-  prcgTmDp: number;
-  prcgTmCRSP: number;
-}
 
 const noDescription = 'No description provided in typology config.';
 
