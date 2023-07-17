@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
@@ -8,6 +10,11 @@ import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
+
+interface MetaData {
+  prcgTmDp: number;
+  prcgTmCRSP: number;
+}
 
 const calculateDuration = (startHrTime: Array<number>, endHrTime: Array<number>): number => {
   return (endHrTime[0] - startHrTime[0]) * 1000 + (endHrTime[1] - startHrTime[1]) / 1000000;
@@ -83,6 +90,7 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
   channelHost: string,
+  metaData: MetaData,
 ): Promise<CADPRequest> => {
   const typologyResult: TypologyResult = {
     result: 0.0,
@@ -142,6 +150,7 @@ const executeRequest = async (
     typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
     typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
     cadpReqBody.typologyResult = typologyResult;
+    cadpReqBody.metaData = metaData;
 
     // Interdiction
     // Send Result to CMS
@@ -180,8 +189,12 @@ const executeRequest = async (
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-export const handleTransaction = async (transaction: any, networkMap: NetworkMap, ruleResult: RuleResult): Promise<CombinedResult> => {
+export const handleTransaction = async (
+  transaction: any,
+  networkMap: NetworkMap,
+  ruleResult: RuleResult,
+  metaData: MetaData,
+): Promise<CombinedResult> => {
   // eslint-disable-line
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
@@ -191,7 +204,7 @@ export const handleTransaction = async (transaction: any, networkMap: NetworkMap
       typologyCounter++;
       const channelHost = channel.host;
 
-      const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap, channelHost);
+      const cadpRes = await executeRequest(transaction, typology, ruleResult, networkMap, channelHost, metaData);
 
       toReturn.cadpRequests.push(cadpRes);
     }
