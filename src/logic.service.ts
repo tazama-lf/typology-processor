@@ -193,8 +193,9 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const toReturn: CombinedResult = new CombinedResult();
 
   const networkMap: NetworkMap = transaction.networkMap;
-  const ruleResult: RuleResult = transaction.ruleRes;
   const metaData: MetaData = transaction.metaData;
+  const ruleResult: RuleResult = transaction.ruleResult;
+
   const parsedTrans = transaction.transaction;
 
   for (const channel of networkMap.messages[0].channels) {
