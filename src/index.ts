@@ -30,11 +30,11 @@ export const runServer = async () => {
   server = new StartupFactory();
   if (configuration.env !== 'test')
     for (let retryCount = 0; retryCount < 10; retryCount++) {
-      console.log('Connecting to nats server...');
+      LoggerService.log('Connecting to nats server...');
       if (!(await server.init(handleTransaction))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
-        console.log('Connected to nats');
+        LoggerService.log('Connected to nats');
         break;
       }
     }
@@ -51,7 +51,7 @@ process.on('unhandledRejection', (err) => {
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
 
 if (cluster.isPrimary && configuration.maxCPU !== 1) {
-  console.log(`Primary ${process.pid} is running`);
+  LoggerService.log(`Primary ${process.pid} is running`);
 
   // Fork workers.
   for (let i = 1; i < 2; i++) {
@@ -59,7 +59,7 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   }
 
   cluster.on('exit', (worker, code, signal) => {
-    console.log(`worker ${worker.process.pid} died, starting another worker`);
+    LoggerService.log(`worker ${worker.process.pid} died, starting another worker`);
     cluster.fork();
   });
 } else {
@@ -74,5 +74,5 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
       LoggerService.error(`Error while starting HTTP server on Worker ${process.pid}`, err);
     }
   })();
-  console.log(`Worker ${process.pid} started`);
+  LoggerService.log(`Worker ${process.pid} started`);
 }

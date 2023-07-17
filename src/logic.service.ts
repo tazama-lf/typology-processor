@@ -8,6 +8,7 @@ import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
+import { MetaData } from './interfaces/metaData';
 
 const calculateDuration = (startHrTime: Array<number>, endHrTime: Array<number>): number => {
   return (endHrTime[0] - startHrTime[0]) * 1000 + (endHrTime[1] - startHrTime[1]) / 1000000;
@@ -83,6 +84,7 @@ const executeRequest = async (
   ruleResult: RuleResult,
   networkMap: NetworkMap,
   channelHost: string,
+  metaData: MetaData,
 ): Promise<CADPRequest> => {
   const typologyResult: TypologyResult = {
     result: 0.0,
@@ -161,7 +163,7 @@ const executeRequest = async (
     try {
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       // LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-      const result = await server.handleResponse(cadpReqBody);
+      const result = await server.handleResponse({ ...cadpReqBody, metaData });
       span?.end();
     } catch (error) {
       span?.end();
@@ -187,7 +189,9 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const toReturn: CombinedResult = new CombinedResult();
 
   const networkMap: NetworkMap = transaction.networkMap;
+  const metaData: MetaData = transaction.metaData;
   const ruleResult: RuleResult = transaction.ruleResult;
+
   const parsedTrans = transaction.transaction;
 
   for (const channel of networkMap.messages[0].channels) {
@@ -196,7 +200,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
       typologyCounter++;
       const channelHost = channel.host;
 
-      const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost);
+      const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, metaData);
       toReturn.cadpRequests.push(cadpRes);
     }
   }
