@@ -1,7 +1,6 @@
 import cluster from 'cluster';
 import apm from 'elastic-apm-node';
 import os from 'os';
-import App from './app';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
 import { Services } from './services';
@@ -25,18 +24,17 @@ export const cache = Services.getCacheInstance();
 export const databaseClient = Services.getDatabaseInstance();
 export const cacheClient = Services.getCacheClientInstance();
 export let server: IStartupService;
-let app: App;
 
 export const runServer = async () => {
   // await dbinit();
   server = new StartupFactory();
   if (configuration.env !== 'test')
     for (let retryCount = 0; retryCount < 10; retryCount++) {
-      console.log('Connecting to nats server...');
+      LoggerService.log('Connecting to nats server...');
       if (!(await server.init(handleTransaction))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
-        console.log('Connected to nats');
+        LoggerService.log('Connected to nats');
         break;
       }
     }
@@ -45,7 +43,7 @@ export const runServer = async () => {
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
 
 if (cluster.isPrimary && configuration.maxCPU !== 1) {
-  console.log(`Primary ${process.pid} is running`);
+  LoggerService.log(`Primary ${process.pid} is running`);
 
   // Fork workers.
   for (let i = 1; i < 2; i++) {
@@ -53,7 +51,7 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   }
 
   cluster.on('exit', (worker, code, signal) => {
-    console.log(`worker ${worker.process.pid} died, starting another worker`);
+    LoggerService.log(`worker ${worker.process.pid} died, starting another worker`);
     cluster.fork();
   });
 } else {
@@ -68,7 +66,5 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
       LoggerService.error(`Error while starting HTTP server on Worker ${process.pid}`, err);
     }
   })();
-  console.log(`Worker ${process.pid} started`);
+  LoggerService.log(`Worker ${process.pid} started`);
 }
-
-export { app };
