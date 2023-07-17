@@ -55,7 +55,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '028@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -102,7 +102,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -188,7 +188,7 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -204,7 +204,7 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 201 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -226,7 +226,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   ref: '.01',
                   true: 100,
-                  false: 2
+                  false: 2,
                 },
                 {
                   id: '004@1.0.0',
@@ -259,7 +259,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'', // Empty string is found as a value of desc element
+              desc: '', // Empty string is found as a value of desc element
               threshold: 50,
               rules: [
                 {
@@ -300,7 +300,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'Typology 029 Description from mock db config.', // Valid Value
+              desc: 'Typology 029 Description from mock db config.', // Valid Value
               threshold: 50,
               rules: [
                 {
@@ -336,7 +336,7 @@ describe('Logic Service', () => {
             }),
           );
         });
-        addOneGetAllSpy = jest
+      addOneGetAllSpy = jest
         .spyOn(cacheClient, 'addOneGetAll')
         .mockImplementation((key: string, value: string): Promise<string[] | null> => {
           return new Promise<string[] | null>((resolve, reject) => {
@@ -358,15 +358,14 @@ describe('Logic Service', () => {
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
       //Case of no element of desc and element found with empty string (Negetive Testing)
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      expect(result.cadpRequests[0].typologyResult.desc).toBe("No description provided in typology config.");
-      expect(result.cadpRequests[1].typologyResult.desc).toBe("No description provided in typology config.");
+      let result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
+      expect(result.cadpRequests[0].typologyResult.desc).toBe('No description provided in typology config.');
+      expect(result.cadpRequests[1].typologyResult.desc).toBe('No description provided in typology config.');
 
       //Test the desc value that is similar to the one found in config file (Positive Testing)
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
-      expect(result.cadpRequests[0].typologyResult.desc).toBe("Typology 029 Description from mock db config.");
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
+      expect(result.cadpRequests[0].typologyResult.desc).toBe('Typology 029 Description from mock db config.');
     });
-
 
     it('should handle successful request, different typology operators', async () => {
       const expectedReq = getMockRequest();
@@ -377,7 +376,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -412,7 +411,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -453,7 +452,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -494,7 +493,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -553,16 +552,16 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      let result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -574,7 +573,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               {
@@ -612,16 +611,16 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      let result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -633,7 +632,7 @@ describe('Logic Service', () => {
           resolve({
             cfg: '1.0.0',
             id: '029@1.0.0',
-            desc:'',
+            desc: '',
             threshold: 50,
             rules: [
               {
@@ -671,16 +670,16 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      let result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -703,7 +702,7 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -720,7 +719,7 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -741,7 +740,7 @@ describe('Logic Service', () => {
         });
       });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -769,7 +768,7 @@ describe('Logic Service', () => {
         }),
       );
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -783,7 +782,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -818,7 +817,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -859,7 +858,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -900,7 +899,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '029@1.0.0',
-              desc:'',
+              desc: '',
               threshold: 50,
               rules: [
                 {
@@ -959,16 +958,16 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockRejectedValue(new Error('Test Failure Path'));
 
-      let result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      let result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
-      result = await handleTransaction(expectedReq, networkMap, ruleResult03);
+      result = await handleTransaction(expectedReq, networkMap, ruleResult03, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
@@ -990,7 +989,7 @@ describe('Logic Service', () => {
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
-      const result = await handleTransaction(expectedReq, networkMap, ruleResult);
+      const result = await handleTransaction(expectedReq, networkMap, ruleResult, { prcgTmCRSP: 23.45, prcgTmDp: 45.233 });
       if (result) test = true;
       expect(test).toBeTruthy();
     });
