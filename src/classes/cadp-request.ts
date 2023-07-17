@@ -16,7 +16,7 @@ export class CADPRequest {
   typologyResult: TypologyResult;
   transaction: Pain001V11Transaction;
   networkMap: NetworkMap;
-
+  metaData?: { prcgTmDp: number; prcgTmCRSP: number };
   constructor(typologyResult: TypologyResult, transaction: Pain001V11Transaction, networkMap: NetworkMap, ruleResults: RuleResult[]) {
     this.typologyResult = typologyResult;
     this.transaction = transaction;
