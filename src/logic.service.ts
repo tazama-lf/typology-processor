@@ -10,8 +10,9 @@ import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypo
 import { LoggerService } from './logger.service';
 import { MetaData } from './interfaces/metaData';
 
-const calculateDuration = (startHrTime: Array<number>, endHrTime: Array<number>): number => {
-  return (endHrTime[0] - startHrTime[0]) * 1000 + (endHrTime[1] - startHrTime[1]) / 1000000;
+const calculateDuration = (startTime: bigint): number => {
+  const endTime = process.hrtime.bigint();
+  return Number((Number(endTime - startTime) / 1000000).toFixed(3));
 };
 
 const noDescription = 'No description provided in typology config.';
@@ -86,6 +87,8 @@ const executeRequest = async (
   channelHost: string,
   metaData: MetaData,
 ): Promise<CADPRequest> => {
+  const startTime = process.hrtime.bigint();
+
   const typologyResult: TypologyResult = {
     result: 0.0,
     id: typology.id,
@@ -96,7 +99,6 @@ const executeRequest = async (
     ruleResults: [],
   };
 
-  const startHrTime = process.hrtime();
   const cadpReqBody: CADPRequest = {
     typologyResult: typologyResult,
     transaction: transaction,
@@ -123,14 +125,14 @@ const executeRequest = async (
 
     if (ruleResults && ruleResults.length < typology.rules.length) {
       typologyResult.desc = typology.desc ? typology.desc : noDescription;
-      typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
+      typologyResult.prcgTm = calculateDuration(startTime);
       return cadpReqBody;
     }
 
     const expressionRes = await databaseClient.getTypologyExpression(typology);
     if (!expressionRes) {
       LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
-      typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
+      typologyResult.prcgTm = calculateDuration(startTime);
       return cadpReqBody;
     }
 
@@ -142,7 +144,7 @@ const executeRequest = async (
     typologyResult.result = typologyResultValue;
     typologyResult.threshold = expression?.threshold ?? 0.0;
     typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
-    typologyResult.prcgTm = calculateDuration(startHrTime, process.hrtime());
+    typologyResult.prcgTm = calculateDuration(startTime);
     cadpReqBody.typologyResult = typologyResult;
 
     // Interdiction
@@ -162,8 +164,7 @@ const executeRequest = async (
     // Send CADP request with this Typology's result
     try {
       span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
-      // LoggerService.log(`Sending to CADP ${configuration.cadpEndpoint} data: \n${JSON.stringify(cadpReqBody)}`);
-      const result = await server.handleResponse({ ...cadpReqBody, metaData });
+      await server.handleResponse({ ...cadpReqBody, metaData });
       span?.end();
     } catch (error) {
       span?.end();
