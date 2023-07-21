@@ -12,7 +12,7 @@ import { MetaData } from './interfaces/metaData';
 
 const calculateDuration = (startTime: bigint): number => {
   const endTime = process.hrtime.bigint();
-  return Number((Number(endTime - startTime) / 1000000).toFixed(3));
+  return Number(endTime - startTime);
 };
 
 const noDescription = 'No description provided in typology config.';
