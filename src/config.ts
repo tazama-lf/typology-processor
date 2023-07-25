@@ -3,6 +3,8 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
+import { type RedisConfig } from '@frmscoe/frms-coe-lib/lib/interfaces';
+
 // Load .env file into process.env if it exists. This is convenient for running locally.
 dotenv.config({
   path: path.resolve(__dirname, '../.env'),
@@ -34,13 +36,7 @@ export interface IConfig {
     host: string;
     port: number;
   };
-  redis: {
-    auth: string;
-    connection: boolean;
-    db: number;
-    host: string;
-    port: number;
-  };
+  redis: RedisConfig;
   transactionRouting: {
     host: string;
     path: string;
@@ -51,39 +47,38 @@ export interface IConfig {
 export const configuration: IConfig = {
   maxCPU: parseInt(process.env.MAX_CPU!, 10) || 1,
   apm: {
-    serviceName: <string>process.env.APM_SERVICE_NAME,
-    url: <string>process.env.APM_URL,
-    secretToken: <string>process.env.APM_SECRET_TOKEN,
-    active: <string>process.env.APM_ACTIVE,
+    serviceName: process.env.APM_SERVICE_NAME as string,
+    url: process.env.APM_URL as string,
+    secretToken: process.env.APM_SECRET_TOKEN as string,
+    active: process.env.APM_ACTIVE as string,
   },
-  cadpEndpoint: <string>process.env.CADP_ENDPOINT,
-  cmsEndpoint: <string>process.env.CMS_ENDPOINT,
+  cadpEndpoint: process.env.CADP_ENDPOINT as string,
+  cmsEndpoint: process.env.CMS_ENDPOINT as string,
   cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
   db: {
-    name: <string>process.env.DATABASE_NAME,
-    password: <string>process.env.DATABASE_PASSWORD,
-    url: <string>process.env.DATABASE_URL,
-    user: <string>process.env.DATABASE_USER,
-    collectionName: <string>process.env.COLLECTION_NAME,
-    dbCertPath: <string>process.env.DATABASE_CERT_PATH,
+    name: process.env.DATABASE_NAME as string,
+    password: process.env.DATABASE_PASSWORD as string,
+    url: process.env.DATABASE_URL as string,
+    user: process.env.DATABASE_USER as string,
+    collectionName: process.env.COLLECTION_NAME as string,
+    dbCertPath: process.env.DATABASE_CERT_PATH as string,
   },
-  env: <string>process.env.NODE_ENV,
-  functionName: <string>process.env.FUNCTION_NAME,
+  env: process.env.NODE_ENV as string,
+  functionName: process.env.FUNCTION_NAME as string,
   logstash: {
-    host: <string>process.env.LOGSTASH_HOST,
+    host: process.env.LOGSTASH_HOST as string,
     port: parseInt(process.env.LOGSTASH_PORT!, 10),
   },
   port: parseInt(process.env.PORT!, 10) || 3000,
   redis: {
-    auth: <string>process.env.REDIS_AUTH,
-    connection: <boolean>(process.env.REDIS_CONNECTION === 'true'),
     db: parseInt(process.env.REDIS_DB!, 10) || 0,
-    host: <string>process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT!, 10),
+    servers: JSON.parse((process.env.REDIS_SERVERS as string) || '[{"hostname": "127.0.0.1", "port":6379}]'),
+    password: process.env.REDIS_AUTH as string,
+    isCluster: process.env.REDIS_IS_CLUSTER === 'true',
   },
   transactionRouting: {
-    host: <string>process.env.TRANSACTION_ROUTING_HOST,
-    path: <string>process.env.TRANSACTION_ROUTING_PATH,
+    host: process.env.TRANSACTION_ROUTING_HOST as string,
+    path: process.env.TRANSACTION_ROUTING_PATH as string,
     port: parseInt(process.env.TRANSACTION_ROUTING_PORT!, 10),
   },
 };

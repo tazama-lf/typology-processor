@@ -1,6 +1,6 @@
 /* eslint-disable */
 import apm from 'elastic-apm-node';
-import { cache, cacheClient, databaseClient, runServer, server } from '../../src';
+import { cache, databaseManager, databaseClient, runServer, server } from '../../src';
 import { Pain001V11Transaction } from '../../src/classes/Pain.001.001.11/iPain001Transaction';
 import { NetworkMap, Typology } from '../../src/classes/network-map';
 import { RuleResult } from '../../src/classes/rule-result';
@@ -30,13 +30,12 @@ const getMockRequest = () => {
   return quote;
 };
 
-beforeAll(() => {
-  runServer();
+beforeAll(async () => {
+  await runServer();
 });
 
 afterAll(() => {
   cache.close();
-  cacheClient.client.quit();
   databaseClient.client.close();
 });
 
@@ -145,30 +144,17 @@ describe('Logic Service', () => {
       });
     });
 
-    jest.spyOn(cacheClient, 'getJson').mockImplementation((key: string): Promise<string[]> => {
+    jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
       return new Promise<string[]>((resolve, reject) => {
-        resolve([cacheString]);
-      });
-    });
-
-    jest.spyOn(cacheClient, 'setJson').mockImplementation((key: string, value: string): Promise<number> => {
-      return new Promise<number>((resolve, reject) => {
-        cacheString = value;
-        resolve(0);
-      });
-    });
-
-    jest.spyOn(cacheClient, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[] | null> => {
-      return new Promise<string[] | null>((resolve, reject) => {
         cacheString = value;
         resolve([cacheString]);
       });
     });
 
-    responseSpy = jest.spyOn(cacheClient, 'deleteKey').mockImplementation((key: string): Promise<number> => {
-      return new Promise<number>((resolve, reject) => {
+    responseSpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
         cacheString = '';
-        resolve(0);
+        resolve();
       });
     });
 
@@ -341,17 +327,15 @@ describe('Logic Service', () => {
             }),
           );
         });
-      jest
-        .spyOn(cacheClient, 'addOneGetAll')
-        .mockImplementation((key: string, value: string): Promise<string[] | null> => {
-          return new Promise<string[] | null>((resolve, reject) => {
-            cacheString = value;
-            resolve([
-              '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-              '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-            ]);
-          });
+      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, reject) => {
+          cacheString = value;
+          resolve([
+            '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+            '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+          ]);
         });
+      });
 
       let test = false;
       const jNetworkMap = JSON.parse(
@@ -534,17 +518,15 @@ describe('Logic Service', () => {
           );
         });
 
-      jest
-        .spyOn(cacheClient, 'addOneGetAll')
-        .mockImplementation((key: string, value: string): Promise<string[] | null> => {
-          return new Promise<string[] | null>((resolve, reject) => {
-            cacheString = value;
-            resolve([
-              '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-              '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-            ]);
-          });
+      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, reject) => {
+          cacheString = value;
+          resolve([
+            '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+            '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+          ]);
         });
+      });
 
       let test = false;
       const jNetworkMap = JSON.parse(
@@ -956,17 +938,15 @@ describe('Logic Service', () => {
           );
         });
 
-      jest
-        .spyOn(cacheClient, 'addOneGetAll')
-        .mockImplementation((key: string, value: string): Promise<string[] | null> => {
-          return new Promise<string[] | null>((resolve, reject) => {
-            cacheString = value;
-            resolve([
-              '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-              '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-            ]);
-          });
+      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, reject) => {
+          cacheString = value;
+          resolve([
+            '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+            '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
+          ]);
         });
+      });
 
       let test = false;
       const jNetworkMap = JSON.parse(

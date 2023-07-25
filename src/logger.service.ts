@@ -1,3 +1,4 @@
+/* eslint-disable */
 import log4js from 'log4js';
 import { configuration } from './config';
 

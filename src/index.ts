@@ -1,11 +1,21 @@
+import { CreateDatabaseManager, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
+import { type IStartupService, StartupFactory } from '@frmscoe/frms-coe-startup-lib';
 import cluster from 'cluster';
 import apm from 'elastic-apm-node';
 import os from 'os';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
-import { Services } from './services';
-import { StartupFactory, IStartupService } from '@frmscoe/frms-coe-startup-lib';
 import { handleTransaction } from './logic.service';
+import { Services } from './services';
+
+const databaseManagerConfig = {
+  redisConfig: {
+    db: configuration.redis.db,
+    servers: configuration.redis.servers,
+    password: configuration.redis.password,
+    isCluster: configuration.redis.isCluster,
+  },
+};
 
 /*
  * Initialize the APM Logging
@@ -20,15 +30,20 @@ if (configuration.apm.active === 'true') {
   });
 }
 
+let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
+
+export const dbinit = async (): Promise<void> => {
+  databaseManager = await CreateDatabaseManager(databaseManagerConfig);
+};
+
 export const cache = Services.getCacheInstance();
 export const databaseClient = Services.getDatabaseInstance();
-export const cacheClient = Services.getCacheClientInstance();
 export let server: IStartupService;
 
-export const runServer = async () => {
-  // await dbinit();
+export const runServer = async (): Promise<void> => {
+  await dbinit();
   server = new StartupFactory();
-  if (configuration.env !== 'test')
+  if (configuration.env !== 'test') {
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       LoggerService.log('Connecting to nats server...');
       if (!(await server.init(handleTransaction))) {
@@ -38,6 +53,7 @@ export const runServer = async () => {
         break;
       }
     }
+  }
 };
 
 process.on('uncaughtException', (err) => {
@@ -45,7 +61,7 @@ process.on('uncaughtException', (err) => {
 });
 
 process.on('unhandledRejection', (err) => {
-  LoggerService.error(`process on unhandledRejection error: ${err ?? '[NoMetaData]'}`);
+  LoggerService.error(`process on unhandledRejection error: ${JSON.stringify(err) ?? '[NoMetaData]'}`);
 });
 
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
@@ -59,7 +75,7 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   }
 
   cluster.on('exit', (worker, code, signal) => {
-    LoggerService.log(`worker ${worker.process.pid} died, starting another worker`);
+    LoggerService.log(`worker ${Number(worker.process.pid)} died, starting another worker`);
     cluster.fork();
   });
 } else {
@@ -76,3 +92,5 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   })();
   LoggerService.log(`Worker ${process.pid} started`);
 }
+
+export { databaseManager };
