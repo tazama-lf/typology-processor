@@ -108,7 +108,7 @@ const executeRequest = async (
   };
 
   try {
-    const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
+    const transactionType = 'FIToFIPmtSts';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
     const jruleResults = await databaseManager.addOneGetAll(`${cacheKey}`, JSON.stringify(ruleResult));
@@ -210,7 +210,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
 
   // Response for CRSP - How many typologies have kicked off?
   // Let CRSP know that we have finished processing this transaction
-  const transactionType = Object.keys(parsedTrans).find((k) => k !== 'TxTp') ?? '';
+  const transactionType = 'FIToFIPmtSts';
   const transactionID = parsedTrans[transactionType].GrpHdr.MsgId;
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
   LoggerService.log(`${result} for Rule ${ruleResult.id}`);
