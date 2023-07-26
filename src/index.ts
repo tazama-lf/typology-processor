@@ -34,6 +34,7 @@ let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
 
 export const dbinit = async (): Promise<void> => {
   databaseManager = await CreateDatabaseManager(databaseManagerConfig);
+  console.log(databaseManager.isReadyCheck());
 };
 
 export const cache = Services.getCacheInstance();
