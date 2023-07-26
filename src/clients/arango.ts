@@ -2,18 +2,16 @@ import { Database } from 'arangojs';
 import { configuration } from '../config';
 import { LoggerService } from '../logger.service';
 import { cache } from '..';
-import { ITypologyExpression } from '../interfaces/iTypologyExpression';
+import { type ITypologyExpression } from '../interfaces/iTypologyExpression';
 import apm from 'elastic-apm-node';
-import { Typology } from '../classes/network-map';
+import { type Typology } from '../classes/network-map';
 import * as fs from 'fs';
 
 export class ArangoDBService {
   client: Database;
 
   constructor() {
-    const caOption = fs.existsSync(configuration.db.dbCertPath)
-      ? [fs.readFileSync(configuration.db.dbCertPath)]
-      : [];
+    const caOption = fs.existsSync(configuration.db.dbCertPath) ? [fs.readFileSync(configuration.db.dbCertPath)] : [];
     this.client = new Database({
       url: configuration.db.url,
       databaseName: configuration.db.name,

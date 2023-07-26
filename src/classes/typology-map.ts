@@ -11,9 +11,9 @@ class Typology {
 class Rule {
   ruleName: string;
   ruleEndpoint: string;
-  typologies: Array<Typology>;
+  typologies: Typology[];
 
-  constructor(ruleName: string, ruleEndpoint: string, typologies: Array<Typology>) {
+  constructor(ruleName: string, ruleEndpoint: string, typologies: Typology[]) {
     this.ruleName = ruleName;
     this.ruleEndpoint = ruleEndpoint;
     this.typologies = typologies;
