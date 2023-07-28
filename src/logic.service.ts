@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
-import { cacheClient, databaseClient, server } from '.';
-import { CADPRequest, CombinedResult, TypologyResult } from './classes/cadp-request';
-import { NetworkMap, Typology } from './classes/network-map';
+import { databaseManager, databaseClient, server } from '.';
+import { type CADPRequest, CombinedResult, type TypologyResult } from './classes/cadp-request';
+import { type NetworkMap, type Typology } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
-import { IExpression, IRuleValue, ITypologyExpression } from './interfaces/iTypologyExpression';
+import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { LoggerService } from './logger.service';
-import { MetaData } from './interfaces/metaData';
+import { type MetaData } from './interfaces/metaData';
 
 const calculateDuration = (startTime: bigint): number => {
   const endTime = process.hrtime.bigint();
@@ -19,6 +20,7 @@ const noDescription = 'No description provided in typology config.';
 
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
+  // eslint-disable-next-line @typescript-eslint/no-for-in-array
   for (const rule in typologyExpression.terms) {
     const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg);
     let ruleVal = 0.0;
@@ -87,7 +89,7 @@ const executeRequest = async (
   channelHost: string,
   metaData: MetaData,
 ): Promise<CADPRequest> => {
-  const rootSpan = apm.startSpan('request.execute');
+  const apmTransaction = apm.startSpan('request.execute');
   const startTime = process.hrtime.bigint();
 
   const typologyResult: TypologyResult = {
@@ -101,16 +103,16 @@ const executeRequest = async (
   };
 
   const cadpReqBody: CADPRequest = {
-    typologyResult: typologyResult,
-    transaction: transaction,
-    networkMap: networkMap,
+    typologyResult,
+    transaction,
+    networkMap,
   };
 
   try {
-    const transactionType = Object.keys(transaction).find((k) => k !== 'TxTp') ?? '';
+    const transactionType = 'FIToFIPmtSts';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
-    const jruleResults = await cacheClient.addOneGetAll(`${cacheKey}`, JSON.stringify(ruleResult));
+    const jruleResults = await databaseManager.addOneGetAll(`${cacheKey}`, JSON.stringify(ruleResult));
     const ruleResults: RuleResult[] = [];
 
     // Get cache from Redis if we have
@@ -137,8 +139,8 @@ const executeRequest = async (
       return cadpReqBody;
     }
 
-    const expression: ITypologyExpression = expressionRes!;
-    let span = apm.startSpan(`[${transactionID}] eval.typology.expr`, { childOf: rootSpan?.ids['span.id'] });
+    const expression: ITypologyExpression = expressionRes;
+    let span = apm.startSpan(`[${transactionID}] eval.typology.expr`);
     const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
 
@@ -152,7 +154,7 @@ const executeRequest = async (
     // Send Result to CMS
     if (expression.threshold && typologyResultValue > expression.threshold) {
       try {
-        span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`, { childOf: rootSpan?.ids['span.id'] });
+        span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
         // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
         await executePost(configuration.cmsEndpoint, cadpReqBody);
       } catch (error) {
@@ -164,7 +166,7 @@ const executeRequest = async (
 
     // Send CADP request with this Typology's result
     try {
-      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`, { childOf: rootSpan?.ids['span.id'] });
+      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
       await server.handleResponse({ ...cadpReqBody, metaData });
     } catch (error) {
       LoggerService.error('Error while sending Typology result to CADP', error as Error);
@@ -172,21 +174,22 @@ const executeRequest = async (
       span?.end();
     }
 
-    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`, { childOf: rootSpan?.ids['span.id'] });
-    await cacheClient.deleteKey(cacheKey);
+    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
+    await databaseManager.deleteKey(cacheKey);
     span?.end();
     return cadpReqBody;
   } catch (error) {
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
   } finally {
     LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
+    apmTransaction?.end();
     return cadpReqBody; // eslint-disable-line
   }
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const handleTransaction = async (transaction: any): Promise<void> => {
-  const span = apm.startSpan('typroc.handleTransaction');
+  const apmTransaction = apm.startTransaction('typroc.handleTransaction');
   // eslint-disable-line
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
@@ -203,9 +206,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
       typologyCounter++;
       const channelHost = channel.host;
 
-      const spanCadpRes = apm.startSpan('cadproc.sendRec', {
-        childOf: span?.ids['span.id'],
-      });
+      const spanCadpRes = apm.startSpan('cadproc.sendRec');
       const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, metaData);
       spanCadpRes?.end();
 
@@ -215,26 +216,26 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
 
   // Response for CRSP - How many typologies have kicked off?
   // Let CRSP know that we have finished processing this transaction
-  const transactionType = Object.keys(parsedTrans).find((k) => k !== 'TxTp') ?? '';
+  const transactionType = 'FIToFIPmtSts';
   const transactionID = parsedTrans[transactionType].GrpHdr.MsgId;
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
   LoggerService.log(`${result} for Rule ${ruleResult.id}`);
   toReturn.typologyResult = result;
-  span?.end();
+  apmTransaction?.end();
   // return toReturn;
 };
 
 // Submit the score to the CADP/CMS
-const executePost = async (endpoint: string, request: CADPRequest) => {
+const executePost = async (endpoint: string, request: CADPRequest): Promise<void> => {
   const span = apm.startSpan('send.cadp/cms');
   try {
     const cadpRes = await axios.post(endpoint, request);
     if (cadpRes.status !== 200) {
-      LoggerService.error(`Response StatusCode != 200, request:\r\n${request}`);
+      LoggerService.error(`Response StatusCode != 200, request:\r\n${JSON.stringify(request)}`);
     }
   } catch (error) {
     LoggerService.error(`Error while sending request to ${endpoint ?? ''} with message: ${error}`);
-    LoggerService.trace(`Axios Post Error Request:\r\n${request}`);
+    LoggerService.trace(`Axios Post Error Request:\r\n${JSON.stringify(request)}`);
     throw error;
   } finally {
     span?.end();

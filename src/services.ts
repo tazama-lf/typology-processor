@@ -1,10 +1,10 @@
 import NodeCache from 'node-cache';
-import { ArangoDBService, RedisService } from './clients';
+import { ArangoDBService } from './clients';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Services {
   private static cache: NodeCache;
   private static databaseClient: ArangoDBService;
-  private static cacheClient: RedisService;
 
   public static getCacheInstance(): NodeCache {
     if (!Services.cache) Services.cache = new NodeCache();
@@ -16,11 +16,5 @@ export class Services {
     if (!Services.databaseClient) Services.databaseClient = new ArangoDBService();
 
     return Services.databaseClient;
-  }
-
-  public static getCacheClientInstance(): RedisService {
-    if (!Services.cacheClient) Services.cacheClient = new RedisService();
-
-    return Services.cacheClient;
   }
 }
