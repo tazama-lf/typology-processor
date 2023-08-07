@@ -2,14 +2,14 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import axios from 'axios';
 import apm from 'elastic-apm-node';
-import { databaseManager, databaseClient, server } from '.';
-import { type CADPRequest, CombinedResult, type TypologyResult } from './classes/cadp-request';
+import { databaseClient, databaseManager, server } from '.';
+import { CombinedResult, type CADPRequest, type TypologyResult } from './classes/cadp-request';
 import { type NetworkMap, type Typology } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
-import { LoggerService } from './logger.service';
 import { type MetaData } from './interfaces/metaData';
+import { LoggerService } from './logger.service';
 
 const calculateDuration = (startTime: bigint): number => {
   const endTime = process.hrtime.bigint();
@@ -165,14 +165,15 @@ const executeRequest = async (
     }
 
     // Send CADP request with this Typology's result
-    try {
-      span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
-      await server.handleResponse({ ...cadpReqBody, metaData });
-    } catch (error) {
-      LoggerService.error('Error while sending Typology result to CADP', error as Error);
-    } finally {
-      span?.end();
-    }
+    span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
+    server
+      .handleResponse({ ...cadpReqBody, metaData })
+      .then(() => {
+        span?.end();
+      })
+      .catch((error) => {
+        LoggerService.error('Error while sending Typology result to CADP', error as Error);
+      });
 
     span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
     await databaseManager.deleteKey(cacheKey);
