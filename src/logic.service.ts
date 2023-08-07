@@ -192,9 +192,9 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const toReturn: CombinedResult = new CombinedResult();
 
   const metaData = transaction.metaData;
-  LoggerService.log(`traceParent in typroc: ${JSON.stringify(metaData.traceParent)}`);
+  LoggerService.log(`traceParent in typroc: ${JSON.stringify(metaData?.traceParent)}`);
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
-    childOf: metaData.traceParent,
+    childOf: metaData?.traceParent,
   });
   const networkMap: NetworkMap = transaction.networkMap;
   const ruleResult: RuleResult = transaction.ruleResult;
