@@ -189,13 +189,16 @@ const executeRequest = async (
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const handleTransaction = async (transaction: any): Promise<void> => {
-  const apmTransaction = apm.startTransaction('typroc.handleTransaction');
   // eslint-disable-line
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
 
+  const metaData = transaction.metaData;
+  LoggerService.log(`traceParent in typroc: ${JSON.stringify(metaData.traceParent)}`);
+  const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
+    childOf: metaData.traceParent,
+  });
   const networkMap: NetworkMap = transaction.networkMap;
-  const metaData: MetaData = transaction.metaData;
   const ruleResult: RuleResult = transaction.ruleResult;
 
   const parsedTrans = transaction.transaction;
