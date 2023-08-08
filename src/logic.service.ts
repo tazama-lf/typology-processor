@@ -158,6 +158,7 @@ const executeRequest = async (
           span?.end();
         })
         .catch((error) => {
+          span?.end();
           LoggerService.error('Error while sending Typology result to CMS', error as Error);
         });
     }
@@ -170,6 +171,7 @@ const executeRequest = async (
         span?.end();
       })
       .catch((error) => {
+        span?.end();
         LoggerService.error('Error while sending Typology result to CADP', error as Error);
       });
 
