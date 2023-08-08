@@ -23,9 +23,9 @@ interface MockedSpan extends Omit<apm.Span, 'end'> {
 
 const getMockRequest = () => {
   const pacs002 = JSON.parse(
-      '{"TxTp":"pacs.002.001.12","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
-    )
-  
+    '{"TxTp":"pacs.002.001.12","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
+  );
+
   return pacs002;
 };
 
@@ -150,14 +150,14 @@ describe('Logic Service', () => {
       });
     });
 
-    responseSpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
+    jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
       return new Promise<void>((resolve, reject) => {
         cacheString = '';
         resolve();
       });
     });
 
-    jest.spyOn(server, 'handleResponse').mockImplementation(jest.fn());
+    responseSpy = jest.spyOn(server, 'handleResponse').mockImplementation(jest.fn());
   });
 
   describe('Handle Transaction', () => {
@@ -1002,24 +1002,23 @@ describe('Logic Service', () => {
 
     it('Should handle failure to post to CADP', async () => {
       const expectedReq = getMockRequest();
-      let test = false;
       const jNetworkMap = JSON.parse(
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1' };
 
-      responseSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
+      const errorSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
         throw new Error('Testing purposes');
       });
 
-      const result = await handleTransaction({
+      await handleTransaction({
         transaction: expectedReq,
         networkMap,
         ruleResult,
       });
 
-      expect(responseSpy).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
     });
   });
 });
