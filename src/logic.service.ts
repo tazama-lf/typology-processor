@@ -3,7 +3,7 @@
 import axios from 'axios';
 import apm from 'elastic-apm-node';
 import { databaseClient, databaseManager, server } from '.';
-import { CombinedResult, type CADPRequest, type TypologyResult } from './classes/cadp-request';
+import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
 import { type NetworkMap, type Typology } from './classes/network-map';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
