@@ -89,7 +89,6 @@ const executeRequest = async (
   channelHost: string,
   metaData: MetaData,
 ): Promise<CADPRequest> => {
-  const apmTransaction = apm.startSpan('request.execute');
   const startTime = process.hrtime.bigint();
 
   const typologyResult: TypologyResult = {
@@ -182,20 +181,22 @@ const executeRequest = async (
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
   } finally {
     LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
-    apmTransaction?.end();
     return cadpReqBody; // eslint-disable-line
   }
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const handleTransaction = async (transaction: any): Promise<void> => {
-  const apmTransaction = apm.startTransaction('typroc.handleTransaction');
   // eslint-disable-line
   let typologyCounter = 0;
   const toReturn: CombinedResult = new CombinedResult();
 
+  const metaData = transaction.metaData;
+  LoggerService.log(`traceParent in typroc: ${JSON.stringify(metaData?.traceParent)}`);
+  const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
+    childOf: metaData?.traceParent,
+  });
   const networkMap: NetworkMap = transaction.networkMap;
-  const metaData: MetaData = transaction.metaData;
   const ruleResult: RuleResult = transaction.ruleResult;
 
   const parsedTrans = transaction.transaction;
@@ -206,8 +207,11 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
       typologyCounter++;
       const channelHost = channel.host;
 
-      const spanCadpRes = apm.startSpan('cadproc.sendRec');
-      const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, metaData);
+      const spanCadpRes = apm.startSpan('cadproc.sendReq');
+      const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, {
+        ...metaData,
+        traceParent: apm.currentTraceparent,
+      });
       spanCadpRes?.end();
 
       toReturn.cadpRequests.push(cadpRes);
