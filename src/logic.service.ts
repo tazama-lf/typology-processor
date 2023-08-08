@@ -152,15 +152,14 @@ const executeRequest = async (
     // Interdiction
     // Send Result to CMS
     if (expression.threshold && typologyResultValue > expression.threshold) {
-      try {
-        span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
-        // LoggerService.log(`Sending to CADP ${config.cadpEndpoint} data: ${toSend}`);
-        await executePost(configuration.cmsEndpoint, cadpReqBody);
-      } catch (error) {
-        LoggerService.error('Error while sending Typology result to CMS', error as Error);
-      } finally {
-        span?.end();
-      }
+      span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
+      executePost(configuration.cmsEndpoint, cadpReqBody)
+        .then(() => {
+          span?.end();
+        })
+        .catch((error) => {
+          LoggerService.error('Error while sending Typology result to CMS', error as Error);
+        });
     }
 
     // Send CADP request with this Typology's result
@@ -190,8 +189,6 @@ const executeRequest = async (
 export const handleTransaction = async (transaction: any): Promise<void> => {
   // eslint-disable-line
   let typologyCounter = 0;
-  const toReturn: CombinedResult = new CombinedResult();
-
   const metaData = transaction.metaData;
   LoggerService.log(`traceParent in typroc: ${JSON.stringify(metaData?.traceParent)}`);
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
@@ -202,32 +199,32 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
 
   const parsedTrans = transaction.transaction;
 
+  const requests = [];
+
   for (const channel of networkMap.messages[0].channels) {
     for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
       typologyCounter++;
       const channelHost = channel.host;
 
-      const spanCadpRes = apm.startSpan('cadproc.sendReq');
-      const cadpRes = await executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, {
-        ...metaData,
-        traceParent: apm.currentTraceparent,
-      });
-      spanCadpRes?.end();
-
-      toReturn.cadpRequests.push(cadpRes);
+      requests.push(
+        executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, {
+          ...metaData,
+          traceParent: apm.currentTraceparent,
+        }),
+      );
     }
   }
 
-  // Response for CRSP - How many typologies have kicked off?
-  // Let CRSP know that we have finished processing this transaction
+  const spanCadpRes = apm.startSpan('cadproc.sendReq');
+  await Promise.all(requests);
+  spanCadpRes?.end();
+
   const transactionType = 'FIToFIPmtSts';
   const transactionID = parsedTrans[transactionType].GrpHdr.MsgId;
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
   LoggerService.log(`${result} for Rule ${ruleResult.id}`);
-  toReturn.typologyResult = result;
   apmTransaction?.end();
-  // return toReturn;
 };
 
 // Submit the score to the CADP/CMS
