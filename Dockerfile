@@ -64,7 +64,6 @@ ENV DATABASE_PASSWORD=
 ENV DATABASE_CERT_PATH=
 ENV COLLECTION_NAME=typologyExpression
 ENV APM_ACTIVE=true
-ENV APM_SERVICE_NAME=typology-processor
 ENV APM_URL=http://apm-server.development:8200
 ENV APM_SECRET_TOKEN=
 ENV LOGSTASH_HOST=logstash.development
