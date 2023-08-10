@@ -59,8 +59,12 @@ export class ArangoDBService {
     try {
       const cycles = await this.client.query(typologyExpressionQuery);
       const results = await cycles.batches.all();
-      if (results.length === 0) return;
+      if (results.length === 0) {
+        span?.end();
+        return;
+      }
       const typologyExpression: ITypologyExpression = results[0][0];
+      span?.end();
       cache.set(`${typology.id}_${typology.cfg}`, results[0][0], configuration.cacheTTL);
       return typologyExpression;
     } catch (error) {
