@@ -1,7 +1,7 @@
+import './apm';
 import { CreateDatabaseManager, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
 import { type IStartupService, StartupFactory } from '@frmscoe/frms-coe-startup-lib';
 import cluster from 'cluster';
-import apm from 'elastic-apm-node';
 import os from 'os';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
@@ -16,19 +16,6 @@ const databaseManagerConfig = {
     isCluster: configuration.redis.isCluster,
   },
 };
-
-/*
- * Initialize the APM Logging
- **/
-if (configuration.apm.active === 'true') {
-  apm.start({
-    serviceName: configuration.apm?.serviceName,
-    secretToken: configuration.apm?.secretToken,
-    serverUrl: configuration.apm?.url,
-    usePathAsTransactionName: true,
-    active: Boolean(configuration.apm?.active),
-  });
-}
 
 let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
 
