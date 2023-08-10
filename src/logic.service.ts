@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import axios from 'axios';
 import apm from 'elastic-apm-node';
+import axios from 'axios';
 import { databaseClient, databaseManager, server } from '.';
 import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
 import { type NetworkMap, type Typology } from './classes/network-map';
