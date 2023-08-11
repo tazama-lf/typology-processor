@@ -206,6 +206,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
 
   const requests = [];
 
+  const spanCadpRes = apm.startSpan('cadproc.sendReq');
   for (const channel of networkMap.messages[0].channels) {
     for (const typology of channel.typologies.filter((typo) => typo.rules.some((r) => r.id === ruleResult.id))) {
       // will loop through every Typology here
@@ -221,7 +222,6 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
     }
   }
 
-  const spanCadpRes = apm.startSpan('cadproc.sendReq');
   await Promise.all(requests);
   spanCadpRes?.end();
 
