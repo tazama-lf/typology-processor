@@ -28,10 +28,11 @@ export interface IConfig {
     user: string;
     collectionName: string;
     dbCertPath: string;
+    cacheEnabled?: boolean;
+    cacheTTL?: number;
   };
   cadpEndpoint: string;
   cmsEndpoint: string;
-  cacheTTL: number;
   logstash: {
     host: string;
     port: number;
@@ -54,7 +55,6 @@ export const configuration: IConfig = {
   },
   cadpEndpoint: process.env.CADP_ENDPOINT as string,
   cmsEndpoint: process.env.CMS_ENDPOINT as string,
-  cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
   db: {
     name: process.env.DATABASE_NAME as string,
     password: process.env.DATABASE_PASSWORD as string,
@@ -62,6 +62,8 @@ export const configuration: IConfig = {
     user: process.env.DATABASE_USER as string,
     collectionName: process.env.COLLECTION_NAME as string,
     dbCertPath: process.env.DATABASE_CERT_PATH as string,
+    cacheEnabled: process.env.CACHE_ENABLED === 'true',
+    cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
   },
   env: process.env.NODE_ENV as string,
   functionName: process.env.FUNCTION_NAME as string,

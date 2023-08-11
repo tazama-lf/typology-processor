@@ -1,4 +1,4 @@
-import { type NetworkMap } from './network-map';
+import { type NetworkMap } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { type Pain001V11Transaction } from './Pain.001.001.11/iPain001Transaction';
 import { type RuleResult } from './rule-result';
 
