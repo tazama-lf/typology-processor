@@ -139,7 +139,7 @@ const executeRequest = async (
     }
 
     const expression: ITypologyExpression = expressionRes;
-    let span = apm.startSpan(`[${transactionID}] eval.typology.expr`);
+    const span = apm.startSpan(`[${transactionID}] eval.typology.expr`);
     const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
 
@@ -152,32 +152,32 @@ const executeRequest = async (
     // Interdiction
     // Send Result to CMS
     if (expression.threshold && typologyResultValue > expression.threshold) {
-      span = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
+      const spanSendToTms = apm.startSpan(`[${transactionID}] Interdiction - Send Typology result to CMS`);
       executePost(configuration.cmsEndpoint, cadpReqBody)
         .then(() => {
-          span?.end();
+          spanSendToTms?.end();
         })
         .catch((error) => {
-          span?.end();
+          spanSendToTms?.end();
           LoggerService.error('Error while sending Typology result to CMS', error as Error);
         });
     }
 
     // Send CADP request with this Typology's result
-    span = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
+    const spanCadpr = apm.startSpan(`[${transactionID}] Send Typology result to CADP`);
     server
       .handleResponse({ ...cadpReqBody, metaData })
       .then(() => {
-        span?.end();
+        spanCadpr?.end();
       })
       .catch((error) => {
-        span?.end();
+        spanCadpr?.end();
         LoggerService.error('Error while sending Typology result to CADP', error as Error);
       });
 
-    span = apm.startSpan(`[${transactionID}] Delete Typology interim cache key`);
+    const spanDelete = apm.startSpan(`cache.delete.[${transactionID}].Typology interim cache key`);
     await databaseManager.deleteKey(cacheKey);
-    span?.end();
+    spanDelete?.end();
     return cadpReqBody;
   } catch (error) {
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
@@ -240,6 +240,7 @@ const executePost = async (endpoint: string, request: CADPRequest): Promise<void
   } catch (error) {
     LoggerService.error(`Error while sending request to ${endpoint ?? ''} with message: ${error}`);
     LoggerService.trace(`Axios Post Error Request:\r\n${JSON.stringify(request)}`);
+    span?.end();
     throw error;
   } finally {
     span?.end();
