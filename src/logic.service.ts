@@ -106,6 +106,7 @@ const executeRequest = async (
     transaction,
     networkMap,
   };
+  const spanExecReq = apm.startSpan(`${typologyResult.id}.exec.Req`);
 
   try {
     const transactionType = 'FIToFIPmtSts';
@@ -128,6 +129,7 @@ const executeRequest = async (
     if (ruleResults && ruleResults.length < typology.rules.length) {
       typologyResult.desc = typology.desc ? typology.desc : noDescription;
       typologyResult.prcgTm = calculateDuration(startTime);
+      spanExecReq?.end();
       return cadpReqBody;
     }
 
@@ -135,6 +137,7 @@ const executeRequest = async (
     if (!expressionRes) {
       LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
       typologyResult.prcgTm = calculateDuration(startTime);
+      spanExecReq?.end();
       return cadpReqBody;
     }
 
@@ -178,11 +181,11 @@ const executeRequest = async (
     const spanDelete = apm.startSpan(`cache.delete.[${transactionID}].Typology interim cache key`);
     await databaseManager.deleteKey(cacheKey);
     spanDelete?.end();
-    return cadpReqBody;
   } catch (error) {
     LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
   } finally {
     LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
+    spanExecReq?.end();
     return cadpReqBody; // eslint-disable-line
   }
 };
