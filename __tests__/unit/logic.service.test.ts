@@ -41,7 +41,7 @@ describe('Logic Service', () => {
     jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
       return new Promise((resolve, reject) => {
         if (typology.id === '028@1.0.0')
-          resolve({
+          resolve([[{
             cfg: '1.0.0',
             id: '028@1.0.0',
             desc: '',
@@ -86,9 +86,9 @@ describe('Logic Service', () => {
                 },
               },
             },
-          });
+          }]]);
         else
-          resolve({
+          resolve([[{
             cfg: '1.0.0',
             id: '029@1.0.0',
             desc: '',
@@ -133,7 +133,7 @@ describe('Logic Service', () => {
                 },
               },
             },
-          });
+          }]]);
       });
     });
 
@@ -199,7 +199,7 @@ describe('Logic Service', () => {
         .spyOn(databaseManager, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: unknown) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               //No desc element present in this config
@@ -235,12 +235,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: unknown) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '', // Empty string is found as a value of desc element
@@ -276,12 +276,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: 'Typology 029 Description from mock db config.', // Valid Value
@@ -317,7 +317,7 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         });
       jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
@@ -354,7 +354,7 @@ describe('Logic Service', () => {
         .spyOn(databaseManager, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -384,12 +384,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -425,12 +425,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -466,12 +466,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -507,7 +507,7 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         });
 
@@ -559,7 +559,7 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
-          resolve({
+          resolve([[{
             cfg: '1.0.0',
             id: '029@1.0.0',
             desc: '',
@@ -588,7 +588,7 @@ describe('Logic Service', () => {
               ],
               expression: undefined,
             },
-          }),
+          }]]),
         );
       });
       let test = false;
@@ -622,7 +622,7 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
-          resolve({
+          resolve([[{
             cfg: '1.0.0',
             id: '029@1.0.0',
             desc: '',
@@ -651,7 +651,7 @@ describe('Logic Service', () => {
               ],
               expression: undefined,
             },
-          }),
+          }]]),
         );
       });
       let test = false;
@@ -773,7 +773,7 @@ describe('Logic Service', () => {
         .spyOn(databaseManager, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -803,12 +803,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -844,12 +844,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -885,12 +885,12 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve({
+            resolve([[{
               cfg: '1.0.0',
               id: '029@1.0.0',
               desc: '',
@@ -926,7 +926,7 @@ describe('Logic Service', () => {
                   expression: undefined,
                 },
               },
-            }),
+            }]]),
           );
         });
 

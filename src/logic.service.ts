@@ -133,7 +133,7 @@ const executeRequest = async (
       return cadpReqBody;
     }
 
-    const expressionRes = await databaseManager.getTypologyExpression(typology);
+    const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
     if (!expressionRes) {
       LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
       typologyResult.prcgTm = calculateDuration(startTime);
@@ -141,7 +141,7 @@ const executeRequest = async (
       return cadpReqBody;
     }
 
-    const expression = expressionRes as ITypologyExpression;
+    const expression = expressionRes[0][0] as ITypologyExpression;
     const span = apm.startSpan(`[${transactionID}] eval.typology.expr`);
     const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
