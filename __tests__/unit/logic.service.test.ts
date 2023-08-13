@@ -527,7 +527,6 @@ describe('Logic Service', () => {
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult03: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
-      //const ruleResult04: RuleResult = { result: true, id: '004@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' };
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 

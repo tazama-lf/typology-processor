@@ -4,13 +4,12 @@ import apm from 'elastic-apm-node';
 import axios from 'axios';
 import { databaseManager, server } from '.';
 import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
-// import { type NetworkMap, type Typology } from './classes/network-map';
+import { type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { type MetaData } from './interfaces/metaData';
 import { LoggerService } from './logger.service';
-import { type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 
 const calculateDuration = (startTime: bigint): number => {
   const endTime = process.hrtime.bigint();
@@ -187,8 +186,8 @@ const executeRequest = async (
   } finally {
     LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
     spanExecReq?.end();
-    return cadpReqBody; // eslint-disable-line
   }
+  return cadpReqBody; // eslint-disable-line
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
