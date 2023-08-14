@@ -14,7 +14,7 @@ if (configuration.env !== 'development' && configuration.env !== 'test') {
       },
     },
     categories: {
-      default: { appenders: ['logstash'], level: 'info' },
+      default: { appenders: ['logstash'], level: 'warn' },
     },
   });
 }
