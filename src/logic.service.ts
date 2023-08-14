@@ -2,14 +2,13 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import apm from 'elastic-apm-node';
 import axios from 'axios';
-import { databaseManager, server } from '.';
+import { databaseManager, server, loggerService } from '.';
 import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
 import { type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { type MetaData } from './interfaces/metaData';
-import { LoggerService } from './logger.service';
 
 const calculateDuration = (startTime: bigint): number => {
   const endTime = process.hrtime.bigint();
@@ -135,7 +134,7 @@ const executeRequest = async (
 
     const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
     if (!expressionRes) {
-      LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
+      loggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
       typologyResult.prcgTm = calculateDuration(startTime);
       spanExecReq?.end();
       return cadpReqBody;
@@ -162,7 +161,7 @@ const executeRequest = async (
         })
         .catch((error) => {
           spanSendToTms?.end();
-          LoggerService.error('Error while sending Typology result to CMS', error as Error);
+          loggerService.error('Error while sending Typology result to CMS', error as Error);
         });
     }
 
@@ -175,16 +174,16 @@ const executeRequest = async (
       })
       .catch((error) => {
         spanCadpr?.end();
-        LoggerService.error('Error while sending Typology result to CADP', error as Error);
+        loggerService.error('Error while sending Typology result to CADP', error as Error);
       });
 
     const spanDelete = apm.startSpan(`cache.delete.[${transactionID}].Typology interim cache key`);
     await databaseManager.deleteKey(cacheKey);
     spanDelete?.end();
   } catch (error) {
-    LoggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
+    loggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
   } finally {
-    LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
+    loggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
     spanExecReq?.end();
   }
   return cadpReqBody; // eslint-disable-line
@@ -195,7 +194,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   // eslint-disable-line
   let typologyCounter = 0;
   const metaData = transaction.metaData;
-  LoggerService.log(`traceParent in typroc: ${JSON.stringify(metaData?.traceParent)}`);
+  loggerService.log(`traceParent in typroc: ${JSON.stringify(metaData?.traceParent)}`);
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
     childOf: metaData?.traceParent,
   });
@@ -228,7 +227,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const transactionType = 'FIToFIPmtSts';
   const transactionID = parsedTrans[transactionType].GrpHdr.MsgId;
   const result = `${typologyCounter} typologies initiated for transaction ID: ${transactionID}`;
-  LoggerService.log(`${result} for Rule ${ruleResult.id}`);
+  loggerService.log(`${result} for Rule ${ruleResult.id}`);
   apmTransaction?.end();
 };
 
@@ -238,11 +237,11 @@ const executePost = async (endpoint: string, request: CADPRequest): Promise<void
   try {
     const cadpRes = await axios.post(endpoint, request);
     if (cadpRes.status !== 200) {
-      LoggerService.error(`Response StatusCode != 200, request:\r\n${JSON.stringify(request)}`);
+      loggerService.error(`Response StatusCode != 200, request:\r\n${JSON.stringify(request)}`);
     }
   } catch (error) {
-    LoggerService.error(`Error while sending request to ${endpoint ?? ''} with message: ${error}`);
-    LoggerService.trace(`Axios Post Error Request:\r\n${JSON.stringify(request)}`);
+    loggerService.error(`Error while sending request to ${endpoint ?? ''} with message: ${error}`);
+    loggerService.trace(`Axios Post Error Request:\r\n${JSON.stringify(request)}`);
     span?.end();
     throw error;
   } finally {
