@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import apm from 'elastic-apm-node';
 import axios from 'axios';
-import { databaseClient, databaseManager, server } from '.';
+import { databaseManager, server } from '.';
 import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
-import { type NetworkMap, type Typology } from './classes/network-map';
+import { type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { RuleResult } from './classes/rule-result';
 import { configuration } from './config';
 import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
@@ -133,7 +133,7 @@ const executeRequest = async (
       return cadpReqBody;
     }
 
-    const expressionRes = await databaseClient.getTypologyExpression(typology);
+    const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
     if (!expressionRes) {
       LoggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
       typologyResult.prcgTm = calculateDuration(startTime);
@@ -141,7 +141,7 @@ const executeRequest = async (
       return cadpReqBody;
     }
 
-    const expression: ITypologyExpression = expressionRes;
+    const expression = expressionRes[0][0] as ITypologyExpression;
     const span = apm.startSpan(`[${transactionID}] eval.typology.expr`);
     const typologyResultValue = evaluateTypologyExpression(expression.rules, ruleResults, expression.expression);
     span?.end();
@@ -186,8 +186,8 @@ const executeRequest = async (
   } finally {
     LoggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
     spanExecReq?.end();
-    return cadpReqBody; // eslint-disable-line
   }
+  return cadpReqBody; // eslint-disable-line
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types

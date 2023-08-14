@@ -1,12 +1,11 @@
 import './apm';
 import { CreateDatabaseManager, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
-import { type IStartupService, StartupFactory } from '@frmscoe/frms-coe-startup-lib';
+import { StartupFactory, type IStartupService } from '@frmscoe/frms-coe-startup-lib';
 import cluster from 'cluster';
 import os from 'os';
 import { configuration } from './config';
 import { LoggerService } from './logger.service';
 import { handleTransaction } from './logic.service';
-import { Services } from './services';
 
 const databaseManagerConfig = {
   redisConfig: {
@@ -14,6 +13,15 @@ const databaseManagerConfig = {
     servers: configuration.redis.servers,
     password: configuration.redis.password,
     isCluster: configuration.redis.isCluster,
+  },
+  configuration: {
+    databaseName: configuration.db.name,
+    certPath: configuration.db.dbCertPath,
+    password: configuration.db.password,
+    url: configuration.db.url,
+    user: configuration.db.user,
+    localCacheEnabled: configuration.db.cacheEnabled,
+    localCacheTTL: configuration.db.cacheTTL,
   },
 };
 
@@ -23,8 +31,6 @@ export const dbinit = async (): Promise<void> => {
   databaseManager = await CreateDatabaseManager(databaseManagerConfig);
 };
 
-export const cache = Services.getCacheInstance();
-export const databaseClient = Services.getDatabaseInstance();
 export let server: IStartupService;
 
 export const runServer = async (): Promise<void> => {

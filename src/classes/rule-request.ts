@@ -1,5 +1,5 @@
 import { type Pain001V11Transaction } from './Pain.001.001.11/iPain001Transaction';
-import { type Typology } from './network-map';
+import { type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 
 export class RuleRequest {
   transaction: Pain001V11Transaction;
