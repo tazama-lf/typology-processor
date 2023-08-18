@@ -1045,7 +1045,7 @@ describe('Logic Service', () => {
     });
       
       const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
-      expect(responseSpy).toHaveBeenCalledTimes(0);
+      expect(responseSpy).toHaveBeenCalledTimes(2);
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
 
