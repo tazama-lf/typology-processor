@@ -87,7 +87,7 @@ const executeRequest = async (
   networkMap: NetworkMap,
   channelHost: string,
   metaData: MetaData,
-): Promise<CADPRequest> => {
+): Promise<void> => {
   const startTime = process.hrtime.bigint();
 
   const typologyResult: TypologyResult = {
@@ -111,9 +111,17 @@ const executeRequest = async (
     const transactionType = 'FIToFIPmtSts';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
-    const jruleResults = await databaseManager.addOneGetAll(`${cacheKey}`, JSON.stringify(ruleResult));
-    const ruleResults: RuleResult[] = [];
+    const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, JSON.stringify(ruleResult));
+    
+    if (jruleResultsCount && jruleResultsCount < typology.rules.length) {
+      typologyResult.desc = typology.desc ? typology.desc : noDescription;
+      typologyResult.prcgTm = calculateDuration(startTime);
+      spanExecReq?.end();
+      return;
+    }
 
+    const jruleResults = await databaseManager.getMembers(`${cacheKey}`);
+    const ruleResults: RuleResult[] = [];
     // Get cache from Redis if we have
     if (jruleResults && jruleResults.length > 0) {
       for (const jruleResult of jruleResults) {
@@ -122,22 +130,14 @@ const executeRequest = async (
         ruleResults.push(ruleRes);
       }
     }
-
     cadpReqBody.typologyResult.ruleResults = ruleResults;
-
-    if (ruleResults && ruleResults.length < typology.rules.length) {
-      typologyResult.desc = typology.desc ? typology.desc : noDescription;
-      typologyResult.prcgTm = calculateDuration(startTime);
-      spanExecReq?.end();
-      return cadpReqBody;
-    }
 
     const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
     if (!expressionRes) {
       loggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
       typologyResult.prcgTm = calculateDuration(startTime);
       spanExecReq?.end();
-      return cadpReqBody;
+      return;
     }
 
     const expression = expressionRes[0][0] as ITypologyExpression;
@@ -186,7 +186,7 @@ const executeRequest = async (
     loggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
     spanExecReq?.end();
   }
-  return cadpReqBody; // eslint-disable-line
+  return; // eslint-disable-line
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
