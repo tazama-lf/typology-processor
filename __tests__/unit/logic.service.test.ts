@@ -144,6 +144,19 @@ describe('Logic Service', () => {
       });
     });
 
+    jest.spyOn(databaseManager, 'getMembers').mockImplementation((key: string): Promise<string[]> => {
+      return new Promise<string[]>((resolve, reject) => {
+        resolve([cacheString]);
+      });
+    });
+
+    jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((key: string, value: string): Promise<number> => {
+      return new Promise<number>((resolve, reject) => {
+        cacheString = value;
+        resolve(1);
+      });
+    });
+
     jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
       return new Promise<void>((resolve, reject) => {
         cacheString = '';
