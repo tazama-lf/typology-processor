@@ -14,7 +14,6 @@ export interface IConfig {
   maxCPU: number;
   env: string;
   functionName: string;
-  port: number;
   apm: {
     secretToken: string;
     serviceName: string;
@@ -73,7 +72,6 @@ export const configuration: IConfig = {
     logstashPort: parseInt(process.env.LOGSTASH_PORT ?? '0', 10),
     logstashLevel: (process.env.LOGSTASH_LEVEL as string) || 'info',
   },
-  port: parseInt(process.env.PORT!, 10) || 3000,
   redis: {
     db: parseInt(process.env.REDIS_DB!, 10) || 0,
     servers: JSON.parse((process.env.REDIS_SERVERS as string) || '[{"hostname": "127.0.0.1", "port":6379}]'),
