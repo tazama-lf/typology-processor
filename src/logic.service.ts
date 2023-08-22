@@ -133,7 +133,7 @@ const executeRequest = async (
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
-    if (!expressionRes) {
+    if (!expressionRes?.[0]?.[0]) {
       loggerService.warn(`No Typology Expression found for Typology ${typology.id}@${typology.cfg}`);
       typologyResult.prcgTm = calculateDuration(startTime);
       spanExecReq?.end();
