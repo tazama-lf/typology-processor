@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import apm from 'elastic-apm-node';
+import apm from './apm';
 import axios from 'axios';
 import { databaseManager, server, loggerService } from '.';
 import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
@@ -112,7 +112,7 @@ const executeRequest = async (
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
     const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, JSON.stringify(ruleResult));
-    
+
     if (jruleResultsCount && jruleResultsCount < typology.rules.length) {
       typologyResult.desc = typology.desc ? typology.desc : noDescription;
       typologyResult.prcgTm = calculateDuration(startTime);
@@ -215,7 +215,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
       requests.push(
         executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, {
           ...metaData,
-          traceParent: apm.currentTraceparent,
+          traceParent: apm.getCurrentTraceparent(),
         }),
       );
     }
