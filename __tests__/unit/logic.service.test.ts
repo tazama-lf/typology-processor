@@ -1,24 +1,11 @@
 /* eslint-disable */
-import apm from 'elastic-apm-node';
-import { databaseManager, runServer, server } from '../../src/index';
-import { NetworkMap, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { NetworkMap, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import axios from 'axios';
-import { RuleResult } from '../../src/classes/rule-result';
+import { databaseManager, runServer, server } from '../../src/index';
 import { handleTransaction } from '../../src/logic.service';
-
-jest.mock('elastic-apm-node');
-const mockApm = apm as jest.Mocked<typeof apm>;
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-interface MockedSpan extends Omit<apm.Span, 'end'> {
-  end: jest.Mock;
-}
-
-(mockApm.startSpan as jest.MockedFunction<typeof mockApm.startSpan>).mockReturnValue({
-  end: jest.fn(),
-} as MockedSpan);
 
 const getMockRequest = () => {
   const pacs002 = JSON.parse(
@@ -41,99 +28,107 @@ describe('Logic Service', () => {
     jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
       return new Promise((resolve, reject) => {
         if (typology.id === '028@1.0.0')
-          resolve([[{
-            cfg: '1.0.0',
-            id: '028@1.0.0',
-            desc: '',
-            threshold: 50,
-            rules: [
-              { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
-              { id: '004@1.0.0', cfg: '1.0.0', ref: '.01', true: 50, false: 2 },
-            ],
-            expression: {
-              operator: '+',
-              terms: [
-                { id: '003@1.0.0', cfg: '1.0.0' },
-                { id: '004@1.0.0', cfg: '1.0.0' },
-              ],
-              expression: {
-                operator: '-',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '028@1.0.0',
+                desc: '',
+                threshold: 50,
+                rules: [
+                  { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+                  { id: '004@1.0.0', cfg: '1.0.0', ref: '.01', true: 50, false: 2 },
                 ],
                 expression: {
-                  operator: '*',
+                  operator: '+',
                   terms: [
                     { id: '003@1.0.0', cfg: '1.0.0' },
                     { id: '004@1.0.0', cfg: '1.0.0' },
                   ],
                   expression: {
-                    operator: '/',
+                    operator: '-',
                     terms: [
                       { id: '003@1.0.0', cfg: '1.0.0' },
                       { id: '004@1.0.0', cfg: '1.0.0' },
                     ],
                     expression: {
-                      operator: '/',
+                      operator: '*',
                       terms: [
                         { id: '003@1.0.0', cfg: '1.0.0' },
                         { id: '004@1.0.0', cfg: '1.0.0' },
                       ],
-                      expression: undefined,
+                      expression: {
+                        operator: '/',
+                        terms: [
+                          { id: '003@1.0.0', cfg: '1.0.0' },
+                          { id: '004@1.0.0', cfg: '1.0.0' },
+                        ],
+                        expression: {
+                          operator: '/',
+                          terms: [
+                            { id: '003@1.0.0', cfg: '1.0.0' },
+                            { id: '004@1.0.0', cfg: '1.0.0' },
+                          ],
+                          expression: undefined,
+                        },
+                      },
                     },
                   },
                 },
               },
-            },
-          }]]);
+            ],
+          ]);
         else
-          resolve([[{
-            cfg: '1.0.0',
-            id: '029@1.0.0',
-            desc: '',
-            threshold: 50,
-            rules: [
-              { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
-              { id: '004@1.0.0', cfg: '1.0.0', ref: '.01', true: 50, false: 2 },
-            ],
-            expression: {
-              operator: '+',
-              terms: [
-                { id: '003@1.0.0', cfg: '1.0.0' },
-                { id: '004@1.0.0', cfg: '1.0.0' },
-              ],
-              expression: {
-                operator: '-',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '029@1.0.0',
+                desc: '',
+                threshold: 50,
+                rules: [
+                  { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+                  { id: '004@1.0.0', cfg: '1.0.0', ref: '.01', true: 50, false: 2 },
                 ],
                 expression: {
-                  operator: '*',
+                  operator: '+',
                   terms: [
                     { id: '003@1.0.0', cfg: '1.0.0' },
                     { id: '004@1.0.0', cfg: '1.0.0' },
                   ],
                   expression: {
-                    operator: '/',
+                    operator: '-',
                     terms: [
                       { id: '003@1.0.0', cfg: '1.0.0' },
                       { id: '004@1.0.0', cfg: '1.0.0' },
                     ],
                     expression: {
-                      operator: '/',
+                      operator: '*',
                       terms: [
                         { id: '003@1.0.0', cfg: '1.0.0' },
                         { id: '004@1.0.0', cfg: '1.0.0' },
                       ],
-                      expression: undefined,
+                      expression: {
+                        operator: '/',
+                        terms: [
+                          { id: '003@1.0.0', cfg: '1.0.0' },
+                          { id: '004@1.0.0', cfg: '1.0.0' },
+                        ],
+                        expression: {
+                          operator: '/',
+                          terms: [
+                            { id: '003@1.0.0', cfg: '1.0.0' },
+                            { id: '004@1.0.0', cfg: '1.0.0' },
+                          ],
+                          expression: undefined,
+                        },
+                      },
                     },
                   },
                 },
               },
-            },
-          }]]);
+            ],
+          ]);
       });
     });
 
@@ -179,23 +174,21 @@ describe('Logic Service', () => {
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
         return new Promise((resolve, reject) => {
-            resolve([[{
-              cfg: '1.0.0',
-              id: '028@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
-                { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }
-              ],
-              expression: {
-                operator: '+',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                ],
-               
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '028@1.0.0',
+                desc: '',
+                threshold: 50,
+                rules: [{ id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }],
+                expression: {
+                  operator: '+',
+                  terms: [{ id: '003@1.0.0', cfg: '1.0.0' }],
+                },
               },
-            }]]);
-          
+            ],
+          ]);
         });
       });
 
@@ -234,125 +227,137 @@ describe('Logic Service', () => {
         .spyOn(databaseManager, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: unknown) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              //No desc element present in this config
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  //No desc element present in this config
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '-',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '-',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '-',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '-',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: unknown) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '', // Empty string is found as a value of desc element
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '', // Empty string is found as a value of desc element
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '+',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '/',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '+',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '/',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: 'Typology 029 Description from mock db config.', // Valid Value
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: 'Typology 029 Description from mock db config.', // Valid Value
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '*',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '*',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '*',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '*',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         });
       jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
@@ -389,160 +394,176 @@ describe('Logic Service', () => {
         .spyOn(databaseManager, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
-                { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+            resolve([
+              [
                 {
-                  id: '004@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '-',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '-',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '-',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '-',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '+',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '/',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '+',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '/',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '*',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '*',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '*',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '*',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '/',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '+',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '/',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '+',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         });
 
@@ -594,36 +615,40 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
-          resolve([[{
-            cfg: '1.0.0',
-            id: '029@1.0.0',
-            desc: '',
-            threshold: 50,
-            rules: [
+          resolve([
+            [
               {
-                id: '003@1.0.0',
                 cfg: '1.0.0',
-                ref: '.01',
-                true: 100,
-                false: 2,
-              },
-              {
-                id: '004@1.0.0',
-                cfg: '1.0.0',
-                ref: '.01',
-                true: 50,
-                false: 2,
+                id: '029@1.0.0',
+                desc: '',
+                threshold: 50,
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    true: 100,
+                    false: 2,
+                  },
+                  {
+                    id: '004@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    true: 50,
+                    false: 2,
+                  },
+                ],
+                expression: {
+                  operator: '/',
+                  terms: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: '004@1.0.0', cfg: '1.0.0' },
+                  ],
+                  expression: undefined,
+                },
               },
             ],
-            expression: {
-              operator: '/',
-              terms: [
-                { id: '003@1.0.0', cfg: '1.0.0' },
-                { id: '004@1.0.0', cfg: '1.0.0' },
-              ],
-              expression: undefined,
-            },
-          }]]),
+          ]),
         );
       });
       let test = false;
@@ -657,36 +682,40 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
         return new Promise((resolve, reject) =>
-          resolve([[{
-            cfg: '1.0.0',
-            id: '029@1.0.0',
-            desc: '',
-            threshold: 50,
-            rules: [
+          resolve([
+            [
               {
-                id: '003@1.0.0',
                 cfg: '1.0.0',
-                ref: '.01',
-                true: 100,
-                false: 2,
-              },
-              {
-                id: '004@1.0.0',
-                cfg: '1.0.0',
-                ref: '.01',
-                true: 50,
-                false: 2,
+                id: '029@1.0.0',
+                desc: '',
+                threshold: 50,
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    true: 100,
+                    false: 2,
+                  },
+                  {
+                    id: '004@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    true: 50,
+                    false: 2,
+                  },
+                ],
+                expression: {
+                  operator: '/',
+                  terms: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: '004@1.0.0', cfg: '1.0.0' },
+                  ],
+                  expression: undefined,
+                },
               },
             ],
-            expression: {
-              operator: '/',
-              terms: [
-                { id: '003@1.0.0', cfg: '1.0.0' },
-                { id: '004@1.0.0', cfg: '1.0.0' },
-              ],
-              expression: undefined,
-            },
-          }]]),
+          ]),
         );
       });
       let test = false;
@@ -808,160 +837,176 @@ describe('Logic Service', () => {
         .spyOn(databaseManager, 'getTypologyExpression')
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
-                { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+            resolve([
+              [
                 {
-                  id: '004@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '-',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '-',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '-',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '-',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '+',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '/',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '+',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '/',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '*',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '*',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '*',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '*',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         })
         .mockImplementationOnce(async (typology: Typology) => {
           return new Promise((resolve, reject) =>
-            resolve([[{
-              cfg: '1.0.0',
-              id: '029@1.0.0',
-              desc: '',
-              threshold: 50,
-              rules: [
+            resolve([
+              [
                 {
-                  id: '003@1.0.0',
                   cfg: '1.0.0',
-                  ref: '.01',
-                  true: 100,
-                  false: 2,
-                },
-                {
-                  id: '004@1.0.0',
-                  cfg: '1.0.0',
-                  ref: '.01',
-                  true: 50,
-                  false: 2,
+                  id: '029@1.0.0',
+                  desc: '',
+                  threshold: 50,
+                  rules: [
+                    {
+                      id: '003@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 100,
+                      false: 2,
+                    },
+                    {
+                      id: '004@1.0.0',
+                      cfg: '1.0.0',
+                      ref: '.01',
+                      true: 50,
+                      false: 2,
+                    },
+                  ],
+                  expression: {
+                    operator: '/',
+                    terms: [
+                      { id: '003@1.0.0', cfg: '1.0.0' },
+                      { id: '004@1.0.0', cfg: '1.0.0' },
+                    ],
+                    expression: {
+                      operator: '+',
+                      terms: [
+                        { id: '003@1.0.0', cfg: '1.0.0' },
+                        { id: '004@1.0.0', cfg: '1.0.0' },
+                      ],
+                      expression: undefined,
+                    },
+                  },
                 },
               ],
-              expression: {
-                operator: '/',
-                terms: [
-                  { id: '003@1.0.0', cfg: '1.0.0' },
-                  { id: '004@1.0.0', cfg: '1.0.0' },
-                ],
-                expression: {
-                  operator: '+',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: undefined,
-                },
-              },
-            }]]),
+            ]),
           );
         });
 
@@ -1021,29 +1066,32 @@ describe('Logic Service', () => {
 
       jest.spyOn(databaseManager, 'getMembers').mockImplementation((key: string): Promise<string[]> => {
         return new Promise<string[]>((resolve, reject) => {
-          resolve([JSON.stringify({
-            result: true,
-            id: '003@1.0.0',
-            cfg: '1.0.0',
-            reason: 'reason',
-            subRuleRef: '.01',
-          }), JSON.stringify({
-            result: true,
-            id: '004@1.0.0',
-            cfg: '1.0.0',
-            reason: 'reason',
-            subRuleRef: '.01',
-          })]);
+          resolve([
+            JSON.stringify({
+              result: true,
+              id: '003@1.0.0',
+              cfg: '1.0.0',
+              reason: 'reason',
+              subRuleRef: '.01',
+            }),
+            JSON.stringify({
+              result: true,
+              id: '004@1.0.0',
+              cfg: '1.0.0',
+              reason: 'reason',
+              subRuleRef: '.01',
+            }),
+          ]);
         });
       });
 
-    jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((key: string, value: string): Promise<number> => {
-      return new Promise<number>((resolve, reject) => {
-        cacheString = value;
-        resolve(2);
+      jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((key: string, value: string): Promise<number> => {
+        return new Promise<number>((resolve, reject) => {
+          cacheString = value;
+          resolve(2);
+        });
       });
-    });
-      
+
       const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       expect(responseSpy).toHaveBeenCalledTimes(2);
 
