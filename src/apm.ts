@@ -8,7 +8,7 @@ const apm = new Apm({
   secretToken: configuration.apm?.secretToken,
   serverUrl: configuration.apm?.url,
   usePathAsTransactionName: true,
-  active: configuration.apm?.active.toLowerCase() === 'true',
+  active: configuration.apm?.active?.toLowerCase() === 'true',
 });
 
 export default apm;
