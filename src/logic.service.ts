@@ -3,9 +3,9 @@
 import apm from './apm';
 import axios from 'axios';
 import { databaseManager, server, loggerService } from '.';
-import { type CADPRequest, type TypologyResult } from './classes/cadp-request';
-import { type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
-import { RuleResult } from './classes/rule-result';
+import { RuleResult, type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
+import { type CADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/CADPRequest';
 import { configuration } from './config';
 import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { type MetaData } from './interfaces/metaData';
