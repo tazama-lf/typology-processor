@@ -124,9 +124,9 @@ const executeRequest = async (
     const ruleResults: RuleResult[] = [];
     // Get cache from Redis if we have
     if (jruleResults && jruleResults.length > 0) {
-      for (const jruleResult of jruleResults) {
+      for (let i = 0; i < jruleResults.length; i++) {
         const ruleRes: RuleResult = new RuleResult();
-        Object.assign(ruleRes, JSON.parse(jruleResult));
+        Object.assign(ruleRes, JSON.parse(jruleResults[i]));
         ruleResults.push(ruleRes);
       }
     }
