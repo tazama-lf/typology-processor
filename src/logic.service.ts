@@ -83,7 +83,8 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
 const executeRequest = async (
   transaction: any, // eslint-disable-line
   typology: Typology,
-  ruleResult: RuleResult,
+  ruleResult: string,
+  ruleId: string,
   networkMap: NetworkMap,
   channelHost: string,
   metaData: MetaData,
@@ -111,7 +112,7 @@ const executeRequest = async (
     const transactionType = 'FIToFIPmtSts';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
-    const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, JSON.stringify(ruleResult));
+    const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, ruleResult);
 
     if (jruleResultsCount && jruleResultsCount < typology.rules.length) {
       typologyResult.desc = typology.desc ? typology.desc : noDescription;
@@ -183,7 +184,7 @@ const executeRequest = async (
   } catch (error) {
     loggerService.error(`Failed to process Typology ${typology.id} request`, error as Error, 'executeRequest');
   } finally {
-    loggerService.log(`Concluded processing of Rule ${ruleResult.id}`);
+    loggerService.log(`Concluded processing of Rule ${ruleId}`);
     spanExecReq?.end();
   }
   return; // eslint-disable-line
@@ -200,6 +201,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   });
   const networkMap: NetworkMap = transaction.networkMap;
   const ruleResult: RuleResult = transaction.ruleResult;
+  const ruleResultStr = JSON.stringify(ruleResult);
 
   const parsedTrans = transaction.transaction;
 
@@ -213,7 +215,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
       const channelHost = channel.host;
 
       requests.push(
-        executeRequest(parsedTrans, typology, ruleResult, networkMap, channelHost, {
+        executeRequest(parsedTrans, typology, ruleResultStr, ruleResult.id, networkMap, channelHost, {
           ...metaData,
           traceParent: apm.getCurrentTraceparent(),
         }),
