@@ -229,6 +229,44 @@ describe('Logic Service', () => {
       expect(responseSpy).toHaveBeenCalled();
     });
 
+    it('should handle successful handle axio error code response', async () => {
+      const expectedReq = getMockRequest();
+      let test = false;
+      const jNetworkMap = JSON.parse(
+        '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
+      );
+      const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
+      const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) => {
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '028@1.0.0',
+                desc: '',
+                threshold: 50,
+                rules: [{ id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }],
+                expression: {
+                  operator: '+',
+                  terms: [{ id: '003@1.0.0', cfg: '1.0.0' }],
+                },
+              },
+            ],
+          ]);
+        });
+      });
+      mockedAxios.post.mockResolvedValue({ status: 401 });
+
+      const result = await handleTransaction({
+        transaction: expectedReq,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalled();
+    });
+
     it('should handle description element from config in 3 different states', async () => {
       const expectedReq = getMockRequest();
       jest
