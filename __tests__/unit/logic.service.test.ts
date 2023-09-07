@@ -20,13 +20,14 @@ beforeAll(async () => {
 });
 
 let cacheString = '';
+let weight: number;
 
 describe('Logic Service', () => {
   let responseSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         if (typology.id === '028@1.0.0')
           resolve([
             [
@@ -132,38 +133,44 @@ describe('Logic Service', () => {
       });
     });
 
-    jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
-      return new Promise<string[]>((resolve, reject) => {
+    jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
+      return new Promise<string[]>((resolve, _reject) => {
         cacheString = value;
         resolve([cacheString]);
       });
     });
 
-    jest.spyOn(databaseManager, 'getMembers').mockImplementation((key: string): Promise<string[]> => {
-      return new Promise<string[]>((resolve, reject) => {
+    jest.spyOn(databaseManager, 'getMembers').mockImplementation((_key: string): Promise<string[]> => {
+      return new Promise<string[]>((resolve, _reject) => {
         resolve([cacheString]);
       });
     });
 
-    jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((key: string, value: string): Promise<number> => {
-      return new Promise<number>((resolve, reject) => {
+    jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: string): Promise<number> => {
+      return new Promise<number>((resolve, _reject) => {
         cacheString = value;
         resolve(1);
       });
     });
 
-    jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
-      return new Promise<void>((resolve, reject) => {
+    jest.spyOn(databaseManager, 'deleteKey').mockImplementation((_key: string): Promise<void> => {
+      return new Promise<void>((resolve, _reject) => {
         cacheString = '';
         resolve();
       });
     });
 
-    responseSpy = jest.spyOn(server, 'handleResponse').mockImplementation(jest.fn());
+    responseSpy = jest.spyOn(server, 'handleResponse').mockImplementation((response: any, _subject: string[] | undefined): Promise<any> => {
+      return new Promise<any>((resolve, _reject) => {
+        cacheString = '';
+        resolve(response as any);
+        weight = (response?.typologyResult?.ruleResults[0].wght as any) ?? 0;
+      });
+    });
   });
 
   describe('Handle Transaction', () => {
-    it('should handle successful request', async () => {
+    it('should handle successful request, and should have weight of 100', async () => {
       const expectedReq = getMockRequest();
       let test = false;
       const jNetworkMap = JSON.parse(
@@ -172,8 +179,8 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
 
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
-        return new Promise((resolve, reject) => {
+      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) => {
           resolve([
             [
               {
@@ -199,6 +206,7 @@ describe('Logic Service', () => {
       });
 
       expect(responseSpy).toHaveBeenCalled();
+      expect(weight).toEqual(100);
     });
 
     it('should handle successful request, wrong status code', async () => {
@@ -225,8 +233,8 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest
         .spyOn(databaseManager, 'getTypologyExpression')
-        .mockImplementationOnce(async (typology: unknown) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: unknown) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -270,8 +278,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: unknown) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: unknown) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -315,8 +323,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -360,8 +368,8 @@ describe('Logic Service', () => {
             ]),
           );
         });
-      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
-        return new Promise<string[]>((resolve, reject) => {
+      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, _reject) => {
           cacheString = value;
           resolve([
             '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
@@ -392,8 +400,8 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest
         .spyOn(databaseManager, 'getTypologyExpression')
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -431,8 +439,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -476,8 +484,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -521,8 +529,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -567,8 +575,8 @@ describe('Logic Service', () => {
           );
         });
 
-      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
-        return new Promise<string[]>((resolve, reject) => {
+      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, _reject) => {
           cacheString = value;
           resolve([
             '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
@@ -589,7 +597,7 @@ describe('Logic Service', () => {
       await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap });
 
       mockedAxios.post.mockReturnValue(
-        new Promise((resolve, reject) => {
+        new Promise((resolve, _reject) => {
           resolve({ status: 400 });
         }),
       );
@@ -613,8 +621,8 @@ describe('Logic Service', () => {
 
     it('should handle successful request, division operator defaults', async () => {
       const expectedReq = getMockRequest();
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
-        return new Promise((resolve, reject) =>
+      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) =>
           resolve([
             [
               {
@@ -680,8 +688,8 @@ describe('Logic Service', () => {
 
     it('should handle successful request, typology evaluation defaults', async () => {
       const expectedReq = getMockRequest();
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (typology: Typology) => {
-        return new Promise((resolve, reject) =>
+      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementationOnce(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) =>
           resolve([
             [
               {
@@ -791,8 +799,8 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
 
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockRejectedValue(async (typology: Typology) => {
-        return new Promise((resolve, reject) => {
+      jest.spyOn(databaseManager, 'getTypologyExpression').mockRejectedValue(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) => {
           resolve(new Error('Test'));
         });
       });
@@ -813,15 +821,15 @@ describe('Logic Service', () => {
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
       const ruleResult: RuleResult = { result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1', desc: '' };
 
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (typology: Typology) => {
-        return new Promise((resolve, reject) => {
+      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) => {
           resolve(undefined);
         });
       });
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
       mockedAxios.post.mockReturnValue(
-        new Promise((resolve, reject) => {
+        new Promise((resolve, _reject) => {
           resolve({ status: 400 });
         }),
       );
@@ -836,8 +844,8 @@ describe('Logic Service', () => {
       const expectedReq = getMockRequest();
       jest
         .spyOn(databaseManager, 'getTypologyExpression')
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -875,8 +883,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -920,8 +928,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -965,8 +973,8 @@ describe('Logic Service', () => {
             ]),
           );
         })
-        .mockImplementationOnce(async (typology: Typology) => {
-          return new Promise((resolve, reject) =>
+        .mockImplementationOnce(async (_typology: Typology) => {
+          return new Promise((resolve, _reject) =>
             resolve([
               [
                 {
@@ -1011,8 +1019,8 @@ describe('Logic Service', () => {
           );
         });
 
-      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((key: string, value: string): Promise<string[]> => {
-        return new Promise<string[]>((resolve, reject) => {
+      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, _reject) => {
           cacheString = value;
           resolve([
             '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
@@ -1066,8 +1074,8 @@ describe('Logic Service', () => {
         desc: '',
       };
 
-      jest.spyOn(databaseManager, 'getMembers').mockImplementation((key: string): Promise<string[]> => {
-        return new Promise<string[]>((resolve, reject) => {
+      jest.spyOn(databaseManager, 'getMembers').mockImplementation((_key: string): Promise<string[]> => {
+        return new Promise<string[]>((resolve, _reject) => {
           resolve([
             JSON.stringify({
               result: true,
@@ -1087,8 +1095,8 @@ describe('Logic Service', () => {
         });
       });
 
-      jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((key: string, value: string): Promise<number> => {
-        return new Promise<number>((resolve, reject) => {
+      jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: string): Promise<number> => {
+        return new Promise<number>((resolve, _reject) => {
           cacheString = value;
           resolve(2);
         });
