@@ -42,7 +42,7 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
             rv.ref === ruleResult.subRuleRef,
         )?.false ?? 0.0,
       );
-
+    ruleResult.wght = ruleVal;
     switch (typologyExpression.operator) {
       case '+':
         toReturn += ruleVal;
