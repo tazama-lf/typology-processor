@@ -5,6 +5,8 @@ import cluster from 'cluster';
 import os from 'os';
 import { configuration } from './config';
 import { handleTransaction } from './logic.service';
+import fastJson from 'fast-json-stringify';
+import { messageSchema } from '@frmscoe/frms-coe-lib/lib/helpers/schemas/message';
 
 const databaseManagerConfig = {
   redisConfig: {
@@ -30,6 +32,11 @@ let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
 export const dbinit = async (): Promise<void> => {
   databaseManager = await CreateDatabaseManager(databaseManagerConfig);
 };
+
+const serialiseRuleResult = fastJson({
+  title: 'Rule Result Schema',
+  ...messageSchema.definitions.ruleResult,
+});
 
 export let server: IStartupService;
 
@@ -86,4 +93,4 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   loggerService.log(`Worker ${process.pid} started`);
 }
 
-export { databaseManager };
+export { databaseManager, serialiseRuleResult };
