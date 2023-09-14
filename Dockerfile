@@ -11,8 +11,6 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY .npmrc ./
 ARG GH_TOKEN
-RUN npm config set '@frmscoe:registry' https://npm.pkg.github.com
-RUN npm config set //npm.pkg.github.com/:_authToken ${GH_TOKEN}
 
 RUN npm ci --ignore-scripts
 RUN npm run build
@@ -24,8 +22,6 @@ LABEL stage=pre-prod
 COPY package*.json ./
 COPY .npmrc ./
 ARG GH_TOKEN
-RUN npm config set '@frmscoe:registry' https://npm.pkg.github.com
-RUN npm config set //npm.pkg.github.com/:_authToken ${GH_TOKEN}
 RUN npm ci --omit=dev --ignore-scripts
 
 FROM ${RUN_IMAGE} AS run-env
