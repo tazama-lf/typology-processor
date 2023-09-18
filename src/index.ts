@@ -33,9 +33,9 @@ export const dbinit = async (): Promise<void> => {
   databaseManager = await CreateDatabaseManager(databaseManagerConfig);
 };
 
-const serialiseRuleResult = fastJson({
-  title: 'Rule Result Schema',
-  ...messageSchema.definitions.ruleResult,
+const serialiseMessage = fastJson({
+  title: 'Message Schema',
+  ...messageSchema.definitions,
 });
 
 export let server: IStartupService;
@@ -93,4 +93,4 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   loggerService.log(`Worker ${process.pid} started`);
 }
 
-export { databaseManager, serialiseRuleResult };
+export { databaseManager, serialiseMessage };
