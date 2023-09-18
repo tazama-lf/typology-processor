@@ -177,7 +177,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
@@ -216,7 +224,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       mockedAxios.post.mockResolvedValue({ status: 201 });
 
@@ -236,7 +252,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
           resolve([
@@ -421,7 +445,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult03: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult03: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       //Case of no element of desc and element found with empty string (Negetive Testing)
       let result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult: ruleResult03 });
@@ -628,7 +660,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult03: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult03: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
@@ -702,7 +742,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'test123', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: false,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: 'test123',
+        desc: '',
+      };
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
 
@@ -769,7 +817,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: false,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
 
@@ -820,7 +876,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: false,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       expect(responseSpy).toHaveBeenCalled();
@@ -836,7 +900,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: false,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockRejectedValue(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
@@ -858,7 +930,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: false, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: 'ref1', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: false,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: 'ref1',
+        desc: '',
+      };
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
@@ -1073,8 +1153,24 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult03: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
-      const ruleResult04: RuleResult = { prcgTm: 0, result: true, id: '004@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult03: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
+      const ruleResult04: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       mockedAxios.post.mockRejectedValue(new Error('Test Failure Path'));
 
@@ -1118,18 +1214,10 @@ describe('Logic Service', () => {
         return new Promise<string[]>((resolve, _reject) => {
           resolve([
             JSON.stringify({
-              result: true,
-              id: '003@1.0.0',
-              cfg: '1.0.0',
-              reason: 'reason',
-              subRuleRef: '.01',
+              ruleResult: { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' },
             }),
             JSON.stringify({
-              result: true,
-              id: '004@1.0.0',
-              cfg: '1.0.0',
-              reason: 'reason',
-              subRuleRef: '.01',
+              ruleResult: { result: true, id: '004@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' },
             }),
           ]);
         });
@@ -1158,7 +1246,15 @@ describe('Logic Service', () => {
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"028@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"029@1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
       const networkMap: NetworkMap = Object.assign(new NetworkMap(), jNetworkMap);
-      const ruleResult: RuleResult = { prcgTm: 0, result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01', desc: '' };
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
 
       const errorSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
         throw new Error('Testing purposes');

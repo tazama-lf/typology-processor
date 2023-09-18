@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import apm from './apm';
 import axios from 'axios';
-import { databaseManager, server, loggerService, serialiseRuleResult } from '.';
+import { databaseManager, server, loggerService, serialiseMessage } from '.';
 import { RuleResult, type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import { type CADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/CADPRequest';
@@ -127,7 +127,7 @@ const executeRequest = async (
     if (jruleResults && jruleResults.length > 0) {
       for (const jruleResult of jruleResults) {
         const ruleRes: RuleResult = new RuleResult();
-        Object.assign(ruleRes, JSON.parse(jruleResult));
+        Object.assign(ruleRes, JSON.parse(jruleResult).ruleResult);
         ruleResults.push(ruleRes);
       }
     }
@@ -201,7 +201,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   });
   const networkMap: NetworkMap = transaction.networkMap;
   const ruleResult: RuleResult = transaction.ruleResult;
-  const ruleResultStr = serialiseRuleResult(ruleResult);
+  const ruleResultStr = serialiseMessage({ ruleResult });
 
   const parsedTrans = transaction.transaction;
 
