@@ -237,13 +237,10 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
 const executePost = async (endpoint: string, request: CADPRequest): Promise<void> => {
   const span = apm.startSpan('send.cadp/cms');
   try {
-    const cadpRes = await axios.post(endpoint, request);
-    if (cadpRes.status !== 200) {
-      loggerService.error(`Response StatusCode != 200, request:\r\n${JSON.stringify(request)}`);
-    }
+    server.handleResponse(request, [endpoint]);
   } catch (error) {
     loggerService.error(`Error while sending request to ${endpoint ?? ''} with message: ${error}`);
-    loggerService.trace(`Axios Post Error Request:\r\n${JSON.stringify(request)}`);
+    loggerService.trace(`NATS Post Error Request:\r\n${JSON.stringify(request)}`);
     span?.end();
     throw error;
   } finally {
