@@ -146,20 +146,27 @@ const executeRequest = async (
 
     // Interdiction
     // Send Result to CMS
-    let producerName;
     if (expression.threshold && typologyResultValue > expression.threshold) {
-      producerName = [configuration.cmsEndpoint];
+      const spanCms = apm.startSpan(`[${transactionID}] Send Typology result to CMS`);
+      server
+        .handleResponse({ ...cadpReqBody, metaData }, [configuration.cmsProducer])
+        .catch((error) => {
+          loggerService.error(`Error while sending Typology result to CMS`, error as Error);
+        })
+        .finally(() => {
+          spanCms?.end();
+        });
     }
 
-    // Send CADP/CMS request with this Typology's result
-    const spanCadCmspr = apm.startSpan(`[${transactionID}] Send Typology result to ${producerName ? 'CMS' : 'TADP'}`);
+    // Send TADP request with this Typology's result
+    const spanTadpr = apm.startSpan(`[${transactionID}] Send Typology result to TADP`);
     server
-      .handleResponse({ ...cadpReqBody, metaData }, producerName)
+      .handleResponse({ ...cadpReqBody, metaData })
       .catch((error) => {
-        loggerService.error('Error while sending Typology result to TADP', error as Error);
+        loggerService.error(`Error while sending Typology result to TADP`, error as Error);
       })
       .finally(() => {
-        spanCadCmspr?.end();
+        spanTadpr?.end();
       });
 
     const spanDelete = apm.startSpan(`cache.delete.[${transactionID}].Typology interim cache key`);
