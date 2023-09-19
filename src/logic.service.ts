@@ -124,15 +124,7 @@ const executeRequest = async (
 
     const jruleResults = await databaseManager.getMemberValues(`${cacheKey}`);
     const ruleResults: RuleResult[] = jruleResults.map((res) => res.ruleResult as RuleResult);
-    // // Get cache from Redis if we have
-    // if (jruleResults && jruleResults.length > 0) {
-    //   for (const jruleResult of jruleResults) {
-    //     const ruleRes: RuleResult = jruleResults as RuleResult;
-    //     //Object.assign(ruleRes, JSON.parse(jruleResult).ruleResult);
 
-    //     ruleResults.push(ruleRes);
-    //   }
-    // }
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
