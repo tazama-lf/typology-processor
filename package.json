@@ -47,7 +47,6 @@
   },
   "devDependencies": {
     "@types/arangodb": "^3.5.11",
-    "@types/axios": "^0.14.0",
     "@types/jest": "^26.0.24",
     "@types/lodash": "^4.14.172",
     "@types/log4js": "^2.3.5",
