@@ -19,7 +19,8 @@ beforeAll(async () => {
   await runServer();
 });
 
-let cacheString = '';
+let cacheString: Record<string, unknown>;
+let cacheStringArr: Map<string, Record<string, unknown>[]> = new Map();
 let weight: number;
 
 describe('Logic Service', () => {
@@ -133,20 +134,13 @@ describe('Logic Service', () => {
       });
     });
 
-    jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
-      return new Promise<string[]>((resolve, _reject) => {
-        cacheString = value;
+    jest.spyOn(databaseManager, 'getMemberValues').mockImplementation((_key: string): Promise<Record<string, unknown>[]> => {
+      return new Promise<Record<string, unknown>[]>((resolve, _reject) => {
         resolve([cacheString]);
       });
     });
 
-    jest.spyOn(databaseManager, 'getMembers').mockImplementation((_key: string): Promise<string[]> => {
-      return new Promise<string[]>((resolve, _reject) => {
-        resolve([cacheString]);
-      });
-    });
-
-    jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: string): Promise<number> => {
+    jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: Record<string, unknown>): Promise<number> => {
       return new Promise<number>((resolve, _reject) => {
         cacheString = value;
         resolve(1);
@@ -155,14 +149,15 @@ describe('Logic Service', () => {
 
     jest.spyOn(databaseManager, 'deleteKey').mockImplementation((_key: string): Promise<void> => {
       return new Promise<void>((resolve, _reject) => {
-        cacheString = '';
+        cacheString = {};
+        cacheStringArr = new Map();
         resolve();
       });
     });
 
     responseSpy = jest.spyOn(server, 'handleResponse').mockImplementation((response: any, _subject: string[] | undefined): Promise<any> => {
       return new Promise<any>((resolve, _reject) => {
-        cacheString = '';
+        cacheString = {};
         resolve(response as any);
         weight = (response?.typologyResult?.ruleResults[0].wght as any) ?? 0;
       });
@@ -432,7 +427,7 @@ describe('Logic Service', () => {
         });
       jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
         return new Promise<string[]>((resolve, _reject) => {
-          cacheString = value;
+          //cacheString = value;
           resolve([
             '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
             '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
@@ -644,14 +639,18 @@ describe('Logic Service', () => {
             ]),
           );
         });
+      cacheStringArr = new Map();
+      jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: Record<string, unknown>): Promise<number> => {
+        return new Promise<number>((resolve, _reject) => {
+          if (cacheStringArr.get(_key)) cacheStringArr.get(_key)?.push(value);
+          else cacheStringArr.set(_key, [value]);
+          resolve(cacheStringArr.get(_key)?.length ?? 0);
+        });
+      });
 
-      jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
-        return new Promise<string[]>((resolve, _reject) => {
-          cacheString = value;
-          resolve([
-            '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-            '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
-          ]);
+      jest.spyOn(databaseManager, 'getMemberValues').mockImplementation((_key: string): Promise<Record<string, unknown>[]> => {
+        return new Promise<Record<string, unknown>[]>((resolve, _reject) => {
+          resolve(cacheStringArr.get(_key) ?? []);
         });
       });
 
@@ -670,6 +669,16 @@ describe('Logic Service', () => {
         desc: '',
       };
 
+      const ruleResult04: RuleResult = {
+        prcgTm: 0,
+        result: true,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        desc: '',
+      };
+
       mockedAxios.post.mockResolvedValue({ status: 200 });
 
       await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap });
@@ -680,7 +689,7 @@ describe('Logic Service', () => {
         }),
       );
 
-      await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap: networkMap });
+      await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult04, networkMap: networkMap });
       await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap: networkMap });
       await handleTransaction({ transaction: expectedReq, ruleResult: ruleResult03, networkMap: networkMap });
       // if (result) test = true;
@@ -1140,7 +1149,7 @@ describe('Logic Service', () => {
 
       jest.spyOn(databaseManager, 'addOneGetAll').mockImplementation((_key: string, value: string): Promise<string[]> => {
         return new Promise<string[]>((resolve, _reject) => {
-          cacheString = value;
+          //cacheString = value;
           resolve([
             '{"result":true,"id":"003@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
             '{"result":false,"id":"004@1.0.0","cfg":"1.0.0","reason":"reason","subRuleRef":".01"}',
@@ -1157,15 +1166,6 @@ describe('Logic Service', () => {
         prcgTm: 0,
         result: true,
         id: '003@1.0.0',
-        cfg: '1.0.0',
-        reason: 'reason',
-        subRuleRef: '.01',
-        desc: '',
-      };
-      const ruleResult04: RuleResult = {
-        prcgTm: 0,
-        result: true,
-        id: '004@1.0.0',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1223,7 +1223,7 @@ describe('Logic Service', () => {
         });
       });
 
-      jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: string): Promise<number> => {
+      jest.spyOn(databaseManager, 'addOneGetCount').mockImplementation((_key: string, value: Record<string, unknown>): Promise<number> => {
         return new Promise<number>((resolve, _reject) => {
           cacheString = value;
           resolve(2);
