@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import apm from './apm';
-import { databaseManager, server, loggerService, serialiseMessage } from '.';
-import { RuleResult, type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { databaseManager, server, loggerService } from '.';
+import { type RuleResult, type NetworkMap, type Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import { type CADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/CADPRequest';
 import { configuration } from './config';
@@ -82,7 +82,7 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
 const executeRequest = async (
   transaction: any,
   typology: Typology,
-  ruleResult: string,
+  ruleResult: RuleResult,
   ruleId: string,
   networkMap: NetworkMap,
   channelHost: string,
@@ -111,7 +111,7 @@ const executeRequest = async (
     const transactionType = 'FIToFIPmtSts';
     const transactionID = transaction[transactionType].GrpHdr.MsgId;
     const cacheKey = `TP_${transactionID}_${typology.id}_${typology.cfg}`;
-    const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, ruleResult);
+    const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, { ruleResult: { ...ruleResult } });
 
     if (jruleResultsCount && jruleResultsCount < typology.rules.length) {
       typologyResult.desc = typology.desc ? typology.desc : noDescription;
@@ -120,16 +120,9 @@ const executeRequest = async (
       return;
     }
 
-    const jruleResults = await databaseManager.getMembers(`${cacheKey}`);
-    const ruleResults: RuleResult[] = [];
-    // Get cache from Redis if we have
-    if (jruleResults && jruleResults.length > 0) {
-      for (const jruleResult of jruleResults) {
-        const ruleRes: RuleResult = new RuleResult();
-        Object.assign(ruleRes, JSON.parse(jruleResult).ruleResult);
-        ruleResults.push(ruleRes);
-      }
-    }
+    const jruleResults = await databaseManager.getMemberValues(`${cacheKey}`);
+    const ruleResults: RuleResult[] = jruleResults.map((res) => res.ruleResult as RuleResult);
+
     cadpReqBody.typologyResult.ruleResults = ruleResults;
 
     const expressionRes = (await databaseManager.getTypologyExpression(typology)) as unknown[][];
@@ -189,7 +182,6 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   });
   const networkMap: NetworkMap = transaction.networkMap;
   const ruleResult: RuleResult = transaction.ruleResult;
-  const ruleResultStr = serialiseMessage({ ruleResult });
 
   const parsedTrans = transaction.transaction;
 
@@ -203,7 +195,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
       const channelHost = channel.host;
 
       requests.push(
-        executeRequest(parsedTrans, typology, ruleResultStr, ruleResult.id, networkMap, channelHost, {
+        executeRequest(parsedTrans, typology, ruleResult, ruleResult.id, networkMap, channelHost, {
           ...metaData,
           traceParent: apm.getCurrentTraceparent(),
         }),

@@ -16,7 +16,8 @@
     "lint:eslint": "eslint \"**/*.ts\"",
     "lint:prettier": "prettier --check \"**/*.ts\"",
     "test": "jest --config=jest.config.ts --passWithNoTests",
-    "test:watch": "jest --config=jest.config.ts --watch"
+    "test:watch": "jest --config=jest.config.ts --watch",
+    "prepare": "husky install"
   },
   "keywords": [
     "mojaloop",
@@ -33,7 +34,7 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@frmscoe/frms-coe-lib": "^1.2.0",
+    "@frmscoe/frms-coe-lib": "^1.2.4",
     "@frmscoe/frms-coe-startup-lib": "^2.0.0",
     "@log4js-node/logstash-http": "^1.1.0",
     "arangojs": "^8.4.0",
