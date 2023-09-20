@@ -30,8 +30,7 @@ export interface IConfig {
     cacheEnabled?: boolean;
     cacheTTL?: number;
   };
-  cadpEndpoint: string;
-  cmsEndpoint: string;
+  cmsProducer: string;
   logger: {
     logstashHost: string;
     logstashPort: number;
@@ -53,8 +52,7 @@ export const configuration: IConfig = {
     secretToken: process.env.APM_SECRET_TOKEN as string,
     active: process.env.APM_ACTIVE as string,
   },
-  cadpEndpoint: process.env.CADP_ENDPOINT as string,
-  cmsEndpoint: process.env.CMS_ENDPOINT as string,
+  cmsProducer: process.env.CMS_PRODUCER as string,
   db: {
     name: process.env.DATABASE_NAME as string,
     password: process.env.DATABASE_PASSWORD as string,
