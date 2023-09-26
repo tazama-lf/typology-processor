@@ -1,10 +1,11 @@
 import './apm';
-import { CreateDatabaseManager, LoggerService, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
+import { LoggerService, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
 import { StartupFactory, type IStartupService } from '@frmscoe/frms-coe-startup-lib';
 import cluster from 'cluster';
 import os from 'os';
 import { configuration } from './config';
 import { handleTransaction } from './logic.service';
+import { Singleton } from './services/services';
 
 const databaseManagerConfig = {
   redisConfig: {
@@ -28,7 +29,7 @@ export const loggerService: LoggerService = new LoggerService();
 let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
 
 export const dbInit = async (): Promise<void> => {
-  databaseManager = await CreateDatabaseManager(databaseManagerConfig);
+  databaseManager = await Singleton.getDatabaseManager(databaseManagerConfig);
 };
 
 export let server: IStartupService;
@@ -64,18 +65,6 @@ process.on('unhandledRejection', (err) => {
 
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
 
-(async () => {
-  try {
-    if (process.env.NODE_ENV !== 'test' && cluster.isPrimary) {
-      // setup lib - create database instance
-      await dbInit();
-    }
-  } catch (err) {
-    loggerService.error('Error while starting Database Manager', err as Error);
-    process.exit(1);
-  }
-})();
-
 if (cluster.isPrimary && configuration.maxCPU !== 1) {
   loggerService.log(`Primary ${process.pid} is running`);
 
@@ -94,6 +83,7 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   (async () => {
     try {
       if (configuration.env !== 'test') {
+        await dbInit();
         await runServer();
       }
     } catch (err) {
