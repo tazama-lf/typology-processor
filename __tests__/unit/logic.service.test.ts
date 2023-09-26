@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { NetworkMap, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import axios from 'axios';
-import { databaseManager, runServer, server } from '../../src/index';
+import { databaseManager, dbInit, runServer, server } from '../../src/index';
 import { handleTransaction } from '../../src/logic.service';
 
 jest.mock('axios');
@@ -16,6 +16,7 @@ const getMockRequest = () => {
 };
 
 beforeAll(async () => {
+  await dbInit();
   await runServer();
 });
 
