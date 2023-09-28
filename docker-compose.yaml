@@ -1,8 +1,10 @@
 services:
-  node:
-    container_name: typology-processor
+  buntp:
     build:
       context: .
+      dockerfile: Dockerfile
       args:
         - GH_TOKEN
-    restart: "no"
+    restart: always
+    # ports:
+    #   - '6499:6499'

@@ -9,12 +9,12 @@ import fastJson from 'fast-json-stringify';
 import { messageSchema } from '@frmscoe/frms-coe-lib/lib/helpers/schemas/message';
 
 const databaseManagerConfig = {
-  redisConfig: {
-    db: configuration.redis.db,
-    servers: configuration.redis.servers,
-    password: configuration.redis.password,
-    isCluster: configuration.redis.isCluster,
-  },
+  // redisConfig: {
+  //   db: configuration.redis.db,
+  //   servers: configuration.redis.servers,
+  //   password: configuration.redis.password,
+  //   isCluster: configuration.redis.isCluster,
+  // },
   configuration: {
     databaseName: configuration.db.name,
     certPath: configuration.db.dbCertPath,
@@ -26,7 +26,7 @@ const databaseManagerConfig = {
   },
 };
 
-export const loggerService: LoggerService = new LoggerService();
+export const loggerService = console;//new LoggerService();
 let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
 
 export const dbinit = async (): Promise<void> => {
@@ -41,12 +41,13 @@ const serialiseMessage = fastJson({
 export let server: IStartupService;
 
 export const runServer = async (): Promise<void> => {
+  console.log(configuration.redis);
   await dbinit();
   server = new StartupFactory();
   if (configuration.env !== 'test') {
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
-      if (!(await server.init(handleTransaction))) {
+      if (!(await server.init(handleTransaction, console))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         loggerService.log('Connected to nats');
@@ -85,12 +86,13 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
     try {
       if (configuration.env !== 'test') {
         await runServer();
+        loggerService.log(`Worker ${process.pid} started`);
       }
     } catch (err) {
       loggerService.error(`Error while starting HTTP server on Worker ${process.pid}`, err);
     }
   })();
-  loggerService.log(`Worker ${process.pid} started`);
+  //loggerService.log(`Worker ${process.pid} started`);
 }
 
 export { databaseManager, serialiseMessage };
