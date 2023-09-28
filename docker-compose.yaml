@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
       args:
         - GH_TOKEN
+    env_file:
+      - .env
     restart: always
     # ports:
     #   - '6499:6499'

@@ -12,6 +12,7 @@ COPY ./tsconfig.json ./
 COPY ./.env.production ./
 COPY bunfig.toml ./
 ARG GH_TOKEN
+RUN sed -i "s/\${GH_TOKEN}/$GH_TOKEN/g" ./bunfig.toml
 
 RUN bun install
 
@@ -39,15 +40,12 @@ ENV PRODUCER_STORAGE=File
 ENV PRODUCER_RETENTION_POLICY=Workqueue
 
 # ARANGO
-ENV DATABASE_URL=http://0.0.0.0:8529
+ENV DATABASE_URL=tcp://redis-1:8529
 ENV DATABASE_USER=root
 ENV DATABASE_PASSWORD=
 ENV DATABASE_NAME=Configuration
 ENV COLLECTION_NAME=typologyExpression
 ENV CACHE_TTL=300
-
-# Authentication
-ENV GH_TOKEN=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
 
 # Branches
 ENV TMS_BRANCH=main
