@@ -63,8 +63,5 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED='0'
 # Set healthcheck command
 HEALTHCHECK --interval=60s CMD [ -e /tmp/.lock ] || exit 1
 
-# EXPOSE 9999
-
 # Execute watchdog command
-# CMD ["build/index.js"]r
 CMD ["bun", "src/index.ts"]
