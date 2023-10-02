@@ -16,49 +16,52 @@ RUN sed -i "s/\${GH_TOKEN}/$GH_TOKEN/g" ./bunfig.toml
 
 RUN bun install
 
-# APP
-ENV FUNCTION_NAME=typology-processor
-#ENV NODE_ENV=develop
-ENV PORT=3000
-ENV QUOTING=false
-ENV APM_ACTIVE=false
-ENV MAX_CPU=1
+# Turn down the verbosity to default level.
+ENV NPM_CONFIG_LOGLEVEL warn
 
-# REDIS
+ENV mode="http"
+ENV upstream_url="http://127.0.0.1:3000"
+ENV prefix_logs="false"
+ENV FUNCTION_NAME=typology-processor-rel-1-0-0
+ENV NODE_ENV=production
+ENV CMS_ENDPOINT=
+ENV CACHE_ENABLED=
+
+#Redis
+ENV CACHE_TTL=30
 ENV REDIS_DB=0
 ENV REDIS_AUTH=
 ENV REDIS_SERVERS=
-ENV REDIS_IS_CLUSTER=false
+ENV REDIS_IS_CLUSTER=
 
-# NATS
-ENV SERVER_URL=0.0.0.0:4222
+#Nats
 ENV STARTUP_TYPE=nats
-ENV CONSUMER_STREAM=RuleResponse901
-ENV PRODUCER_STREAM=TADP
+ENV PRODUCER_STREAM=
+ENV CONSUMER_STREAM=
+ENV STREAM_SUBJECT=
+ENV SERVER_URL=0.0.0.0:4222
 ENV ACK_POLICY=Explicit
 ENV PRODUCER_STORAGE=File
 ENV PRODUCER_RETENTION_POLICY=Workqueue
 
-# ARANGO
-ENV DATABASE_URL=tcp://arango:8529
+#Database
+ENV DATABASE_NAME=Configuration
+ENV DATABASE_URL=
 ENV DATABASE_USER=root
 ENV DATABASE_PASSWORD=
-ENV DATABASE_NAME=Configuration
+ENV DATABASE_CERT_PATH=
 ENV COLLECTION_NAME=typologyExpression
-ENV CACHE_TTL=300
 
-# Branches
-ENV TMS_BRANCH=main
-ENV CRSP_BRANCH=main
-ENV TP_BRANCH=main
-ENV TADP_BRANCH=main
-ENV RULE_901_BRANCH=main
+# Apm
+ENV APM_ACTIVE=true
+ENV APM_SERVICE_NAME=typology-processor
+ENV APM_URL=http://apm-server.development.svc.cluster.local:8200/
+ENV APM_SECRET_TOKEN=
 
-# Ports
-ENV TMS_PORT=5000
-
-# TLS
-ENV NODE_TLS_REJECT_UNAUTHORIZED='0'
+# Logstash
+ENV LOGSTASH_HOST=logstash.development.svc.cluster.local
+ENV LOGSTASH_PORT=8080
+ENV LOGSTASH_LEVEL='info'
 
 # Set healthcheck command
 HEALTHCHECK --interval=60s CMD [ -e /tmp/.lock ] || exit 1
