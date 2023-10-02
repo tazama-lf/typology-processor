@@ -9,7 +9,7 @@ WORKDIR /home/app
 COPY ./src ./src
 COPY ./package*.json ./
 COPY ./tsconfig.json ./
-COPY ./.env.production ./
+# COPY ./.env.production ./
 COPY bunfig.toml ./
 ARG GH_TOKEN
 RUN sed -i "s/\${GH_TOKEN}/$GH_TOKEN/g" ./bunfig.toml
