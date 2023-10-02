@@ -85,6 +85,7 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
       if (configuration.env !== 'test') {
         await dbInit();
         await runServer();
+        loggerService.log(`Worker ${process.pid} started`);
       }
     } catch (err) {
       loggerService.error(`Error while starting services on Worker ${process.pid}`, err);
