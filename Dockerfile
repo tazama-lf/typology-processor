@@ -3,7 +3,7 @@ ARG RUN_IMAGE=oven/bun
 
 FROM ${BUILD_IMAGE} AS builder
 LABEL stage=build
-	@@ -9,30 +9,12 @@ WORKDIR /home/app
+WORKDIR /home/app
 COPY ./src ./src
 COPY ./package*.json ./
 COPY ./tsconfig.json ./
