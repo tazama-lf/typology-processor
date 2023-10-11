@@ -36,7 +36,6 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '028@1.0.0',
-                desc: '',
                 threshold: 50,
                 rules: [
                   { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -87,7 +86,6 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '029@1.0.0',
-                desc: '',
                 threshold: 50,
                 rules: [
                   { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -180,7 +178,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
@@ -190,7 +187,6 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '028@1.0.0',
-                desc: '',
                 threshold: 50,
                 rules: [{ id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }],
                 expression: {
@@ -227,7 +223,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       mockedAxios.post.mockResolvedValue({ status: 201 });
@@ -255,7 +250,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
@@ -264,7 +258,6 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '028@1.0.0',
-                desc: '',
                 threshold: 50,
                 rules: [{ id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }],
                 expression: {
@@ -343,7 +336,6 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '', // Empty string is found as a value of desc element
                   threshold: 50,
                   rules: [
                     {
@@ -388,7 +380,6 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: 'Typology 029 Description from mock db config.', // Valid Value
                   threshold: 50,
                   rules: [
                     {
@@ -448,7 +439,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       //Case of no element of desc and element found with empty string (Negetive Testing)
@@ -473,7 +463,6 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
                   threshold: 50,
                   rules: [
                     { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -512,7 +501,6 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
                   threshold: 50,
                   rules: [
                     {
@@ -557,7 +545,6 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
                   threshold: 50,
                   rules: [
                     {
@@ -602,7 +589,6 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
                   threshold: 50,
                   rules: [
                     {
@@ -667,7 +653,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       const ruleResult04: RuleResult = {
@@ -677,7 +662,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       mockedAxios.post.mockResolvedValue({ status: 200 });
@@ -716,7 +700,6 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '029@1.0.0',
-                desc: '',
                 threshold: 50,
                 rules: [
                   {
@@ -759,7 +742,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'test123',
-        desc: '',
       };
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
@@ -791,7 +773,6 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '029@1.0.0',
-                desc: '',
                 threshold: 50,
                 rules: [
                   {
@@ -834,7 +815,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
@@ -869,7 +849,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
-        desc: '',
       };
 
       await handleTransaction({ transaction: expectedReq, ruleResult, networkMap: networkMap });
@@ -893,7 +872,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
@@ -917,7 +895,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockRejectedValue(async (_typology: Typology) => {
@@ -947,7 +924,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
-        desc: '',
       };
 
       jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
@@ -980,7 +956,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
+
                   threshold: 50,
                   rules: [
                     { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
@@ -1019,7 +995,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
+
                   threshold: 50,
                   rules: [
                     {
@@ -1064,7 +1040,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
+
                   threshold: 50,
                   rules: [
                     {
@@ -1109,7 +1085,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  desc: '',
+
                   threshold: 50,
                   rules: [
                     {
@@ -1170,7 +1146,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       mockedAxios.post.mockRejectedValue(new Error('Test Failure Path'));
@@ -1208,7 +1183,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       jest.spyOn(databaseManager, 'getMembers').mockImplementation((_key: string): Promise<string[]> => {
@@ -1254,7 +1228,6 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
-        desc: '',
       };
 
       const errorSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {

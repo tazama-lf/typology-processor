@@ -94,7 +94,6 @@ const executeRequest = async (
     result: 0.0,
     id: typology.id,
     cfg: typology.cfg,
-    desc: '',
     threshold: 0.0,
     prcgTm: 0,
     ruleResults: [],
@@ -114,7 +113,6 @@ const executeRequest = async (
     const jruleResultsCount = await databaseManager.addOneGetCount(`${cacheKey}`, { ruleResult: { ...ruleResult } });
 
     if (jruleResultsCount && jruleResultsCount < typology.rules.length) {
-      typologyResult.desc = typology.desc ? typology.desc : noDescription;
       typologyResult.prcgTm = calculateDuration(startTime);
       spanExecReq?.end();
       return;
@@ -140,7 +138,6 @@ const executeRequest = async (
 
     typologyResult.result = typologyResultValue;
     typologyResult.threshold = expression?.threshold ?? 0.0;
-    typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
     typologyResult.prcgTm = calculateDuration(startTime);
     cadpReqBody.typologyResult = typologyResult;
 
