@@ -97,6 +97,10 @@ const executeRequest = async (
     threshold: 0.0,
     prcgTm: 0,
     ruleResults: [],
+    workflow: {
+      alertThreshold: '',
+      interdictionThreshold: '',
+    },
   };
 
   const cadpReqBody: CADPRequest = {
@@ -137,14 +141,17 @@ const executeRequest = async (
     span?.end();
 
     typologyResult.result = typologyResultValue;
-    typologyResult.threshold = expression?.threshold ?? 0.0;
+    // typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
     typologyResult.prcgTm = calculateDuration(startTime);
+    typologyResult.review = false;
     cadpReqBody.typologyResult = typologyResult;
+    typologyResult.workflow.interdictionThreshold = expression.workflow.interdictionThreshold ?? '';
 
     // Interdiction
     // Send Result to CMS
-    if (expression.threshold && typologyResultValue > expression.threshold) {
+    if (expression.workflow.interdictionThreshold && typologyResultValue >= Number(expression.workflow.interdictionThreshold)) {
       const spanCms = apm.startSpan(`[${transactionID}] Send Typology result to CMS`);
+      typologyResult.review = true;
       server
         .handleResponse({ ...cadpReqBody, metaData }, [configuration.cmsProducer])
         .catch((error) => {
@@ -153,6 +160,14 @@ const executeRequest = async (
         .finally(() => {
           spanCms?.end();
         });
+    }
+
+    if (!expression.workflow.alertThreshold && Number(expression.workflow.alertThreshold) !== 0) {
+      loggerService.error(`Typology ${typology.cfg} config missing alert Threshold`);
+    } else if (typologyResultValue >= Number(expression.workflow.alertThreshold)) {
+      typologyResult.workflow.alertThreshold = expression.workflow.alertThreshold;
+      loggerService.log(`Typology ${typology.cfg} alerting on transaction : ${transactionID} with a trigger of: ${typologyResultValue}`);
+      typologyResult.review = true;
     }
 
     // Send TADP request with this Typology's result
