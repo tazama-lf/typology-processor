@@ -94,7 +94,6 @@ const executeRequest = async (
     result: 0.0,
     id: typology.id,
     cfg: typology.cfg,
-    threshold: 0.0,
     prcgTm: 0,
     ruleResults: [],
     workflow: {
