@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
 import { NetworkMap, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import axios from 'axios';
