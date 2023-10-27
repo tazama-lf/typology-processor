@@ -21,11 +21,16 @@ export interface IExpression {
   expression: IExpression | undefined;
 }
 
+export interface IWorkFlow {
+  alertThreshold: number;
+  interdictionThreshold?: number;
+}
+
 export interface ITypologyExpression {
   id: string;
   cfg: string;
   desc?: string | undefined;
   rules: IRuleValue[];
-  threshold: number;
   expression: IExpression;
+  workflow: IWorkFlow;
 }

@@ -37,7 +37,7 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '028@1.0.0',
-                threshold: 50,
+                workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                 rules: [
                   { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
                   { id: '004@1.0.0', cfg: '1.0.0', ref: '.01', true: 50, false: 2 },
@@ -87,7 +87,7 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '029@1.0.0',
-                threshold: 50,
+                workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                 rules: [
                   { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
                   { id: '004@1.0.0', cfg: '1.0.0', ref: '.01', true: 50, false: 2 },
@@ -188,7 +188,7 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '028@1.0.0',
-                threshold: 50,
+                workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                 rules: [{ id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }],
                 expression: {
                   operator: '+',
@@ -259,7 +259,7 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '028@1.0.0',
-                threshold: 50,
+                workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                 rules: [{ id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 }],
                 expression: {
                   operator: '+',
@@ -293,7 +293,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
                   //No desc element present in this config
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -337,7 +337,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -381,7 +381,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -464,7 +464,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
                     {
@@ -502,7 +502,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -546,7 +546,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -590,7 +590,7 @@ describe('Logic Service', () => {
                 {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -701,7 +701,7 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '029@1.0.0',
-                threshold: 50,
+                workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                 rules: [
                   {
                     id: '003@1.0.0',
@@ -774,7 +774,7 @@ describe('Logic Service', () => {
               {
                 cfg: '1.0.0',
                 id: '029@1.0.0',
-                threshold: 50,
+                workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                 rules: [
                   {
                     id: '003@1.0.0',
@@ -958,7 +958,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
 
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     { id: '003@1.0.0', cfg: '1.0.0', ref: '.01', true: 100, false: 2 },
                     {
@@ -997,7 +997,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
 
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -1042,7 +1042,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
 
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',
@@ -1087,7 +1087,7 @@ describe('Logic Service', () => {
                   cfg: '1.0.0',
                   id: '029@1.0.0',
 
-                  threshold: 50,
+                  workflow: { alertThreshold: '25', interdictionThreshold: '50' },
                   rules: [
                     {
                       id: '003@1.0.0',

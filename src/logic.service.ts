@@ -95,9 +95,11 @@ const executeRequest = async (
     result: 0.0,
     id: typology.id,
     cfg: typology.cfg,
-    threshold: 0.0,
     prcgTm: 0,
     ruleResults: [],
+    workflow: {
+      alertThreshold: 0,
+    },
   };
 
   const cadpReqBody: CADPRequest = {
@@ -138,14 +140,17 @@ const executeRequest = async (
     span?.end();
 
     typologyResult.result = typologyResultValue;
-    typologyResult.threshold = expression?.threshold ?? 0.0;
     typologyResult.prcgTm = calculateDuration(startTime);
-    cadpReqBody.typologyResult = typologyResult;
+    typologyResult.review = false;
+    if (expression.workflow.interdictionThreshold)
+      typologyResult.workflow.interdictionThreshold = expression.workflow.interdictionThreshold;
+    if (expression.workflow.alertThreshold) typologyResult.workflow.alertThreshold = expression.workflow.alertThreshold;
 
     // Interdiction
     // Send Result to CMS
-    if (expression.threshold && typologyResultValue > expression.threshold) {
+    if (expression.workflow.interdictionThreshold && typologyResultValue >= expression.workflow.interdictionThreshold) {
       const spanCms = apm.startSpan(`[${transactionID}] Send Typology result to CMS`);
+      typologyResult.review = true;
       server
         .handleResponse({ ...cadpReqBody, metaData }, [configuration.cmsProducer])
         .catch((error) => {
@@ -155,6 +160,14 @@ const executeRequest = async (
           spanCms?.end();
         });
     }
+
+    if (!expression.workflow.alertThreshold) {
+      loggerService.error(`Typology ${typology.cfg} config missing alert Threshold`);
+    } else if (typologyResultValue >= expression.workflow.alertThreshold) {
+      loggerService.log(`Typology ${typology.cfg} alerting on transaction : ${transactionID} with a trigger of: ${typologyResultValue}`);
+      typologyResult.review = true;
+    }
+    cadpReqBody.typologyResult = typologyResult;
 
     // Send TADP request with this Typology's result
     const spanTadpr = apm.startSpan(`[${transactionID}] Send Typology result to TADP`);
