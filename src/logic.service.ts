@@ -143,11 +143,11 @@ const executeRequest = async (
     // typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
     typologyResult.prcgTm = calculateDuration(startTime);
     typologyResult.review = false;
-    typologyResult.workflow.interdictionThreshold = expression.workflow.interdictionThreshold ?? '';
+    typologyResult.workflow.interdictionThreshold = expression.workflow.interdictionThreshold ?? 0;
 
     // Interdiction
     // Send Result to CMS
-    if (expression.workflow.interdictionThreshold && typologyResultValue >= Number(expression.workflow.interdictionThreshold)) {
+    if (expression.workflow.interdictionThreshold && typologyResultValue >= expression.workflow.interdictionThreshold) {
       const spanCms = apm.startSpan(`[${transactionID}] Send Typology result to CMS`);
       typologyResult.review = true;
       server
@@ -162,7 +162,7 @@ const executeRequest = async (
 
     if (!expression.workflow.alertThreshold && expression.workflow.alertThreshold !== 0) {
       loggerService.error(`Typology ${typology.cfg} config missing alert Threshold`);
-    } else if (typologyResultValue >= Number(expression.workflow.alertThreshold)) {
+    } else if (typologyResultValue >= expression.workflow.alertThreshold) {
       typologyResult.workflow.alertThreshold = expression.workflow.alertThreshold;
       loggerService.log(`Typology ${typology.cfg} alerting on transaction : ${transactionID} with a trigger of: ${typologyResultValue}`);
       typologyResult.review = true;
