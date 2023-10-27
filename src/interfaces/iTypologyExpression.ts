@@ -22,7 +22,7 @@ export interface IExpression {
 
 export interface IWorkFlow {
   alertThreshold: number;
-  interdictionThreshold: number;
+  interdictionThreshold?: number;
 }
 
 export interface ITypologyExpression {

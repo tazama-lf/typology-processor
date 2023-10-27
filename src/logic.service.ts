@@ -139,7 +139,6 @@ const executeRequest = async (
     span?.end();
 
     typologyResult.result = typologyResultValue;
-    // typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
     typologyResult.prcgTm = calculateDuration(startTime);
     typologyResult.review = false;
     if (expression.workflow.interdictionThreshold)
