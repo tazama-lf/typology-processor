@@ -98,7 +98,6 @@ const executeRequest = async (
     ruleResults: [],
     workflow: {
       alertThreshold: 0,
-      interdictionThreshold: 0,
     },
   };
 
