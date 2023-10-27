@@ -97,8 +97,8 @@ const executeRequest = async (
     prcgTm: 0,
     ruleResults: [],
     workflow: {
-      alertThreshold: '',
-      interdictionThreshold: '',
+      alertThreshold: 0,
+      interdictionThreshold: 0,
     },
   };
 
@@ -143,7 +143,6 @@ const executeRequest = async (
     // typologyResult.desc = expression.desc?.length ? expression.desc : noDescription;
     typologyResult.prcgTm = calculateDuration(startTime);
     typologyResult.review = false;
-    cadpReqBody.typologyResult = typologyResult;
     typologyResult.workflow.interdictionThreshold = expression.workflow.interdictionThreshold ?? '';
 
     // Interdiction
@@ -161,13 +160,14 @@ const executeRequest = async (
         });
     }
 
-    if (!expression.workflow.alertThreshold && Number(expression.workflow.alertThreshold) !== 0) {
+    if (!expression.workflow.alertThreshold && expression.workflow.alertThreshold !== 0) {
       loggerService.error(`Typology ${typology.cfg} config missing alert Threshold`);
     } else if (typologyResultValue >= Number(expression.workflow.alertThreshold)) {
       typologyResult.workflow.alertThreshold = expression.workflow.alertThreshold;
       loggerService.log(`Typology ${typology.cfg} alerting on transaction : ${transactionID} with a trigger of: ${typologyResultValue}`);
       typologyResult.review = true;
     }
+    cadpReqBody.typologyResult = typologyResult;
 
     // Send TADP request with this Typology's result
     const spanTadpr = apm.startSpan(`[${transactionID}] Send Typology result to TADP`);

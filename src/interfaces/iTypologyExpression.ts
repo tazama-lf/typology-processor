@@ -21,8 +21,8 @@ export interface IExpression {
 }
 
 export interface IWorkFlow {
-  alertThreshold: string;
-  interdictionThreshold: string;
+  alertThreshold: number;
+  interdictionThreshold: number;
 }
 
 export interface ITypologyExpression {
