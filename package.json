@@ -1,6 +1,6 @@
 {
   "name": "typology-processor",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "typology-processor",
   "main": "build/index.js",
   "types": "build/index.d.ts",

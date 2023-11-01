@@ -40,7 +40,7 @@ ENV NPM_CONFIG_LOGLEVEL warn
 ENV mode="http"
 ENV upstream_url="http://127.0.0.1:3000"
 ENV prefix_logs="false"
-ENV FUNCTION_NAME=typology-processor-rel-1-0-0
+ENV FUNCTION_NAME=typology-processor
 ENV NODE_ENV=production
 ENV CMS_ENDPOINT=
 ENV CACHE_ENABLED=
