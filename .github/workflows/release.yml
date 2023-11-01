@@ -35,16 +35,23 @@ jobs:
         with:
           semver_only: true
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Setup Node.js (.npmrc)
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
-
-      - name: Install Dependencies
-        run: npm install
+          node-version: 16.x
+          registry-url: https://npm.pkg.github.com/
+          # Defaults to the user or organization that owns the workflow file
+          scope: '@frmscoe'
+          
+      - name: Install dependencies
+        run: npm ci
+        env:
+          GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
       - name: Run Tests
         run: npm test
+        env:
+          STARTUP_TYPE: 'nats'
         
       # Determine the release type (major, minor, patch) based on commit messages  
       - name: Determine Release Type
@@ -147,7 +154,7 @@ jobs:
             local section_label="$2"
             local section_icon="$3"
             # Get the commit messages with the specified label between the last release and the current release
-            local commit_messages=$(git log --pretty=format:"- %s (Milestone: %b, Linked Issues: %C(yellow)%H%Creset)" "$LAST_RELEASE_TAG..HEAD" --grep="$section_label" --no-merges --decorate --decorate-refs=refs/issues)
+            local commit_messages=$(git log --pretty=format:"- %s (Linked Issues: %C(yellow)%H%Creset)" "$LAST_RELEASE_TAG..HEAD" --grep="$section_label" --no-merges --decorate --decorate-refs=refs/issues)
             # If there are commit messages, append the section to the changelog file
             if [ -n "$commit_messages" ]; then
               echo "### $section_icon $section_title" >> "$CHANGELOG_FILE"
@@ -191,7 +198,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.bump_version.outputs.new_version }}
-          release_name: Release ${{ steps.bump_version.outputs.new_version }}
+          release_name: ${{ steps.bump_version.outputs.new_version }}
           body_path: /home/runner/work/changelog.txt
           draft: false
           prerelease: false
