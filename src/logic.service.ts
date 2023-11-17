@@ -128,10 +128,10 @@ const evaluateTypologySendRequest = async (
 ): Promise<CADPRequest | undefined> => {
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
-    const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
+    // const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
 
     // Already has been sent to TADProc continue with the next typology
-    if (jsentAlready.some((idOfSent) => idOfSent === typologyResults[index].id)) continue;
+    // if (jsentAlready.some((idOfSent) => idOfSent === typologyResults[index].id)) continue;
 
     // Typology Wait for enough rules if they are not matching the number configured
     const networkMapRules = networkMap.messages[0].channels[0].typologies[index].rules;
@@ -214,7 +214,7 @@ const evaluateTypologySendRequest = async (
     server
       .handleResponse({ ...cadpReqBody, metaData })
       .then(async () => {
-        await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].id });
+        // await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].id });
       })
       .catch((error) => {
         loggerService.error(`Error while sending Typology result to TADP`, error as Error);
