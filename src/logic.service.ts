@@ -104,13 +104,16 @@ const ruleResultAggregation = (networkMap: NetworkMap, ruleList: RuleResult[]): 
   networkMap.messages.forEach((message) => {
     message.channels.forEach((channel) => {
       channel.typologies.forEach((typology) => {
-        typologyResult.push({
-          id: typology.id,
-          cfg: typology.cfg,
-          result: -1,
-          ruleResults: ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id)),
-          workflow: { alertThreshold: -1 },
-        });
+        const ruleResult = ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id));
+        if (ruleResult.length) {
+          typologyResult.push({
+            id: typology.id,
+            cfg: typology.cfg,
+            result: -1,
+            ruleResults: ruleResult,
+            workflow: { alertThreshold: -1 },
+          });
+        }
       });
     });
   });
@@ -128,6 +131,7 @@ const evaluateTypologySendRequest = async (
 ): Promise<CADPRequest | undefined> => {
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
+    const jsentAlready2 = await databaseManager.getMemberValues(`alreadySent_${transactionId}`);
     const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
 
     // Already has been sent to TADProc continue with the next typology
@@ -150,7 +154,7 @@ const evaluateTypologySendRequest = async (
     })) as unknown[][];
 
     if (!expressionRes?.[0]?.[0]) {
-      loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].id}@${typologyResults[index].cfg}`);
+      loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].cfg}`);
       return {
         typologyResult: typologyResults[index],
         transaction,
@@ -213,9 +217,6 @@ const evaluateTypologySendRequest = async (
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
     server
       .handleResponse({ ...cadpReqBody, metaData })
-      .then(async () => {
-        await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].cfg });
-      })
       .catch((error) => {
         loggerService.error(`Error while sending Typology result to TADP`, error as Error);
       })
@@ -223,6 +224,7 @@ const evaluateTypologySendRequest = async (
         spanExecReq?.end();
         spanTadpr?.end();
       });
+    await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].cfg });
   }
   return cadpReqBody;
 };
