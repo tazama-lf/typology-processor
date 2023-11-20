@@ -131,7 +131,6 @@ const evaluateTypologySendRequest = async (
 ): Promise<CADPRequest | undefined> => {
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
-    const jsentAlready2 = await databaseManager.getMemberValues(`alreadySent_${transactionId}`);
     const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
 
     // Already has been sent to TADProc continue with the next typology
