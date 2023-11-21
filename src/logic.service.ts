@@ -10,6 +10,11 @@ import { type IExpression, type IRuleValue, type ITypologyExpression } from './i
 import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
 import { type MetaData } from './interfaces/metaData';
 
+interface UniqueNetworkMapCount {
+  rulesLength: number;
+  typologiesLength: number;
+}
+
 // Util #1
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -75,11 +80,15 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
 };
 
 // Util #2
-const getUniqueRulesCount = (networkMap: NetworkMap): number => {
+const getUniqueNetworkMapCount = (networkMap: NetworkMap): UniqueNetworkMapCount => {
   const uniqueIdsRules: string[] = [];
+  const uniqueIdsTypologies: string[] = [];
 
   for (const channel of networkMap.messages[0].channels) {
     for (const typology of channel.typologies) {
+      if (!uniqueIdsTypologies.includes(typology.cfg)) {
+        uniqueIdsTypologies.push(typology.cfg);
+      }
       for (const rule of typology.rules) {
         if (!uniqueIdsRules.includes(rule.id)) {
           uniqueIdsRules.push(rule.id);
@@ -87,7 +96,19 @@ const getUniqueRulesCount = (networkMap: NetworkMap): number => {
       }
     }
   }
-  return uniqueIdsRules.length;
+  return { rulesLength: uniqueIdsRules.length, typologiesLength: uniqueIdsTypologies.length };
+};
+
+// Util #3
+const transactionMinimalObject = (transaction: any): any => {
+  return {
+    TxTp: transaction.TxTp,
+    FIToFIPmtSts: {
+      GrpHdr: {
+        MsgId: transaction.FIToFIPmtSts.GrpHdr.MsgId,
+      },
+    },
+  };
 };
 
 // Step 1
@@ -128,6 +149,10 @@ const evaluateTypologySendRequest = async (
   transaction: any,
   metaData: MetaData,
   transactionId: string,
+  numberOfRules: {
+    totalRules: number;
+    storedRules: number;
+  },
 ): Promise<CADPRequest | undefined> => {
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
@@ -209,6 +234,8 @@ const evaluateTypologySendRequest = async (
     typologyResults[index].prcgTm = CalculateDuration(startTime);
     cadpReqBody.typologyResult = typologyResults[index];
 
+    if (numberOfRules.storedRules < numberOfRules.totalRules) cadpReqBody.transaction = transactionMinimalObject(transaction);
+
     // Send Typology to TADProc
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
     server
@@ -247,14 +274,19 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
     return;
   }
 
+  const rulesCount = {
+    totalRules: getUniqueNetworkMapCount(networkMap).rulesLength,
+    storedRules: rulesList.length,
+  };
+
   // Aggregations of typology config merge with rule result #Step 2
   const typologyResults: TypologyResult[] = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining #Step 3
-  await evaluateTypologySendRequest(typologyResults, networkMap, parsedTrans, metaData, cacheKey);
+  await evaluateTypologySendRequest(typologyResults, networkMap, parsedTrans, metaData, cacheKey, rulesCount);
 
   // Garbage collection
-  if (rulesList.length >= getUniqueRulesCount(networkMap)) {
+  if (rulesCount.storedRules >= rulesCount.totalRules) {
     const spanDelete = apm.startSpan(`cache.delete.[${String(transactionId)}].Typology interim cache key`);
     databaseManager.deleteKey(cacheKey);
     apmTransaction?.end();
