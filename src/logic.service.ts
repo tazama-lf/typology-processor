@@ -131,15 +131,12 @@ const evaluateTypologySendRequest = async (
 ): Promise<CADPRequest | undefined> => {
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
-    // const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
-
-    // Already has been sent to TADProc continue with the next typology
-    // if (jsentAlready.some((idOfSent) => idOfSent === typologyResults[index].cfg)) continue;
-
     // Typology Wait for enough rules if they are not matching the number configured
-    const networkMapRules = networkMap.messages[0].channels[0].typologies[index].rules;
+    const networkMapRules = networkMap.messages[0].channels[0].typologies.find(
+      (typology) => typology.cfg === typologyResults[index].cfg && typology.id === typologyResults[index].id,
+    );
     const typologyResultRules = typologyResults[index].ruleResults;
-    if (typologyResultRules.length < networkMapRules.length) continue;
+    if (networkMapRules && typologyResultRules.length < networkMapRules.rules.length) continue;
 
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${typologyResults[index].cfg}.exec.Req`);
@@ -223,7 +220,6 @@ const evaluateTypologySendRequest = async (
         spanExecReq?.end();
         spanTadpr?.end();
       });
-    // await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].cfg });
   }
   return cadpReqBody;
 };
@@ -261,7 +257,6 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   if (rulesList.length >= getUniqueRulesCount(networkMap)) {
     const spanDelete = apm.startSpan(`cache.delete.[${String(transactionId)}].Typology interim cache key`);
     databaseManager.deleteKey(cacheKey);
-    // databaseManager.deleteKey(`alreadySent_${cacheKey}`);
     apmTransaction?.end();
     spanDelete?.end();
   }
