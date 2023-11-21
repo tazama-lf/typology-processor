@@ -98,19 +98,19 @@ const saveToRedisGetAll = async (transactionId: any, ruleResult: RuleResult): Pr
 };
 
 // Step 2
-const ruleResultAggregation = (networkMap: NetworkMap, ruleList: RuleResult[]): TypologyResult[] => {
+const ruleResultAggregation = (networkMap: NetworkMap, ruleList: RuleResult[], ruleResult: RuleResult): TypologyResult[] => {
   const typologyResult: TypologyResult[] = [];
-
   networkMap.messages.forEach((message) => {
     message.channels.forEach((channel) => {
       channel.typologies.forEach((typology) => {
-        const ruleResult = ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id));
-        if (ruleResult.length) {
+        if (!typology.rules.some((trule) => trule.id === ruleResult.id && trule.cfg === ruleResult.cfg)) return;
+        const ruleResults = ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id));
+        if (ruleResults.length) {
           typologyResult.push({
             id: typology.id,
             cfg: typology.cfg,
             result: -1,
-            ruleResults: ruleResult,
+            ruleResults,
             workflow: { alertThreshold: -1 },
           });
         }
@@ -131,10 +131,10 @@ const evaluateTypologySendRequest = async (
 ): Promise<CADPRequest | undefined> => {
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
-    const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
+    // const jsentAlready = (await databaseManager.getMemberValues(`alreadySent_${transactionId}`)).map((res) => res.alreadySent as string);
 
     // Already has been sent to TADProc continue with the next typology
-    if (jsentAlready.some((idOfSent) => idOfSent === typologyResults[index].cfg)) continue;
+    // if (jsentAlready.some((idOfSent) => idOfSent === typologyResults[index].cfg)) continue;
 
     // Typology Wait for enough rules if they are not matching the number configured
     const networkMapRules = networkMap.messages[0].channels[0].typologies[index].rules;
@@ -223,7 +223,7 @@ const evaluateTypologySendRequest = async (
         spanExecReq?.end();
         spanTadpr?.end();
       });
-    await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].cfg });
+    // await databaseManager.setAdd(`alreadySent_${transactionId}`, { alreadySent: typologyResults[index].cfg });
   }
   return cadpReqBody;
 };
@@ -252,7 +252,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   }
 
   // Aggregations of typology config merge with rule result #Step 2
-  const typologyResults: TypologyResult[] = ruleResultAggregation(networkMap, rulesList);
+  const typologyResults: TypologyResult[] = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining #Step 3
   await evaluateTypologySendRequest(typologyResults, networkMap, parsedTrans, metaData, cacheKey);
@@ -261,7 +261,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   if (rulesList.length >= getUniqueRulesCount(networkMap)) {
     const spanDelete = apm.startSpan(`cache.delete.[${String(transactionId)}].Typology interim cache key`);
     databaseManager.deleteKey(cacheKey);
-    databaseManager.deleteKey(`alreadySent_${cacheKey}`);
+    // databaseManager.deleteKey(`alreadySent_${cacheKey}`);
     apmTransaction?.end();
     spanDelete?.end();
   }
