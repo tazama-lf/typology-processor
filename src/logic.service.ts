@@ -10,11 +10,6 @@ import { type IExpression, type IRuleValue, type ITypologyExpression } from './i
 import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
 import { type MetaData } from './interfaces/metaData';
 
-interface UniqueNetworkMapCount {
-  rulesLength: number;
-  typologiesLength: number;
-}
-
 // Util #1
 const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
   let toReturn = 0.0;
@@ -79,26 +74,6 @@ const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleR
   return toReturn;
 };
 
-// Util #2
-const getUniqueNetworkMapCount = (networkMap: NetworkMap): UniqueNetworkMapCount => {
-  const uniqueIdsRules: string[] = [];
-  const uniqueIdsTypologies: string[] = [];
-
-  for (const channel of networkMap.messages[0].channels) {
-    for (const typology of channel.typologies) {
-      if (!uniqueIdsTypologies.includes(typology.cfg)) {
-        uniqueIdsTypologies.push(typology.cfg);
-      }
-      for (const rule of typology.rules) {
-        if (!uniqueIdsRules.includes(rule.id)) {
-          uniqueIdsRules.push(rule.id);
-        }
-      }
-    }
-  }
-  return { rulesLength: uniqueIdsRules.length, typologiesLength: uniqueIdsTypologies.length };
-};
-
 // Util #3
 const transactionMinimalObject = (transaction: any): any => {
   return {
@@ -119,11 +94,19 @@ const saveToRedisGetAll = async (transactionId: any, ruleResult: RuleResult): Pr
 };
 
 // Step 2
-const ruleResultAggregation = (networkMap: NetworkMap, ruleList: RuleResult[], ruleResult: RuleResult): TypologyResult[] => {
+const ruleResultAggregation = (
+  networkMap: NetworkMap,
+  ruleList: RuleResult[],
+  ruleResult: RuleResult,
+): { typologyResult: TypologyResult[]; ruleCount: number } => {
   const typologyResult: TypologyResult[] = [];
+  const set = new Set();
   networkMap.messages.forEach((message) => {
     message.channels.forEach((channel) => {
       channel.typologies.forEach((typology) => {
+        for (const rule of typology.rules) {
+          set.add(rule.id);
+        }
         if (!typology.rules.some((trule) => trule.id === ruleResult.id && trule.cfg === ruleResult.cfg)) return;
         const ruleResults = ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id));
         if (ruleResults.length) {
@@ -139,7 +122,7 @@ const ruleResultAggregation = (networkMap: NetworkMap, ruleList: RuleResult[], r
     });
   });
 
-  return typologyResult;
+  return { typologyResult, ruleCount: set.size };
 };
 
 // Step 3
@@ -274,19 +257,17 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
     return;
   }
 
-  const rulesCount = {
-    totalRules: getUniqueNetworkMapCount(networkMap).rulesLength,
-    storedRules: rulesList.length,
-  };
-
   // Aggregations of typology config merge with rule result #Step 2
-  const typologyResults: TypologyResult[] = ruleResultAggregation(networkMap, rulesList, ruleResult);
+  const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining #Step 3
-  await evaluateTypologySendRequest(typologyResults, networkMap, parsedTrans, metaData, cacheKey, rulesCount);
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData, cacheKey, {
+    storedRules: rulesList.length,
+    totalRules: ruleCount,
+  });
 
   // Garbage collection
-  if (rulesCount.storedRules >= rulesCount.totalRules) {
+  if (rulesList.length >= ruleCount) {
     const spanDelete = apm.startSpan(`cache.delete.[${String(transactionId)}].Typology interim cache key`);
     databaseManager.deleteKey(cacheKey);
     apmTransaction?.end();
