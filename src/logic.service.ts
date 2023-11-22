@@ -6,94 +6,17 @@ import { type RuleResult, type NetworkMap } from '@frmscoe/frms-coe-lib/lib/inte
 import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import { type CADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/CADPRequest';
 import { configuration } from './config';
-import { type IExpression, type IRuleValue, type ITypologyExpression } from './interfaces/iTypologyExpression';
+import { type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
-import { type MetaData } from './interfaces/metaData';
+import { type MetaData } from '@frmscoe/frms-coe-lib/lib/interfaces/metaData';
+import { evaluateTypologyExpression, transactionMinimalObject } from './utils/evaluateTExpression';
 
-// Util #1
-const evaluateTypologyExpression = (ruleValues: IRuleValue[], ruleResults: RuleResult[], typologyExpression: IExpression): number => {
-  let toReturn = 0.0;
-  // eslint-disable-next-line @typescript-eslint/no-for-in-array
-  for (const rule in typologyExpression.terms) {
-    const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg);
-    let ruleVal = 0.0;
-    if (!ruleResult) return ruleVal;
-    if (ruleResult.result)
-      ruleVal = Number(
-        ruleValues.find(
-          (rv) =>
-            rv.id === typologyExpression.terms[rule].id &&
-            rv.cfg === typologyExpression.terms[rule].cfg &&
-            rv.ref === ruleResult.subRuleRef,
-        )?.true ?? 0.0,
-      );
-    else
-      ruleVal = Number(
-        ruleValues.find(
-          (rv) =>
-            rv.id === typologyExpression.terms[rule].id &&
-            rv.cfg === typologyExpression.terms[rule].cfg &&
-            rv.ref === ruleResult.subRuleRef,
-        )?.false ?? 0.0,
-      );
-    ruleResult.wght = ruleVal;
-    switch (typologyExpression.operator) {
-      case '+':
-        toReturn += ruleVal;
-        break;
-      case '-':
-        toReturn -= ruleVal;
-        break;
-      case '*':
-        toReturn *= ruleVal;
-        break;
-      case '/':
-        if (ruleVal === 0.0) break;
-        toReturn /= ruleVal;
-        break;
-    }
-  }
-  if (typologyExpression.expression) {
-    const evalRes = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
-    switch (typologyExpression.operator) {
-      case '+':
-        toReturn += evalRes;
-        break;
-      case '-':
-        toReturn -= evalRes;
-        break;
-      case '*':
-        toReturn *= evalRes;
-        break;
-      case '/':
-        if (evalRes === 0.0) break;
-        toReturn /= evalRes;
-        break;
-    }
-  }
-  return toReturn;
-};
-
-// Util #3
-const transactionMinimalObject = (transaction: any): any => {
-  return {
-    TxTp: transaction.TxTp,
-    FIToFIPmtSts: {
-      GrpHdr: {
-        MsgId: transaction.FIToFIPmtSts.GrpHdr.MsgId,
-      },
-    },
-  };
-};
-
-// Step 1
 const saveToRedisGetAll = async (transactionId: any, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
   const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => res.ruleResult as RuleResult);
   return ruleResults;
 };
 
-// Step 2
 const ruleResultAggregation = (
   networkMap: NetworkMap,
   ruleList: RuleResult[],
@@ -125,7 +48,6 @@ const ruleResultAggregation = (
   return { typologyResult, ruleCount: set.size };
 };
 
-// Step 3
 const evaluateTypologySendRequest = async (
   typologyResults: TypologyResult[],
   networkMap: NetworkMap,
@@ -249,7 +171,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
   const cacheKey = `TP_${String(transactionId)}`;
 
-  // Save the rules Result to Redis and continue with the available #Step 1
+  // Save the rules Result to Redis and continue with the available
   const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult);
 
   if (!rulesList) {
@@ -257,10 +179,10 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
     return;
   }
 
-  // Aggregations of typology config merge with rule result #Step 2
+  // Aggregations of typology config merge with rule result
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
-  // Typology evaluation and Send to TADP interdiction determining #Step 3
+  // Typology evaluation and Send to TADP interdiction determining
   await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData, cacheKey, {
     storedRules: rulesList.length,
     totalRules: ruleCount,
