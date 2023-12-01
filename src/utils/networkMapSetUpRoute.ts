@@ -6,7 +6,7 @@ function getRuleMap(networkMap: NetworkMap | undefined): { rulesHost: string[]; 
   const rulesHost: string[] = new Array<string>();
   const tadpHost: string[] = new Array<string>();
   if (networkMap)
-    for (const Message of networkMap?.messages) {
+    for (const Message of networkMap.messages) {
       if (tadpHost.findIndex((m: string) => m === Message.host) < 0) tadpHost.push(Message.host);
       if (Message.channels && Message.channels.length > 0)
         for (const channel of Message.channels) {
