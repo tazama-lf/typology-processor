@@ -8,7 +8,7 @@ function getRuleMap(networkMap: NetworkMap | undefined): { rulesHost: string[]; 
   if (networkMap)
     for (const Message of networkMap.messages) {
       if (tadpHost.findIndex((m: string) => m === Message.host) < 0) tadpHost.push(Message.host);
-      if (Message.channels && Message.channels.length > 0)
+      if (Message.channels?.length)
         for (const channel of Message.channels) {
           if (channel.typologies && channel.typologies.length > 0)
             for (const typology of channel.typologies) {
