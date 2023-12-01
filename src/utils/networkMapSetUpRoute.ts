@@ -10,9 +10,9 @@ function getRuleMap(networkMap: NetworkMap | undefined): { rulesHost: string[]; 
       if (tadpHost.findIndex((m: string) => m === Message.host) < 0) tadpHost.push(Message.host);
       if (Message.channels?.length)
         for (const channel of Message.channels) {
-          if (channel.typologies && channel.typologies.length > 0)
+          if (channel.typologies?.length)
             for (const typology of channel.typologies) {
-              if (typology.rules && typology.rules.length > 0)
+              if (typology.rules?.length)
                 for (const rule of typology.rules) {
                   if (rulesHost.findIndex((r: string) => r === rule.host) < 0) rulesHost.push(rule.host);
                 }
