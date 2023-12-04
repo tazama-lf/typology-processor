@@ -68,14 +68,3 @@ export const evaluateTypologyExpression = (
   }
   return toReturn;
 };
-
-export const transactionMinimalObject = (transaction: any): any => {
-  return {
-    TxTp: transaction.TxTp,
-    FIToFIPmtSts: {
-      GrpHdr: {
-        MsgId: transaction.FIToFIPmtSts.GrpHdr.MsgId,
-      },
-    },
-  };
-};

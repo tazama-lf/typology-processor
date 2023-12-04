@@ -9,7 +9,7 @@ import { configuration } from './config';
 import { type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
 import { type MetaData } from '@frmscoe/frms-coe-lib/lib/interfaces/metaData';
-import { evaluateTypologyExpression, transactionMinimalObject } from './utils/evaluateTExpression';
+import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
 const saveToRedisGetAll = async (transactionId: any, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
@@ -138,8 +138,6 @@ const evaluateTypologySendRequest = async (
     }
     typologyResults[index].prcgTm = CalculateDuration(startTime);
     cadpReqBody.typologyResult = typologyResults[index];
-
-    if (numberOfRules.storedRules < numberOfRules.totalRules) cadpReqBody.transaction = transactionMinimalObject(transaction);
 
     // Send Typology to TADProc
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
