@@ -26,5 +26,10 @@ export const getRulesHostFromNetworkMap = async (): Promise<{ rulesHost: string[
   const networkConfigurationList = await databaseManager.getNetworkMap();
   const unwrappedNetworkMap = unwrap<NetworkMap>(networkConfigurationList as NetworkMap[][]);
   const networkMap = getRuleMap(unwrappedNetworkMap);
-  return { rulesHost: networkMap.rulesHost, tadpHost: networkMap.tadpHost };
+  return {
+    rulesHost: networkMap.rulesHost.map((rule) => {
+      return rule.replace('RuleRequest', 'RuleResponse');
+    }),
+    tadpHost: networkMap.tadpHost,
+  };
 };
