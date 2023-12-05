@@ -14,7 +14,8 @@ function getRuleMap(networkMap: NetworkMap | undefined): { rulesHost: string[]; 
             for (const typology of channel.typologies) {
               if (typology.rules?.length)
                 for (const rule of typology.rules) {
-                  if (rulesHost.findIndex((r: string) => r === rule.host) < 0) rulesHost.push(rule.host);
+                  if (rulesHost.findIndex((r: string) => r === rule.host) < 0)
+                    rulesHost.push(rule.host.replace('RuleRequest', 'RuleResponse'));
                 }
             }
         }
@@ -26,5 +27,8 @@ export const getRulesHostFromNetworkMap = async (): Promise<{ rulesHost: string[
   const networkConfigurationList = await databaseManager.getNetworkMap();
   const unwrappedNetworkMap = unwrap<NetworkMap>(networkConfigurationList as NetworkMap[][]);
   const networkMap = getRuleMap(unwrappedNetworkMap);
-  return { rulesHost: networkMap.rulesHost, tadpHost: networkMap.tadpHost };
+  return {
+    rulesHost: networkMap.rulesHost,
+    tadpHost: networkMap.tadpHost,
+  };
 };
