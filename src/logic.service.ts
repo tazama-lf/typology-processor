@@ -58,7 +58,9 @@ const evaluateTypologySendRequest = async (
     totalRules: number;
     storedRules: number;
   },
+  msgId: string,
 ): Promise<CADPRequest | undefined> => {
+  const logContext = 'evaluateTypologySendRequest()';
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
     // Typology Wait for enough rules if they are not matching the number configured
@@ -80,7 +82,7 @@ const evaluateTypologySendRequest = async (
     })) as unknown[][];
 
     if (!expressionRes?.[0]?.[0]) {
-      loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].cfg}`);
+      loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].cfg},`, logContext, msgId);
       return {
         typologyResult: typologyResults[index],
         transaction,
@@ -101,9 +103,13 @@ const evaluateTypologySendRequest = async (
     typologyResults[index].review = false;
 
     if (!expression.workflow.alertThreshold) {
-      loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`);
+      loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`, logContext, msgId);
     } else if (typologyResultValue >= expression.workflow.alertThreshold) {
-      loggerService.log(`Typology ${typologyResults[index].cfg} alerting on transaction : with a trigger of: ${typologyResultValue}`);
+      loggerService.log(
+        `Typology ${typologyResults[index].cfg} alerting on transaction : with a trigger of: ${typologyResultValue}`,
+        logContext,
+        msgId,
+      );
       typologyResults[index].review = true;
     }
 
@@ -122,7 +128,7 @@ const evaluateTypologySendRequest = async (
       server
         .handleResponse({ ...cadpReqBody, metaData }, [configuration.cmsProducer])
         .catch((error) => {
-          loggerService.error(`Error while sending Typology result to CMS`, error as Error);
+          loggerService.error(`Error while sending Typology result to CMS`, error as Error, logContext, msgId);
         })
         .finally(() => {
           spanExecReq?.end();
@@ -131,9 +137,13 @@ const evaluateTypologySendRequest = async (
     }
 
     if (!expression.workflow.alertThreshold) {
-      loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`);
+      loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`, undefined, logContext, msgId);
     } else if (typologyResultValue >= expression.workflow.alertThreshold) {
-      loggerService.log(`Typology ${typologyResults[index].cfg} alerting on transaction :  with a trigger of: ${typologyResultValue}`);
+      loggerService.log(
+        `Typology ${typologyResults[index].cfg} alerting on transaction :  with a trigger of: ${typologyResultValue}`,
+        logContext,
+        msgId,
+      );
       typologyResults[index].review = true;
     }
     typologyResults[index].prcgTm = CalculateDuration(startTime);
@@ -144,7 +154,7 @@ const evaluateTypologySendRequest = async (
     server
       .handleResponse({ ...cadpReqBody, metaData })
       .catch((error) => {
-        loggerService.error(`Error while sending Typology result to TADP`, error as Error);
+        loggerService.error(`Error while sending Typology result to TADP`, error as Error, logContext, msgId);
       })
       .finally(() => {
         spanExecReq?.end();
@@ -155,8 +165,8 @@ const evaluateTypologySendRequest = async (
 };
 
 export const handleTransaction = async (transaction: any): Promise<void> => {
+  const context = 'handleTransaction()';
   const metaData = transaction.metaData;
-  loggerService.log(`traceParent in typroc: ${JSON.stringify(metaData?.traceParent)}`);
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
     childOf: metaData?.traceParent,
   });
@@ -166,6 +176,10 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const parsedTrans = transaction.transaction;
 
   const transactionType = 'FIToFIPmtSts';
+
+  const id = parsedTrans[transactionType].GrpHdr.MsgId;
+  loggerService.log('tx received', context, id);
+
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
   const cacheKey = `TP_${String(transactionId)}`;
 
@@ -173,7 +187,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult);
 
   if (!rulesList) {
-    loggerService.log('Redis records should never be undefined');
+    loggerService.error('Redis records should never be undefined', undefined, context, id);
     return;
   }
 
@@ -181,10 +195,18 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData, cacheKey, {
-    storedRules: rulesList.length,
-    totalRules: ruleCount,
-  });
+  await evaluateTypologySendRequest(
+    typologyResult,
+    networkMap,
+    parsedTrans,
+    metaData,
+    cacheKey,
+    {
+      storedRules: rulesList.length,
+      totalRules: ruleCount,
+    },
+    id,
+  );
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {

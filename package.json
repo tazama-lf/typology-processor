@@ -15,7 +15,7 @@
     "lint": "npm run lint:eslint && npm run lint:prettier",
     "lint:eslint": "eslint \"**/*.ts\"",
     "lint:prettier": "prettier --check \"**/*.ts\"",
-    "test": "jest --config=jest.config.ts --passWithNoTests",
+    "test": "jest --config=jest.config.ts --passWithNoTests --forceExit",
     "test:watch": "jest --config=jest.config.ts --watch",
     "prepare": "husky install"
   },
@@ -34,12 +34,11 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@frmscoe/frms-coe-lib": "^2.1.5",
-    "@frmscoe/frms-coe-startup-lib": "^2.1.1",
+    "@frmscoe/frms-coe-lib": "^2.2.0",
+    "@frmscoe/frms-coe-startup-lib": "^2.1.0",
     "@log4js-node/logstash-http": "^1.1.0",
     "arangojs": "^8.4.0",
     "dotenv": "^16.0.0",
-    "fs": "^0.0.1-security",
     "ioredis": "^5.3.0",
     "lodash": "^4.17.21",
     "log4js": "^6.4.0",

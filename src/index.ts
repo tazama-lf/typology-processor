@@ -34,7 +34,7 @@ const databaseManagerConfig = {
   },
 };
 
-export const loggerService: LoggerService = new LoggerService();
+export const loggerService: LoggerService = new LoggerService(configuration.sidecarHost);
 let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
 
 export const dbInit = async (): Promise<void> => {

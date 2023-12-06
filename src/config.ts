@@ -44,6 +44,7 @@ export interface IConfig {
     path: string;
     port: number;
   };
+  sidecarHost: string;
 }
 
 export const configuration: IConfig = {
@@ -84,4 +85,5 @@ export const configuration: IConfig = {
     path: process.env.TRANSACTION_ROUTING_PATH as string,
     port: parseInt(process.env.TRANSACTION_ROUTING_PORT!, 10),
   },
+  sidecarHost: process.env.SIDECAR_HOST as string,
 };
