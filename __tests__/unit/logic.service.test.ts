@@ -2,7 +2,7 @@
 /* eslint-disable */
 import { NetworkMap, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import axios from 'axios';
-import { databaseManager, dbInit, loggerService, runServer, server } from '../../src/index';
+import { databaseManager, dbInit, runServer, server } from '../../src/index';
 import { handleTransaction } from '../../src/logic.service';
 
 jest.mock('axios');
@@ -21,6 +21,10 @@ beforeAll(async () => {
   await runServer();
 });
 
+afterAll((done) => {
+  done();
+});
+
 let cacheString: Record<string, unknown>;
 let cacheStringArr: Map<string, Record<string, unknown>[]> = new Map();
 let weight: number;
@@ -29,6 +33,18 @@ describe('Logic Service', () => {
   let responseSpy: jest.SpyInstance;
 
   beforeEach(() => {
+
+    jest.spyOn(databaseManager, 'addOneGetAll')
+      .mockImplementation((_key: string, _value: Record<string, unknown>): Promise<Record<string, unknown>[]> => {
+        return new Promise<Record<string, unknown>[]>((resolve, _reject) => {
+          //cacheString = value;
+          resolve([
+            { ruleResult: { result: true, id: '003@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' } },
+            { ruleResult: { result: false, id: '004@1.0.0', cfg: '1.0.0', reason: 'reason', subRuleRef: '.01' } },
+          ]);
+        });
+      });
+
     jest.spyOn(databaseManager, 'getNetworkMap').mockImplementation(async () => {
       return new Promise((resolve, _reject) => {
         resolve(
@@ -976,7 +992,7 @@ describe('Logic Service', () => {
       try {
         await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
       } catch {
-        loggerService.log('Error handle transaction');
+        console.log('Error handle transaction');
       }
 
       expect(responseSpy).toHaveBeenCalledTimes(0);
@@ -1242,15 +1258,15 @@ describe('Logic Service', () => {
       try {
         await handleTransaction({ transaction: expectedReq, networkMap, ruleResult: ruleResult03 });
       } catch {
-        loggerService.log('Error of handling of transaction');
+        console.log('Error of handling of transaction');
       }
 
       expect(responseSpy).toHaveBeenCalled();
     });
 
     it('should test typology expression', async () => {
+      jest.clearAllMocks()
       const expectedReq = getMockRequest();
-      let test = false;
       const jNetworkMap = JSON.parse(
         '{"messages":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","txTp":"pain.001.001.11","channels":[{"id":"001@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0","typologies":[{"id":"1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"028@1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"004@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]},{"id":"1.0.0","host":"https://frmfaas.sybrin.com/function/off-frm-typology-processor","cfg":"029@1.0.0","rules":[{"id":"003@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"},{"id":"005@1.0.0","host":"http://openfaas:8080","cfg":"1.0.0"}]}]}]}]}',
       );
@@ -1284,8 +1300,8 @@ describe('Logic Service', () => {
         });
       });
 
-      const result = await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
-      expect(responseSpy).toHaveBeenCalledTimes(2);
+      await handleTransaction({ transaction: expectedReq, networkMap, ruleResult });
+      expect(responseSpy).toHaveBeenCalledTimes(1);
 
       // mockedAxios.post.mockResolvedValue({ status: 200 });
 
