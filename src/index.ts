@@ -7,8 +7,16 @@ import os from 'os';
 import { configuration } from './config';
 import { handleTransaction } from './logic.service';
 import { Singleton } from './services/services';
+import { getRulesHostFromNetworkMap } from './utils/networkMapSetUpRoute';
 
 const databaseManagerConfig = {
+  networkMap: {
+    certPath: configuration.db.dbCertPath,
+    databaseName: configuration.db.networkMap,
+    user: configuration.db.user,
+    password: configuration.db.password,
+    url: configuration.db.url,
+  },
   redisConfig: {
     db: configuration.redis.db,
     servers: configuration.redis.servers,
@@ -38,10 +46,11 @@ export let server: IStartupService;
 export const runServer = async (): Promise<void> => {
   server = new StartupFactory();
   if (configuration.env !== 'test') {
+    const { rulesHost, tadpHost } = await getRulesHostFromNetworkMap();
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
-      if (!(await server.init(handleTransaction))) {
+      if (!(await server.init(handleTransaction, undefined, rulesHost, tadpHost[0]))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         loggerService.log('Connected to nats');

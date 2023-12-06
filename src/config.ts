@@ -28,6 +28,7 @@ export interface IConfig {
     user: string;
     collectionName: string;
     dbCertPath: string;
+    networkMap: string;
     cacheEnabled?: boolean;
     cacheTTL?: number;
   };
@@ -64,6 +65,7 @@ export const configuration: IConfig = {
     dbCertPath: process.env.DATABASE_CERT_PATH as string,
     cacheEnabled: process.env.CACHE_ENABLED === 'true',
     cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
+    networkMap: process.env.DATABASE_NETWORKMAP as string,
   },
   env: process.env.NODE_ENV as string,
   functionName: process.env.FUNCTION_NAME as string,
