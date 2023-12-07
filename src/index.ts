@@ -8,7 +8,6 @@ import os from 'os';
 import { configuration } from './config';
 import { handleTransaction } from './logic.service';
 import { Singleton } from './services/services';
-import { getRulesHostFromNetworkMap } from './utils/networkMapSetUpRoute';
 
 const databaseManagerConfig = {
   networkMap: {
