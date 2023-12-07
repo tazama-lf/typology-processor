@@ -49,7 +49,7 @@ export const runServer = async (): Promise<void> => {
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
-      const consumers = (await getRoutesFromNetworkMap(databaseManager, configuration.functionName)).consumers;
+      const { consumers } = await getRoutesFromNetworkMap(databaseManager, configuration.functionName);
       if (!(await server.init(handleTransaction, undefined, consumers, 'temp-pub-tadp'))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
