@@ -46,7 +46,6 @@ export let server: IStartupService;
 export const runServer = async (): Promise<void> => {
   server = new StartupFactory();
   if (configuration.env !== 'test') {
-    // const { rulesHost, tadpHost } = await getRulesHostFromNetworkMap();
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
