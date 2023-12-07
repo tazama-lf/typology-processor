@@ -2,6 +2,7 @@
 import './apm';
 import { LoggerService, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
 import { StartupFactory, type IStartupService } from '@frmscoe/frms-coe-startup-lib';
+import { getRoutesFromNetworkMap } from '@frmscoe/frms-coe-lib/lib/helpers/networkMapIdentifiers';
 import cluster from 'cluster';
 import os from 'os';
 import { configuration } from './config';
@@ -46,11 +47,12 @@ export let server: IStartupService;
 export const runServer = async (): Promise<void> => {
   server = new StartupFactory();
   if (configuration.env !== 'test') {
-    const { rulesHost, tadpHost } = await getRulesHostFromNetworkMap();
+    // const { rulesHost, tadpHost } = await getRulesHostFromNetworkMap();
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
-      if (!(await server.init(handleTransaction, undefined, rulesHost, tadpHost[0]))) {
+      const consumers = (await getRoutesFromNetworkMap(databaseManager, 'TP')).consumer;
+      if (!(await server.init(handleTransaction, undefined, consumers, 'temp-pub-tadp'))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         loggerService.log('Connected to nats');

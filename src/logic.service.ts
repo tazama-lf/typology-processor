@@ -152,7 +152,7 @@ const evaluateTypologySendRequest = async (
     // Send Typology to TADProc
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
     server
-      .handleResponse({ ...cadpReqBody, metaData })
+      .handleResponse({ ...cadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
       .catch((error) => {
         loggerService.error(`Error while sending Typology result to TADP`, error as Error, logContext, msgId);
       })
