@@ -11,7 +11,7 @@ import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePr
 import { type MetaData } from '@frmscoe/frms-coe-lib/lib/interfaces/metaData';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
-const saveToRedisGetAll = async (transactionId: any, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
+const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
   const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => res.ruleResult as RuleResult);
   return ruleResults;
@@ -177,7 +177,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
 
   const transactionType = 'FIToFIPmtSts';
 
-  const id = parsedTrans[transactionType].GrpHdr.MsgId;
+  const id = parsedTrans[transactionType].GrpHdr.MsgId as string;
   loggerService.log('tx received', context, id);
 
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
@@ -199,7 +199,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
     typologyResult,
     networkMap,
     parsedTrans,
-    metaData,
+    metaData as MetaData,
     cacheKey,
     {
       storedRules: rulesList.length,
