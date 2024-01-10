@@ -96,7 +96,7 @@ jobs:
           TRANSACTIONHISTORY_DATABASE: transactionHistory
 
       - name: Test Processor
-        run: newman run https://raw.githubusercontent.com/frmscoe/postman/indexes/NATS_RES_TP_TEST.postman_collection.json -e https://raw.githubusercontent.com/frmscoe/postman/indexes/environments/Ekuta-LOCAL.postman_environment.json --timeout-request 10200 -r json --reporter-json-export fullReport.json
+        run: newman run https://raw.githubusercontent.com/frmscoe/postman/main/micro_processors/TypologyProcessor_Proxy_Test.postman_collection.json -e https://raw.githubusercontent.com/frmscoe/postman/main/environments/Ekuta-LOCAL.postman_environment.json --timeout-request 10200 -r json --reporter-json-export fullReport.json
 
       - name: Extract Specific Field
         id: newman_test
