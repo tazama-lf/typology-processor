@@ -2,6 +2,30 @@
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 
 name: Node.js CI
+env:
+  NODE_ENV: 'dev'
+  STARTUP_TYPE: 'nats'
+  SERVER_URL: 'nats://localhost:4222'
+  ACK_POLICY: 'None'
+  STREAM_SUBJECT:
+  APM_ACTIVE: false
+  APM_LOGGING: false
+  FUNCTION_NAME: 'typology-processor'
+  REDIS_DB: 0
+  REDIS_AUTH:
+  REDIS_SERVERS: '[{"host":"127.0.0.1", "port":6379}]'
+  REDIS_IS_CLUSTER: false
+  DATABASE_NAME: Configuration
+  DATABASE_NETWORKMAP: networkmap
+  DATABASE_URL: 'http://localhost:8529/'
+  DATABASE_USER: root
+  DATABASE_PASSWORD:
+  PSEUDONYMS_DATABASE: pseudonyms
+  TRANSACTIONHISTORY_DATABASE: transactionHistory
+  GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+  NPM_SCOPE: "@frmscoe"
+  NPM_REGISTRY: "https://npm.pkg.github.com/"
+  ENV_NEWMAN: https://raw.githubusercontent.com/frmscoe/postman/indexes/environments/Ekuta-LOCAL.postman_environment.json
 on:
   push:
     branches: [ "main" ]
@@ -16,7 +40,7 @@ jobs:
       responseMax: ${{ steps.newman_test.outputs.responseMax }}
       responseSd: ${{ steps.newman_test.outputs.responseSd }}
       numberOfTest: ${{ steps.newman_test.outputs.numberOfTest }}
-    name: install, build, test
+    name: integration test
     permissions:
       packages: write
       contents: read
@@ -36,7 +60,7 @@ jobs:
           arangodb version: 'latest'
 
       - name: Setup Arango
-        run: newman run https://raw.githubusercontent.com/frmscoe/postman/indexes/ArangoDB%20Setup.json -e https://raw.githubusercontent.com/frmscoe/postman/indexes/environments/Ekuta-LOCAL.postman_environment.json --timeout-request 10200
+        run: newman run https://raw.githubusercontent.com/frmscoe/postman/indexes/ArangoDB%20Setup.json -e ${{ env.ENV_NEWMAN }} --timeout-request 10200
 
       - name: Startup Nats
         uses: onichandame/nats-action@master
@@ -59,44 +83,18 @@ jobs:
           scope: '@frmscoe'
 
       - name: Install dependencies
-        run: npm install -g newman && npm ci
+        run: npm ci
         env:
           GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-
-      - name: Run unit tests
-        run: npm run test
-        env:
-            NODE_ENV: 'test'
-            STARTUP_TYPE: 'nats'
 
       - name: Processor Build
         run: npm run build
 
       - name: Processor Start
         run: npm run start &
-        env:
-          NODE_ENV: 'dev'
-          STARTUP_TYPE: 'nats'
-          SERVER_URL: 'nats://localhost:4222'
-          ACK_POLICY: 'None'
-          STREAM_SUBJECT:
-          APM_ACTIVE: false
-          APM_LOGGING: false
-          FUNCTION_NAME: 'typology-processor'
-          REDIS_DB: 0
-          REDIS_AUTH:
-          REDIS_SERVERS: '[{"host":"127.0.0.1", "port":6379}]'
-          REDIS_IS_CLUSTER: false
-          DATABASE_NAME: Configuration
-          DATABASE_NETWORKMAP: networkmap
-          DATABASE_URL: 'http://localhost:8529/'
-          DATABASE_USER: root
-          DATABASE_PASSWORD:
-          PSEUDONYMS_DATABASE: pseudonyms
-          TRANSACTIONHISTORY_DATABASE: transactionHistory
 
       - name: Test Processor
-        run: newman run https://raw.githubusercontent.com/frmscoe/postman/main/micro_processors/TypologyProcessor_Proxy_Test.postman_collection.json -e https://raw.githubusercontent.com/frmscoe/postman/main/environments/Ekuta-LOCAL.postman_environment.json --timeout-request 10200 -r json --reporter-json-export fullReport.json
+        run: newman run https://raw.githubusercontent.com/frmscoe/postman/main/micro_processors/TypologyProcessor_Proxy_Test.postman_collection.json -e ${{ env.ENV_NEWMAN }} --timeout-request 10200 -r json --reporter-json-export fullReport.json
 
       - name: Extract Specific Field
         id: newman_test
@@ -128,3 +126,45 @@ jobs:
                 -H "Content-Type: application/json" \
                 --data-raw "{\"body\":\"$COMMENT_BODY\"}" \
                 $API_URL
+
+  test:
+    runs-on: ubuntu-latest
+    name: unit tests
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          registry-url: ${{ env.NPM_REGISTRY }}
+          scope: ${{ env.NPM_SCOPE }}
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_ENV: 'test'
+
+  lint:
+    runs-on: ubuntu-latest
+    name: check style
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          registry-url: ${{ env.NPM_REGISTRY }}
+          scope: ${{ env.NPM_SCOPE }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Check linting
+        run: npm run lint
