@@ -108,6 +108,7 @@ jobs:
           path: fullReport.json
 
   pastbench:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       responseMax: ${{ steps.pre_test.outputs.responseMax }}
@@ -135,6 +136,7 @@ jobs:
           echo "##[set-output name=prNumber]$(echo "$input" | awk -F ';' '{print $7}')"
 
   output:
+    if: github.event_name == 'pull_request'
     needs: [build, pastbench]
     runs-on: ubuntu-latest
     steps:
@@ -162,6 +164,7 @@ jobs:
               $API_URL
 
   store:
+    if: github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     steps:
