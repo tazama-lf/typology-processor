@@ -5,8 +5,9 @@ env:
   PROCCESSOR_REPO_NAME: ${{ github.event.repository.name }}
 on:
   push:
-    branches:
-      - 'main'
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 jobs:
   bench:
     runs-on: ubuntu-latest
