@@ -5,9 +5,8 @@ env:
   PROCCESSOR_REPO_NAME: ${{ github.event.repository.name }}
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - 'main'
 jobs:
   bench:
     runs-on: ubuntu-latest
@@ -35,7 +34,7 @@ jobs:
           cat "${{ env.PROCCESSOR_REPO_NAME }}".csv.tmp >> "${{ env.PROCCESSOR_REPO_NAME }}".csv
           git reset "${{ env.PROCCESSOR_REPO_NAME }}".csv.tmp
           git add "${{ env.PROCCESSOR_REPO_NAME }}".csv
-          git commit -m "#${{ github.event.number}} Pushed update of ${{ env.PROCCESSOR_REPO_NAME }}"
+          git commit -m "#${{ github.event.number }} Pushed update of ${{ env.PROCCESSOR_REPO_NAME }}"
       - name: push data
         run: |
           cd ${{ env.REPO_NAME }}
