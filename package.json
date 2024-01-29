@@ -38,7 +38,7 @@
     "@frmscoe/frms-coe-startup-lib": "^2.1.2",
     "@log4js-node/logstash-http": "^1.1.0",
     "arangojs": "^8.4.0",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.4.1",
     "ioredis": "^5.3.0",
     "lodash": "^4.17.21",
     "log4js": "^6.4.0",
