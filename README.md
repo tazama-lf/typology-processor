@@ -1,6 +1,6 @@
 # 4. Typology Processor
 
-See also [Typology Processing](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/1740494/Typology+Processing)
+See also [Typology Processing](https://github.com/frmscoe/docs/blob/main/Product/typology-processing.md)
 
 - [4. Typology Processor](#4-typology-processor)
   - [Code Activity Diagram](#code-activity-diagram)
@@ -11,11 +11,11 @@ See also [Typology Processing](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pa
     - [Sample response from TP:](#sample-response-from-tp)
   - [Testing](#testing)
 
-![](./Images/image-20220706-133859.png)
+![](images/image-20220706-133859.png)
 
 ## Code Activity Diagram
 
-![](/Images/image-20231124-060051.png)
+![](images/image-20231124-060051.png)
 
 [https://github.com/ActioFRM/uml-diagrams/blob/main/TP.plantuml](https://github.com/ActioFRM/uml-diagrams/blob/main/TP.plantuml)
 
@@ -35,7 +35,7 @@ See also [Typology Processing](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pa
   "workflow": {
     "alertThreshold": 800
   },
-  "rules": \[
+  "rules": [
     {
       "id": "003@1.0.0",
       "cfg": "1.0.0",
@@ -57,15 +57,15 @@ See also [Typology Processing](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pa
       "true": 400,
       "false": 0
     }
-  \],
+  ],
   "expression": {
     "operator": "+",
-    "terms": \[
+    "terms": [
       {
         "id": "083@1.0.0",
         "cfg": "1.0.0"
       }
-    \]
+    ]
   }
 }
 ```
@@ -281,35 +281,35 @@ See also [Typology Processing](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pa
     "networkMap": {
         "active": true,
         "cfg": "1.0.0",
-        "messages": \[
+        "messages": [
             {
                 "id": "004@1.0.0",
                 "host": "NATS Server",
                 "cfg": "1.0.0",
                 "txTp": "pacs.002.001.12",
-                "channels": \[
+                "channels": [
                     {
                         "id": "001@1.0.0",
                         "host": "NATS Server",
                         "cfg": "1.0.0",
-                        "typologies": \[
+                        "typologies": [
                             {
                                 "id": "typology-processor@1.0.0",
                                 "host": "NATS Server",
                                 "cfg": "001@1.0.0",
-                                "rules": \[
+                                "rules": [
                                     {
                                         "id": "003@1.0.0",
                                         "host": "RuleRequest003",
                                         "cfg": "1.0.0"
                                     }
-                                \]
+                                ]
                             }
-                        \]
+                        ]
                     }
-                \]
+                ]
             }
-        \]
+        ]
     }
 }
 ```
