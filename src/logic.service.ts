@@ -52,14 +52,9 @@ const evaluateTypologySendRequest = async (
   transaction: any,
   metaData: MetaData,
   transactionId: string,
-  numberOfRules: {
-    totalRules: number;
-    storedRules: number;
-  },
   msgId: string,
-): Promise<CADPRequest | undefined> => {
+): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
-  let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
     // Typology Wait for enough rules if they are not matching the number configured
     const networkMapRules = networkMap.messages[0].typologies.find(
@@ -81,11 +76,7 @@ const evaluateTypologySendRequest = async (
 
     if (!expressionRes?.[0]?.[0]) {
       loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].cfg},`, logContext, msgId);
-      return {
-        typologyResult: typologyResults[index],
-        transaction,
-        networkMap,
-      };
+      continue;
     }
 
     const expression = expressionRes[0][0] as ITypologyExpression;
@@ -111,7 +102,7 @@ const evaluateTypologySendRequest = async (
       typologyResults[index].review = true;
     }
 
-    cadpReqBody = {
+    const cadpReqBody: CADPRequest = {
       typologyResult: typologyResults[index],
       transaction,
       networkMap,
@@ -159,7 +150,6 @@ const evaluateTypologySendRequest = async (
         spanTadpr?.end();
       });
   }
-  return cadpReqBody;
 };
 
 export const handleTransaction = async (transaction: any): Promise<void> => {
@@ -193,18 +183,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(
-    typologyResult,
-    networkMap,
-    parsedTrans,
-    metaData as MetaData,
-    cacheKey,
-    {
-      storedRules: rulesList.length,
-      totalRules: ruleCount,
-    },
-    id,
-  );
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData as MetaData, cacheKey, id);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
