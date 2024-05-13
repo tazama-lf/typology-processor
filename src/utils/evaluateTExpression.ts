@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { loggerService } from '..';
 import { type IExpression, type IRuleValue } from '../interfaces/iTypologyExpression';
 import { type RuleResult } from '@frmscoe/frms-coe-lib/lib/interfaces';
 
@@ -12,25 +13,18 @@ export const evaluateTypologyExpression = (
   for (const rule in typologyExpression.terms) {
     const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg);
     let ruleVal = 0.0;
-    if (!ruleResult) return ruleVal;
-    if (ruleResult.result)
-      ruleVal = Number(
-        ruleValues.find(
-          (rv) =>
-            rv.id === typologyExpression.terms[rule].id &&
-            rv.cfg === typologyExpression.terms[rule].cfg &&
-            rv.ref === ruleResult.subRuleRef,
-        )?.true ?? 0.0,
+    if (!ruleResult) {
+      loggerService.warn(
+        `Could not find rule result for typology expression's term ${typologyExpression.terms[rule].id}${typologyExpression.terms[rule].cfg}`,
       );
-    else
-      ruleVal = Number(
-        ruleValues.find(
-          (rv) =>
-            rv.id === typologyExpression.terms[rule].id &&
-            rv.cfg === typologyExpression.terms[rule].cfg &&
-            rv.ref === ruleResult.subRuleRef,
-        )?.false ?? 0.0,
-      );
+      return ruleVal;
+    }
+    ruleVal = Number(
+      ruleValues.find(
+        (rv) =>
+          rv.id === typologyExpression.terms[rule].id && rv.cfg === typologyExpression.terms[rule].cfg && rv.ref === ruleResult.subRuleRef,
+      )?.wght ?? 0.0,
+    );
     ruleResult.wght = ruleVal;
     switch (typologyExpression.operator) {
       case '+':
