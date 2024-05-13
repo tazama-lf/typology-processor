@@ -1,262 +1,307 @@
-Sample configuration:
+# 4. Typology Processor
+
+See also [Typology Processing](https://github.com/frmscoe/docs/blob/main/Product/typology-processing.md)
+
+- [4. Typology Processor](#4-typology-processor)
+  - [Code Activity Diagram](#code-activity-diagram)
+  - [Code Repository](#code-repository)
+  - [Usage](#usage)
+    - [Sample Typology Expression](#sample-typology-expression)
+    - [Sample NATS subscription payload](#sample-nats-subscription-payload)
+    - [Sample response from TP:](#sample-response-from-tp)
+  - [Testing](#testing)
+
+![](images/image-20220706-133859.png)
+
+## Code Activity Diagram
+
+![](images/image-20231124-060051.png)
+
+[https://github.com/ActioFRM/uml-diagrams/blob/main/TP.plantuml](https://github.com/ActioFRM/uml-diagrams/blob/main/TP.plantuml)
+
+## Code Repository
+
+[https://github.com/ActioFRM/typology-processor](https://github.com/ActioFRM/typology-processor)
+
+## Usage
+
+### Sample Typology Expression
 
 ```json
 {
-  "typology_name": "Typology_29",
-  "typology_version": "1.1",
-  "rules_values": [
+  "desc": "Use of several currencies, structured transactions, with a great number of persons involved, large number of transactions related to each other during a short time period.",
+  "id": "typology-processor@1.0.0",
+  "cfg": "001@1.0.0",
+  "workflow": {
+    "alertThreshold": 800
+  },
+  "rules": [
     {
-      "rule_id": "Rule_15_1.4",
-      "rule_true_value": "70",
-      "rule_false_value": "0"
+      "id": "003@1.0.0",
+      "cfg": "1.0.0",
+      "ref": ".err",
+      "true": 0,
+      "false": 0
     },
     {
-      "rule_id": "Rule_27_1.0",
-      "rule_true_value": "77",
-      "rule_false_value": "0"
+      "id": "003@1.0.0",
+      "cfg": "1.0.0",
+      "ref": ".01",
+      "true": 0,
+      "false": 0
     },
     {
-      "rule_id": "Rule_05_1.0",
-      "rule_true_value": "90",
-      "rule_false_value": "5"
+      "id": "003@1.0.0",
+      "cfg": "1.0.0",
+      "ref": ".02",
+      "true": 400,
+      "false": 0
     }
   ],
-  "typology_expression": {
-    "operation": "+",
-    "values": ["Rule_05_1.0", "Rule_27_1.0"],
-    "nested_expression": {
-      "operation": "-",
-      "values": ["Rule_27_1.0", "Rule_15_1.4"],
-      "nested_expression": {
-        "operation": "*",
-        "values": ["Rule_15_1.4", "Rule_05_1.0"]
+  "expression": {
+    "operator": "+",
+    "terms": [
+      {
+        "id": "083@1.0.0",
+        "cfg": "1.0.0"
       }
-    }
+    ]
   }
 }
 ```
 
----
-
-Sample HTTP request to /execute endpoint:
+### Sample NATS subscription payload
 
 ```json
 {
     "transaction": {
-        "GroupHeader": {
-            "InitiatingParty": {
-                "Identification": {
-                    "ContactDetails": {
-                        "MobileNumber": "Hello"
-                    },
-                    "Identification": "c5249c18-3518-4975-82a2-5313bd6661f1",
-                    "Other": {
-                        "ContactDetails": {
-                            "MobileNumber": "Hello"
-                        },
-                        "Identification": "2b04e485-bd4b-4c8c-8ec1-2d31ca07c848",
-                        "PrivateIdentification": {
-                            "DateAndPlaceOfBirth": {
-                                "Birthdate": "Hello"
-                            }
-                        },
-                        "SchemeName": {
-                            "Proprietary": "Hello"
-                        }
-                    },
-                    "PrivateIdentification": {
-                        "DateAndPlaceOfBirth": {
-                            "Birthdate": "Hello"
-                        }
-                    },
-                    "SchemeName": {
-                        "Proprietary": "Hello"
-                    }
-                },
-                "Name": "'ABD AL-MALIK2"
-            }
-        },
-        "PaymentInformation": {
-            "CreditTransferTransactionInformation": {
-                "Amount": {
-                    "EquivalentAmount": {
-                        "Amount": 1.1,
-                        "CurrencyOfTransfer": "Hello"
-                    },
-                    "InstructedAmount": {}
-                },
-                "Creditor": {
-                    "Identification": {
-                        "ContactDetails": {
-                            "MobileNumber": "Hello"
-                        },
-                        "Identification": "e838d001-5dd9-4e7d-a67f-285889ea9a09",
-                        "Other": {
-                            "ContactDetails": {
-                                "MobileNumber": "Hello"
+        "TxTp": "pain.001.001.11",
+        "CstmrCdtTrfInitn": {
+            "GrpHdr": {
+                "MsgId": "2669e349-500d-44ba-9e27-7767a16608a0",
+                "CreDtTm": "2021-10-07T09:25:31.000Z",
+                "NbOfTxs": 1,
+                "InitgPty": {
+                    "Nm": "Ivan Reese Russel-Klein",
+                    "Id": {
+                        "PrvtId": {
+                            "DtAndPlcOfBirth": {
+                                "BirthDt": "1967-11-23",
+                                "CityOfBirth": "Unknown",
+                                "CtryOfBirth": "ZZ"
                             },
-                            "Identification": "d8b2b3d0-e00b-4a92-8e45-60b4fdf0563b",
-                            "PrivateIdentification": {
-                                "DateAndPlaceOfBirth": {
-                                    "Birthdate": "1989-07-132",
-                                    "CityOfBirth": "Hello",
-                                    "CountryOfBirth": "",
-                                    "ProvinceOfBirth": "Hello"
+                            "Othr": {
+                                "Id": "+27783078685",
+                                "SchmeNm": {
+                                    "Prtry": "MSISDN"
                                 }
+                            }
+                        }
+                    },
+                    "CtctDtls": {
+                        "MobNb": "+27-783078685"
+                    }
+                }
+            },
+            "PmtInf": {
+                "PmtInfId": "b51ec534-ee48-4575-b6a9-ead2955b8069",
+                "PmtMtd": "TRA",
+                "ReqdAdvcTp": {
+                    "DbtAdvc": {
+                        "Cd": "ADWD",
+                        "Prtry": "Advice with transaction details"
+                    }
+                },
+                "ReqdExctnDt": {
+                    "Dt": "2021-10-07",
+                    "DtTm": "2021-10-07T09:25:31.000Z"
+                },
+                "Dbtr": {
+                    "Nm": "Ivan Reese Russel-Klein",
+                    "Id": {
+                        "PrvtId": {
+                            "DtAndPlcOfBirth": {
+                                "BirthDt": "1967-11-23",
+                                "CityOfBirth": "Unknown",
+                                "CtryOfBirth": "ZZ"
                             },
-                            "SchemeName": {
-                                "Proprietary": "Hello"
+                            "Othr": {
+                                "Id": "+27783078685",
+                                "SchmeNm": {
+                                    "Prtry": "MSISDN"
+                                }
                             }
-                        },
-                        "PrivateIdentification": {
-                            "DateAndPlaceOfBirth": {
-                                "Birthdate": "Hello"
-                            }
-                        },
-                        "SchemeName": {
-                            "Proprietary": "Hello"
                         }
                     },
-                    "Name": "Hello"
+                    "CtctDtls": {
+                        "MobNb": "+27-783078685"
+                    }
                 },
-                "CreditorAccount": {
-                    "Identification": {
-                        "ContactDetails": {},
-                        "Identification": "a58cc6c9-e0cf-41c6-bc67-e73c2240fa74",
-                        "Other": {
-                            "ContactDetails": {},
-                            "Identification": "aec18357-04ec-4fb3-aefc-33579e6068b4",
-                            "PrivateIdentification": {},
-                            "SchemeName": {}
-                        },
-                        "PrivateIdentification": {},
-                        "SchemeName": {}
+                "DbtrAcct": {
+                    "Id": {
+                        "Othr": {
+                            "Id": "+27783078685",
+                            "SchmeNm": {
+                                "Prtry": "PASSPORT"
+                            }
+                        }
                     },
-                    "Name": "Hello",
-                    "Proxy": "Hello"
+                    "Nm": "Ivan Russel-Klein"
                 },
-                "CreditorAgent": {
-                    "FinancialInstitutionIdentification": {
-                        "ClearingSystemMemberIdentification": {
-                            "MemberIdentification": "Hello"
+                "DbtrAgt": {
+                    "FinInstnId": {
+                        "ClrSysMmbId": {
+                            "MmbId": "dfsp001"
                         }
                     }
                 },
-                "PaymentIdentification": {
-                    "EndToEndIdentification": "aec18362-04ec-4fb3-aefc-33579e6068b"
-                },
-                "PaymentTypeInformation": {
-                    "CategoryPurpose": {
-                        "Proprietary": "Hello"
-                    }
-                },
-                "RegulatoryReporting": {
-                    "Details": {
-                        "Code": "Hello"
-                    }
-                },
-                "RemittanceInformation": {
-                    "Structured": {
-                        "AdditionalRemittanceInformation": "Hello"
-                    }
-                },
-                "SupplementaryData": {
-                    "fees_amount": 1.1,
-                    "fees_currency": "Hello"
-                }
-            },
-            "Debtor": {
-                "Identification": {
-                    "ContactDetails": {},
-                    "Identification": "e274ddc4-cc8c-4e7d-8d46-02fdee14a5d5",
-                    "Other": {
-                        "ContactDetails": {},
-                        "Identification": "66d46c16-bcd6-43f0-adac-2a5d289529ba",
-                        "PrivateIdentification": {},
-                        "SchemeName": {}
+                "CdtTrfTxInf": {
+                    "PmtId": {
+                        "EndToEndId": "c51ec534-ee48-4575-b6a9-ead2955b8069"
                     },
-                    "PrivateIdentification": {},
-                    "SchemeName": {}
-                },
-                "Name": "Hello"
-            },
-            "DebtorAccount": {
-                "Identification": {},
-                "Name": "Hello",
-                "Proxy": "Hello"
-            },
-            "DebtorAgent": {
-                "FinancialInstitutionIdentification": {
-                    "ClearingSystemMemberIdentification": {
-                        "MemberIdentification": "Hello"
+                    "PmtTpInf": {
+                        "CtgyPurp": {
+                            "Prtry": "TRANSFER"
+                        }
+                    },
+                    "Amt": {
+                        "InstdAmt": {
+                            "Amt": {
+                                "Amt": "50431891779910900",
+                                "Ccy": "USD"
+                            }
+                        },
+                        "EqvtAmt": {
+                            "Amt": {
+                                "Amt": "50431891779910900",
+                                "Ccy": "USD"
+                            },
+                            "CcyOfTrf": "USD"
+                        }
+                    },
+                    "ChrgBr": "DEBT",
+                    "CdtrAgt": {
+                        "FinInstnId": {
+                            "ClrSysMmbId": {
+                                "MmbId": "dfsp002"
+                            }
+                        }
+                    },
+                    "Cdtr": {
+                        "Nm": "April Sam Adamson",
+                        "Id": {
+                            "PrvtId": {
+                                "DtAndPlcOfBirth": {
+                                    "BirthDt": "1923-04-26",
+                                    "CityOfBirth": "Unknown",
+                                    "CtryOfBirth": "ZZ"
+                                },
+                                "Othr": {
+                                    "Id": "+27782722305",
+                                    "SchmeNm": {
+                                        "Prtry": "MSISDN"
+                                    }
+                                }
+                            }
+                        },
+                        "CtctDtls": {
+                            "MobNb": "+27-782722305"
+                        }
+                    },
+                    "CdtrAcct": {
+                        "Id": {
+                            "Othr": {
+                                "Id": "+27783078685",
+                                "SchmeNm": {
+                                    "Prtry": "MSISDN"
+                                }
+                            }
+                        },
+                        "Nm": "April Adamson"
+                    },
+                    "Purp": {
+                        "Cd": "MP2P"
+                    },
+                    "RgltryRptg": {
+                        "Dtls": {
+                            "Tp": "BALANCE OF PAYMENTS",
+                            "Cd": "100"
+                        }
+                    },
+                    "RmtInf": {
+                        "Ustrd": "Payment of USD 49932566118723700.89 from Ivan to April"
+                    },
+                    "SplmtryData": {
+                        "Envlp": {
+                            "Doc": {
+                                "Cdtr": {
+                                    "FrstNm": "Ivan",
+                                    "MddlNm": "Reese",
+                                    "LastNm": "Russel-Klein",
+                                    "MrchntClssfctnCd": "BLANK"
+                                },
+                                "Dbtr": {
+                                    "FrstNm": "April",
+                                    "MddlNm": "Sam",
+                                    "LastNm": "Adamson",
+                                    "MrchntClssfctnCd": "BLANK"
+                                },
+                                "DbtrFinSvcsPrvdrFees": {
+                                    "Ccy": "USD",
+                                    "Amt": "499325661187237"
+                                },
+                                "Xprtn": "2021-10-07T09:30:31.000Z"
+                            }
+                        }
                     }
                 }
             },
-            "PaymentInformationIdentification": "Hello"
-        },
-        "SupplementaryData": {
-            "geoCode_latitude": "Hello",
-            "geoCode_longitude": "Hello",
-            "payee_merchantClassificationCode": "Hello",
-            "payer_merchantClassificationCode": "Hello",
-            "transactionType_initiatorType": "Hello"
+            "SplmtryData": {
+                "Envlp": {
+                    "Doc": {
+                        "InitgPty": {
+                            "InitrTp": "CONSUMER",
+                            "Glctn": {
+                                "Lat": "-3.1291",
+                                "Long": "39.0006"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "ruleResult": {
-        "rule": "Rule_27_1.0",
-        "result": true
+        "rule": "003@1.0.0",
+        "result": true,
+        "subRuleRef": "123"
+        "prcgTm": 123456,
+        "wght": 0
     },
     "networkMap": {
-        "transactions": [
+        "active": true,
+        "cfg": "1.0.0",
+        "messages": [
             {
-                "transaction_type": "pain.001.001.12",
-                "transaction_name": "CustomerCreditTransferInitiationV11",
+                "id": "004@1.0.0",
+                "host": "NATS Server",
+                "cfg": "1.0.0",
+                "txTp": "pacs.002.001.12",
                 "channels": [
                     {
-                        "channel_id": "UUIDv4",
-                        "channel_name": "Fraud",
+                        "id": "001@1.0.0",
+                        "host": "NATS Server",
+                        "cfg": "1.0.0",
                         "typologies": [
                             {
-                                "typology_id": "Typology_29.1.0",
-                                "typology_name": "Typology_29",
-                                "typology_version": "1.0",
+                                "id": "typology-processor@1.0.0",
+                                "host": "NATS Server",
+                                "cfg": "001@1.0.0",
                                 "rules": [
                                     {
-                                        "rule_id": "UUIDv4",
-                                        "rule_name": "Rule_27_1.0",
-                                        "rule_version": "1.0"
-                                    },
-                                    {
-                                        "rule_id": "UUIDv4",
-                                        "rule_name": "Rule_15_1.4",
-                                        "rule_version": "1.0"
-                                    },
-                                    {
-                                        "rule_id": "UUIDv4",
-                                        "rule_name": "Rule_05_1.0",
-                                        "rule_version": "1.0"
-                                    }
-                                ]
-                            },
-                            {
-                                "typology_id": "Typology_30.1.0",
-                                "typology_name": "Typology_30",
-                                "typology_version": "1.0",
-                                "rules": [
-                                    {
-                                        "rule_id": "UUIDv4",
-                                        "rule_name": "Rule_27_1.0",
-                                        "rule_version": "1.0"
-                                    },
-                                    {
-                                        "rule_id": "UUIDv4",
-                                        "rule_name": "Rule_15_1.4",
-                                        "rule_version": "1.0"
-                                    },
-                                    {
-                                        "rule_id": "UUIDv4",
-                                        "rule_name": "Rule_05_1.0",
-                                        "rule_version": "1.0"
+                                        "id": "003@1.0.0",
+                                        "host": "RuleRequest003",
+                                        "cfg": "1.0.0"
                                     }
                                 ]
                             }
@@ -266,5 +311,13 @@ Sample HTTP request to /execute endpoint:
             }
         ]
     }
-} 
+}
 ```
+
+### Sample response from TP:
+
+> :exclamation: BROKEN IN CONFLUENCE
+
+## Testing
+
+Jenkins is [configured](https://frmjenkins.sybrin.com/job/Testing/job/typology_processor/) to execute the [TypologyProcessorTests.json](https://github.com/ActioFRM/postman/blob/main/TypologyProcessorTests.json)
