@@ -25,23 +25,21 @@ const ruleResultAggregation = (
   const typologyResult: TypologyResult[] = [];
   const set = new Set();
   networkMap.messages.forEach((message) => {
-    message.channels.forEach((channel) => {
-      channel.typologies.forEach((typology) => {
-        for (const rule of typology.rules) {
-          set.add(rule.id);
-        }
-        if (!typology.rules.some((trule) => trule.id === ruleResult.id && trule.cfg === ruleResult.cfg)) return;
-        const ruleResults = ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id));
-        if (ruleResults.length) {
-          typologyResult.push({
-            id: typology.id,
-            cfg: typology.cfg,
-            result: -1,
-            ruleResults,
-            workflow: { alertThreshold: -1 },
-          });
-        }
-      });
+    message.typologies.forEach((typology) => {
+      for (const rule of typology.rules) {
+        set.add(`${rule.id}@${rule.cfg}`);
+      }
+      if (!set.has(`${ruleResult.id}@${ruleResult.cfg}`)) return;
+      const ruleResults = ruleList.filter((rule) => set.has(`${rule.id}@${rule.cfg}`)).map((r) => ({ ...r }));
+      if (ruleResults.length) {
+        typologyResult.push({
+          id: typology.id,
+          cfg: typology.cfg,
+          result: -1,
+          ruleResults,
+          workflow: { alertThreshold: -1 },
+        });
+      }
     });
   });
 
@@ -64,7 +62,7 @@ const evaluateTypologySendRequest = async (
   let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
     // Typology Wait for enough rules if they are not matching the number configured
-    const networkMapRules = networkMap.messages[0].channels[0].typologies.find(
+    const networkMapRules = networkMap.messages[0].typologies.find(
       (typology) => typology.cfg === typologyResults[index].cfg && typology.id === typologyResults[index].id,
     );
     const typologyResultRules = typologyResults[index].ruleResults;
