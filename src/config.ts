@@ -39,11 +39,6 @@ export interface IConfig {
     logstashLevel: string;
   };
   redis: RedisConfig;
-  transactionRouting: {
-    host: string;
-    path: string;
-    port: number;
-  };
   sidecarHost: string;
 }
 
@@ -79,11 +74,6 @@ export const configuration: IConfig = {
     servers: JSON.parse(process.env.REDIS_SERVERS! || '[{"hostname": "127.0.0.1", "port":6379}]'),
     password: process.env.REDIS_AUTH!,
     isCluster: process.env.REDIS_IS_CLUSTER === 'true',
-  },
-  transactionRouting: {
-    host: process.env.TRANSACTION_ROUTING_HOST!,
-    path: process.env.TRANSACTION_ROUTING_PATH!,
-    port: parseInt(process.env.TRANSACTION_ROUTING_PORT!, 10),
   },
   sidecarHost: process.env.SIDECAR_HOST!,
 };
