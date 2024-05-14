@@ -23,6 +23,36 @@ See also [Typology Processing](https://github.com/frmscoe/docs/blob/main/Product
 
 [https://github.com/ActioFRM/typology-processor](https://github.com/ActioFRM/typology-processor)
 
+### Configure environment
+
+| Variable | Purpose | Example
+| ------ | ------ | ------ |
+| `FUNCTION_NAME` | Denotes the type of application that is running. This is also used in logs to show the source of logs | `TP`
+| `NODE_ENV` | Represents the environment the ampplication is currently running in | `dev`
+| `MAX_CPU` | Max number of CPUs to use | `1`
+| `CMS_PRODUCER` | NATS topic for forwarding of interdicting typologies to a CMS | `CMS`
+| `DATABASE_NAME` | ArangoDB database for TP | `Configuration`
+| `DATABASE_URL` | ArangoDB server URL | `tcp://arango:8529`
+| `COLLECTION_NAME` | ArangoDB collection inside database for Typology Expressions | `typologyExpression`
+| `DATABASE_NETWORKMAP` | ArangoDB collection inside database for Network Map | `networkmap`
+| `DATABASE_USER` | ArangoDB username | `root`
+| `DATABASE_PASSWORD` | ArangoDB password for username | `<secure_user_password>`
+| `DATABASE_CERT_PATH` | Certificate's path used for TLS by Arango | `<path_to_certificate>`
+| `CACHE_ENABLED` | Redis Cache integration for ArangoDB is redis config is provided | `false`
+| `CACHE_TTL` | TTL of Cache entries | `1000`
+| `SIDECAR_HOST` | Sidecar log host | `sidecar-url:5000`
+| `LOGSTASH_HOST` | The endpoint at where logstash is served | `http://0.0.0.0`
+| `LOGSTASH_PORT` | The port of where logstash is served | `9700`
+| `LOGSTASH_LEVEL` | Level of log granularity | `log`, `debug`, `trace` `warn` `error`
+| `APM_ACTIVE` | A flag configuring whether Application Performance Monitoring is enabled | `true`
+| `APM_SERVICE_NAME` | A name to identify the application from APM log | `TP`
+| `APM_URL` | Endpoint at which APM is reached | `<apm-url>`
+| `APM_SECRET_TOKEN` | Token used to auth with APM | `<some secret>`
+| `REDIS_DB` | Redis database index (default redis has 16 ie. 0~15) | `0`
+| `REDIS_SERVERS` | [Redis] Host in json format | `[{"host":"redis", "port":6379}]`
+| `REDIS_IS_CLUSTER` | A flag to indicate if [Redis] is served in cluster mode | `false`
+| `REDIS_AUTH` | [Redis] password | `01ARZ3Example`
+
 ## Usage
 
 ### Sample Typology Expression
