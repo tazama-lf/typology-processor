@@ -65,7 +65,7 @@ graph TD;
   networkMap: NetworkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
   metaData?: {
     prcgTmDp: number;
-    prcgTmCRSP: number;
+    prcgTmED: number;
 }
 ```
 
