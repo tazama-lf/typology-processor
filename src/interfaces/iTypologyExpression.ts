@@ -5,8 +5,7 @@ export interface IRuleValue {
   id: string;
   cfg: string;
   ref: string;
-  true: number;
-  false: number;
+  wght: number;
 }
 
 export interface IRule {

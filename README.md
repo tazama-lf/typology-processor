@@ -1,27 +1,96 @@
-# 4. Typology Processor
+# Typology Processor
 
-See also [Typology Processing](https://github.com/frmscoe/docs/blob/main/Product/typology-processing.md)
+## Overview
+An overview of the processor is detailed [here](https://github.com/frmscoe/docs/blob/main/Product/typology-processing.md)
 
-- [4. Typology Processor](#4-typology-processor)
-  - [Code Activity Diagram](#code-activity-diagram)
-  - [Code Repository](#code-repository)
-  - [Usage](#usage)
+- [Inputs](#inputs)
+- [Internal process flow](#internal-process-flow)
+- [Outputs](#outputs)
+- [Deployment](#deployment)
+- [Usage](#usage)
     - [Sample Typology Expression](#sample-typology-expression)
     - [Sample NATS subscription payload](#sample-nats-subscription-payload)
     - [Sample response from TP:](#sample-response-from-tp)
-  - [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
 
 ![](images/image-20220706-133859.png)
 
-## Code Activity Diagram
+## Inputs
+
+```js
+{
+  transaction: { 
+    networkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
+    ruleResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/rule/RuleResult.ts
+    transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
+    metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
+  }
+};
+```
+
+## Internal process flow
+
+```mermaid
+graph TD;
+    start[Start] --> saveToRedis;
+    saveToRedis -->|Success| aggregateRules;
+    saveToRedis -->|Failure| logError1[Log Error];
+    aggregateRules --> evaluateTypologySendRequest;
+    evaluateTypologySendRequest -->|Success| checkRuleCount;
+    evaluateTypologySendRequest -->|Failure| logError2[Log Error];
+    checkRuleCount -->|Enough Rules| deleteCacheAndEnd[Delete Cache and End];
+    checkRuleCount -->|Not Enough Rules| End[End];
+```
 
 ![](images/image-20231124-060051.png)
 
-[https://github.com/ActioFRM/uml-diagrams/blob/main/TP.plantuml](https://github.com/ActioFRM/uml-diagrams/blob/main/TP.plantuml)
+[https://github.com/frmscoe/uml-diagrams/blob/main/TP.plantuml](https://github.com/frmscoe/uml-diagrams/blob/main/TP.plantuml)
 
-## Code Repository
+## Outputs
+```js
+// TADP
+{
+  transaction: { 
+    networkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
+    ruleResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/rule/RuleResult.ts
+    transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
+    metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
+  }
+};
 
-[https://github.com/ActioFRM/typology-processor](https://github.com/ActioFRM/typology-processor)
+// CMS on interdiction
+{
+  typologyResult: TypologyResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/46d1ec1fc9a07b6556baa4fecd80e09c709ccb1b/src/interfaces/processor-files/TypologyResult.ts
+  transaction: Pacs002; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/cb464248be1efc45ba2701131e75fcf89c478baf/src/interfaces/Pacs.002.001.12.ts
+  networkMap: NetworkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
+  metaData?: {
+    prcgTmDp: number;
+    prcgTmED: number;
+}
+```
+
+## Environment variables
+
+You then need to configure your environment: a [sample](.env.template) configuration file has been provided and you may adapt that to your environment. Copy it to `.env` and modify as needed:
+
+```sh
+cp .env.template .env
+```
+A [registry](https://github.com/frmscoe/docs) of environment variables is provided to provide more context for what each variable is used for.
+
+##### Additional Variables
+
+| Variable | Purpose | Example
+| ------ | ------ | ------ |
+| `DATABASE_NAME` | ArangoDB database for TP | `Configuration`
+| `DATABASE_URL` | ArangoDB server URL | `tcp://arango:8529`
+| `COLLECTION_NAME` | ArangoDB collection inside database for Typology Expressions | `typologyExpression`
+| `DATABASE_NETWORKMAP` | ArangoDB collection inside database for Network Map | `networkmap`
+| `DATABASE_USER` | ArangoDB username | `root`
+| `DATABASE_PASSWORD` | ArangoDB password for username | `<secure_user_password>`
+| `DATABASE_CERT_PATH` | Certificate's path used for TLS by Arango | `<path_to_certificate>`
+
+## Deployment
 
 ## Usage
 
@@ -314,10 +383,9 @@ See also [Typology Processing](https://github.com/frmscoe/docs/blob/main/Product
 }
 ```
 
-### Sample response from TP:
+## Troubleshooting
+#### npm install
+Ensure generated token has read package rights
 
-> :exclamation: BROKEN IN CONFLUENCE
-
-## Testing
-
-Jenkins is [configured](https://frmjenkins.sybrin.com/job/Testing/job/typology_processor/) to execute the [TypologyProcessorTests.json](https://github.com/ActioFRM/postman/blob/main/TypologyProcessorTests.json)
+#### npm build
+Ensure that you're on the current LTS version of Node.JS

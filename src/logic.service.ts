@@ -4,7 +4,7 @@ import apm from './apm';
 import { databaseManager, server, loggerService } from '.';
 import { type RuleResult, type NetworkMap } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
-import { type CADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/CADPRequest';
+import { type TADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import { configuration } from './config';
 import { type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
@@ -25,23 +25,21 @@ const ruleResultAggregation = (
   const typologyResult: TypologyResult[] = [];
   const set = new Set();
   networkMap.messages.forEach((message) => {
-    message.channels.forEach((channel) => {
-      channel.typologies.forEach((typology) => {
-        for (const rule of typology.rules) {
-          set.add(rule.id);
-        }
-        if (!typology.rules.some((trule) => trule.id === ruleResult.id && trule.cfg === ruleResult.cfg)) return;
-        const ruleResults = ruleList.filter((rRule) => typology.rules.some((tRule) => rRule.id === tRule.id));
-        if (ruleResults.length) {
-          typologyResult.push({
-            id: typology.id,
-            cfg: typology.cfg,
-            result: -1,
-            ruleResults,
-            workflow: { alertThreshold: -1 },
-          });
-        }
-      });
+    message.typologies.forEach((typology) => {
+      for (const rule of typology.rules) {
+        set.add(`${rule.id}@${rule.cfg}`);
+      }
+      if (!set.has(`${ruleResult.id}@${ruleResult.cfg}`)) return;
+      const ruleResults = ruleList.filter((rule) => set.has(`${rule.id}@${rule.cfg}`)).map((r) => ({ ...r }));
+      if (ruleResults.length) {
+        typologyResult.push({
+          id: typology.id,
+          cfg: typology.cfg,
+          result: -1,
+          ruleResults,
+          workflow: { alertThreshold: -1 },
+        });
+      }
     });
   });
 
@@ -54,17 +52,12 @@ const evaluateTypologySendRequest = async (
   transaction: any,
   metaData: MetaData,
   transactionId: string,
-  numberOfRules: {
-    totalRules: number;
-    storedRules: number;
-  },
   msgId: string,
-): Promise<CADPRequest | undefined> => {
+): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
-  let cadpReqBody: CADPRequest = { networkMap, transaction, typologyResult: typologyResults[0] };
   for (let index = 0; index < typologyResults.length; index++) {
     // Typology Wait for enough rules if they are not matching the number configured
-    const networkMapRules = networkMap.messages[0].channels[0].typologies.find(
+    const networkMapRules = networkMap.messages[0].typologies.find(
       (typology) => typology.cfg === typologyResults[index].cfg && typology.id === typologyResults[index].id,
     );
     const typologyResultRules = typologyResults[index].ruleResults;
@@ -83,11 +76,7 @@ const evaluateTypologySendRequest = async (
 
     if (!expressionRes?.[0]?.[0]) {
       loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].cfg},`, logContext, msgId);
-      return {
-        typologyResult: typologyResults[index],
-        transaction,
-        networkMap,
-      };
+      continue;
     }
 
     const expression = expressionRes[0][0] as ITypologyExpression;
@@ -113,7 +102,7 @@ const evaluateTypologySendRequest = async (
       typologyResults[index].review = true;
     }
 
-    cadpReqBody = {
+    const tadpReqBody: TADPRequest = {
       typologyResult: typologyResults[index],
       transaction,
       networkMap,
@@ -126,7 +115,7 @@ const evaluateTypologySendRequest = async (
       // Send Typology to CMS
       const spanCms = apm.startSpan(`[${transactionId}] Send Typology result to CMS`);
       server
-        .handleResponse({ ...cadpReqBody, metaData }, [configuration.cmsProducer])
+        .handleResponse({ ...tadpReqBody, metaData }, [configuration.cmsProducer])
         .catch((error) => {
           loggerService.error(`Error while sending Typology result to CMS`, error as Error, logContext, msgId);
         })
@@ -147,12 +136,12 @@ const evaluateTypologySendRequest = async (
       typologyResults[index].review = true;
     }
     typologyResults[index].prcgTm = CalculateDuration(startTime);
-    cadpReqBody.typologyResult = typologyResults[index];
+    tadpReqBody.typologyResult = typologyResults[index];
 
     // Send Typology to TADProc
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
     server
-      .handleResponse({ ...cadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
+      .handleResponse({ ...tadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
       .catch((error) => {
         loggerService.error(`Error while sending Typology result to TADP`, error as Error, logContext, msgId);
       })
@@ -161,7 +150,6 @@ const evaluateTypologySendRequest = async (
         spanTadpr?.end();
       });
   }
-  return cadpReqBody;
 };
 
 export const handleTransaction = async (transaction: any): Promise<void> => {
@@ -195,18 +183,7 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(
-    typologyResult,
-    networkMap,
-    parsedTrans,
-    metaData as MetaData,
-    cacheKey,
-    {
-      storedRules: rulesList.length,
-      totalRules: ruleCount,
-    },
-    id,
-  );
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData as MetaData, cacheKey, id);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
