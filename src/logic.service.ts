@@ -4,7 +4,7 @@ import apm from './apm';
 import { databaseManager, server, loggerService } from '.';
 import { type RuleResult, type NetworkMap } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
-import { type CADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/CADPRequest';
+import { type TADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import { configuration } from './config';
 import { type ITypologyExpression } from './interfaces/iTypologyExpression';
 import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
@@ -102,7 +102,7 @@ const evaluateTypologySendRequest = async (
       typologyResults[index].review = true;
     }
 
-    const cadpReqBody: CADPRequest = {
+    const tadpReqBody: TADPRequest = {
       typologyResult: typologyResults[index],
       transaction,
       networkMap,
@@ -115,7 +115,7 @@ const evaluateTypologySendRequest = async (
       // Send Typology to CMS
       const spanCms = apm.startSpan(`[${transactionId}] Send Typology result to CMS`);
       server
-        .handleResponse({ ...cadpReqBody, metaData }, [configuration.cmsProducer])
+        .handleResponse({ ...tadpReqBody, metaData }, [configuration.cmsProducer])
         .catch((error) => {
           loggerService.error(`Error while sending Typology result to CMS`, error as Error, logContext, msgId);
         })
@@ -136,12 +136,12 @@ const evaluateTypologySendRequest = async (
       typologyResults[index].review = true;
     }
     typologyResults[index].prcgTm = CalculateDuration(startTime);
-    cadpReqBody.typologyResult = typologyResults[index];
+    tadpReqBody.typologyResult = typologyResults[index];
 
     // Send Typology to TADProc
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
     server
-      .handleResponse({ ...cadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
+      .handleResponse({ ...tadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
       .catch((error) => {
         loggerService.error(`Error while sending Typology result to TADP`, error as Error, logContext, msgId);
       })
