@@ -432,7 +432,7 @@ describe('Logic Service', () => {
       expect(responseSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should handle successful request, cms and cadproc result error', async () => {
+    it('should handle successful request, cms and tadproc result error', async () => {
       const Req = getMockReqPacs002();
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
@@ -461,7 +461,7 @@ describe('Logic Service', () => {
       expect(responseSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('Should handle failure to post to CADP', async () => {
+    it('Should handle failure to post to TADP', async () => {
       const Req = getMockReqPacs002();
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
