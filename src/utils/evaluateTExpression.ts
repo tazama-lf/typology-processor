@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { loggerService } from '..';
 import { type IExpression, type IRuleValue } from '../interfaces/iTypologyExpression';
 import { type RuleResult } from '@frmscoe/frms-coe-lib/lib/interfaces';
