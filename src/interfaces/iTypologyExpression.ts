@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-/* eslint-disable camelcase */
-
 export interface IRuleValue {
   id: string;
   cfg: string;

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import apm from './apm';
 import { databaseManager, server, loggerService } from '.';
 import { type RuleResult, type NetworkMap } from '@frmscoe/frms-coe-lib/lib/interfaces';
@@ -49,6 +48,7 @@ const ruleResultAggregation = (
 const evaluateTypologySendRequest = async (
   typologyResults: TypologyResult[],
   networkMap: NetworkMap,
+  /* eslint-disable  @typescript-eslint/no-explicit-any*/
   transaction: any,
   metaData: MetaData,
   transactionId: string,
@@ -84,8 +84,9 @@ const evaluateTypologySendRequest = async (
 
     typologyResults[index].result = typologyResultValue;
 
-    if (expression.workflow.interdictionThreshold)
+    if (expression.workflow.interdictionThreshold) {
       typologyResults[index].workflow.interdictionThreshold = expression.workflow.interdictionThreshold;
+    }
 
     if (expression.workflow.alertThreshold) typologyResults[index].workflow.alertThreshold = expression.workflow.alertThreshold;
 
@@ -117,7 +118,7 @@ const evaluateTypologySendRequest = async (
       server
         .handleResponse({ ...tadpReqBody, metaData }, [configuration.cmsProducer])
         .catch((error) => {
-          loggerService.error(`Error while sending Typology result to CMS`, error as Error, logContext, msgId);
+          loggerService.error('Error while sending Typology result to CMS', error as Error, logContext, msgId);
         })
         .finally(() => {
           spanExecReq?.end();
@@ -143,7 +144,7 @@ const evaluateTypologySendRequest = async (
     server
       .handleResponse({ ...tadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
       .catch((error) => {
-        loggerService.error(`Error while sending Typology result to TADP`, error as Error, logContext, msgId);
+        loggerService.error('Error while sending Typology result to TADP', error as Error, logContext, msgId);
       })
       .finally(() => {
         spanExecReq?.end();
