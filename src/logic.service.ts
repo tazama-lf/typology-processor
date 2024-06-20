@@ -22,11 +22,13 @@ const ruleResultAggregation = (
   ruleResult: RuleResult,
 ): { typologyResult: TypologyResult[]; ruleCount: number } => {
   const typologyResult: TypologyResult[] = [];
-  const set = new Set();
+  const allRuleSet = new Set();
   networkMap.messages.forEach((message) => {
     message.typologies.forEach((typology) => {
+      const set = new Set();
       for (const rule of typology.rules) {
         set.add(`${rule.id}@${rule.cfg}`);
+        allRuleSet.add(`${rule.id}@${rule.cfg}`);
       }
       if (!set.has(`${ruleResult.id}@${ruleResult.cfg}`)) return;
       const ruleResults = ruleList.filter((rule) => set.has(`${rule.id}@${rule.cfg}`)).map((r) => ({ ...r }));
@@ -42,7 +44,7 @@ const ruleResultAggregation = (
     });
   });
 
-  return { typologyResult, ruleCount: set.size };
+  return { typologyResult, ruleCount: allRuleSet.size };
 };
 
 const evaluateTypologySendRequest = async (
