@@ -68,7 +68,7 @@ const evaluateTypologySendRequest = async (
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${typologyResults[index].cfg}.exec.Req`);
 
-    const expressionRes = (await databaseManager.getTypologyExpression({
+    const expressionRes = (await databaseManager.getTypologyConfig({
       id: typologyResults[index].id,
       cfg: typologyResults[index].cfg,
       host: '',
