@@ -38,6 +38,7 @@ export interface IConfig {
   };
   redis: RedisConfig;
   sidecarHost: string;
+  suppressAlerts: boolean;
 }
 
 export const configuration: IConfig = {
@@ -72,4 +73,5 @@ export const configuration: IConfig = {
     isCluster: process.env.REDIS_IS_CLUSTER === 'true',
   },
   sidecarHost: process.env.SIDECAR_HOST!,
+  suppressAlerts: process.env.SUPPRESS_ALERTS === 'true',
 };

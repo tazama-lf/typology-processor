@@ -111,10 +111,14 @@ const evaluateTypologySendRequest = async (
       networkMap,
     };
 
-    if (expression.workflow.interdictionThreshold && typologyResultValue >= expression.workflow.interdictionThreshold) {
+    const isInterdicting = expression.workflow.interdictionThreshold && typologyResultValue >= expression.workflow.interdictionThreshold;
+
+    if (isInterdicting) {
       typologyResults[index].review = true;
       typologyResults[index].prcgTm = CalculateDuration(startTime);
+    }
 
+    if (!configuration.suppressAlerts && isInterdicting) {
       // Send Typology to CMS
       const spanCms = apm.startSpan(`[${transactionId}] Send Typology result to CMS`);
       server
