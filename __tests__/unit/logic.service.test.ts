@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
 import { NetworkMap, Pacs002, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { configuration } from '../../src/config';
 import { databaseManager, dbInit, runServer, server } from '../../src/index';
 import { ITypologyExpression } from '../../src/interfaces/iTypologyExpression';
 import { handleTransaction } from '../../src/logic.service';
@@ -351,6 +352,54 @@ describe('Logic Service', () => {
       expect(typology028CMS.typologyResult.ruleResults.length).toEqual(1);
       expect(typology028CMS.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
       expect(typology028CMS.typologyResult.result).toEqual(20);
+    });
+
+    it('should handle successful request, TP028, Rules 1/1, Interdicting. Suppressed', async () => {
+      const Req = getMockReqPacs002();
+
+      configuration.suppressAlerts = true;
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) => {
+          resolve([
+            [
+              JSON.parse(
+                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"}]}}',
+              ),
+            ],
+          ]);
+        });
+      });
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002();
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
+      expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
+      expect(deleteKeySpy).toHaveBeenCalledTimes(0);
+      expect(responseSpy).toHaveBeenCalledTimes(1); // Suppressed CMS
+      expect(responseSpy.mock.results.length).toEqual(1); // Suppressed CMS
+
+      const typology028 = await responseSpy.mock.results[0].value;
+      expect(typology028.networkMap).toEqual(networkMap);
+      expect(typology028.transaction).toEqual(Req);
+      expect(typology028.typologyResult.ruleResults.length).toEqual(1);
+      expect(typology028.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
+      expect(typology028.typologyResult.result).toEqual(20);
+
+      configuration.suppressAlerts = false;
     });
 
     it('should handle successful request, with a unmatched ruleId', async () => {
