@@ -18,7 +18,7 @@
     "lint:prettier": "prettier --check \"**/*.ts\"",
     "test": "jest --config=jest.config.ts --passWithNoTests --forceExit",
     "test:watch": "jest --config=jest.config.ts --watch",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "keywords": [
     "mojaloop",
@@ -35,8 +35,8 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@frmscoe/frms-coe-lib": "4.0.0-rc.5",
-    "@frmscoe/frms-coe-startup-lib": "2.2.0-alpha.1",
+    "@frmscoe/frms-coe-lib": "4.0.0-rc.10",
+    "@frmscoe/frms-coe-startup-lib": "2.2.0-rc.3",
     "arangojs": "^8.8.1",
     "dotenv": "^16.4.5",
     "ioredis": "^5.4.1",

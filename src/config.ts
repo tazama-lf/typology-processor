@@ -26,9 +26,7 @@ export interface IConfig {
     password: string;
     url: string;
     user: string;
-    collectionName: string;
     dbCertPath: string;
-    networkMap: string;
     cacheEnabled?: boolean;
     cacheTTL?: number;
   };
@@ -56,11 +54,9 @@ export const configuration: IConfig = {
     password: process.env.DATABASE_PASSWORD!,
     url: process.env.DATABASE_URL!,
     user: process.env.DATABASE_USER!,
-    collectionName: process.env.COLLECTION_NAME!,
     dbCertPath: process.env.DATABASE_CERT_PATH!,
     cacheEnabled: process.env.CACHE_ENABLED === 'true',
     cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
-    networkMap: process.env.DATABASE_NETWORKMAP!,
   },
   env: process.env.NODE_ENV!,
   functionName: process.env.FUNCTION_NAME!,

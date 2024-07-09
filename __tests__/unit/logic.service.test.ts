@@ -43,7 +43,7 @@ const cacheStringArr: Map<string, Record<string, unknown>[]> = new Map();
 describe('Logic Service', () => {
   let responseSpy: jest.SpyInstance;
   let addOneGetAllSpy: jest.SpyInstance;
-  let getTypologyExpressionSpy: jest.SpyInstance;
+  let getTypologyConfigSpy: jest.SpyInstance;
   let deleteKeySpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('Logic Service', () => {
         });
       });
 
-    getTypologyExpressionSpy = jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
+    getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: Typology) => {
       switch (_typology.cfg) {
         case '028@1.0.0': {
           return new Promise((resolve, _reject) => {
@@ -75,7 +75,7 @@ describe('Logic Service', () => {
         }
         default: {
           return new Promise((resolve, _reject) => {
-            throw new Error('Extend getTypologyExpression Case');
+            throw new Error('Extend getTypologyConfig Case');
           });
         }
       }
@@ -119,7 +119,7 @@ describe('Logic Service', () => {
         ruleResult,
       });
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('Logic Service', () => {
         ruleResult,
       });
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(1);
@@ -178,7 +178,7 @@ describe('Logic Service', () => {
         ruleResult: ruleResultTwo,
       });
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(2);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(2);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(2);
       expect(deleteKeySpy).toHaveBeenCalledTimes(1);
       expect(responseSpy).toHaveBeenCalledTimes(2);
@@ -203,36 +203,41 @@ describe('Logic Service', () => {
     it('should handle nested typology expressions using "+"', async () => {
       const Req = getMockReqPacs002();
 
-      getTypologyExpressionSpy.mockRestore();
-      getTypologyExpressionSpy = jest
-        .spyOn(databaseManager, 'getTypologyExpression')
-        .mockImplementationOnce(async (_typology: Typology) => {
-          return new Promise((resolve, _reject) =>
-            resolve([
-              [
-                {
-                  cfg: '1.0.0',
-                  id: '030@1.0.0',
-                  workflow: { alertThreshold: '2000', interdictionThreshold: '4000' },
-                  rules: [
-                    {
-                      id: '003@1.0.0',
-                      cfg: '1.0.0',
-                      ref: '.01',
-                      wght: 100,
-                    },
-                    {
-                      id: '004@1.0.0',
-                      cfg: '1.0.0',
-                      ref: '.01',
-                      wght: 50,
-                    },
-                    {
-                      id: '005@1.0.0',
-                      cfg: '1.0.0',
-                      ref: '.01',
-                      wght: 25,
-                    },
+      getTypologyConfigSpy.mockRestore();
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: { alertThreshold: '2000', interdictionThreshold: '4000' },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    wght: 100,
+                  },
+                  {
+                    id: '004@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    wght: 50,
+                  },
+                  {
+                    id: '005@1.0.0',
+                    cfg: '1.0.0',
+                    ref: '.01',
+                    wght: 25,
+                  },
+                ],
+                expression: {
+                  operator: '+',
+                  terms: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: '004@1.0.0', cfg: '1.0.0' },
+                    { id: '005@1.0.0', cfg: '1.0.0' },
                   ],
                   expression: {
                     operator: '+',
@@ -241,20 +246,13 @@ describe('Logic Service', () => {
                       { id: '004@1.0.0', cfg: '1.0.0' },
                       { id: '005@1.0.0', cfg: '1.0.0' },
                     ],
-                    expression: {
-                      operator: '+',
-                      terms: [
-                        { id: '003@1.0.0', cfg: '1.0.0' },
-                        { id: '004@1.0.0', cfg: '1.0.0' },
-                        { id: '005@1.0.0', cfg: '1.0.0' },
-                      ],
-                    },
                   },
                 },
-              ],
-            ]),
-          );
-        });
+              },
+            ],
+          ]),
+        );
+      });
 
       const localNetworkMap = JSON.parse(
         '{"active":true,"cfg":"1.0.0","messages":[{"id":"004@1.0.0","cfg":"1.0.0","txTp":"pacs.002.001.12","typologies":[{"id":"typology-processor@1.0.0","cfg":"030@1.0.0","rules":[{"id":"003@1.0.0","cfg":"1.0.0"},{"id":"004@1.0.0","cfg":"1.0.0"},{"id":"005@1.0.0","cfg":"1.0.0"}]}]}]}',
@@ -288,7 +286,7 @@ describe('Logic Service', () => {
       await handleTransaction({ transaction: Req, networkMap, ruleResult: ruleResult04 });
       await handleTransaction({ transaction: Req, networkMap, ruleResult: ruleResult05 });
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(3);
       expect(deleteKeySpy).toHaveBeenCalledTimes(1); // Completed all rules in network map
       expect(responseSpy).toHaveBeenCalledTimes(1);
@@ -307,19 +305,17 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting', async () => {
       const Req = getMockReqPacs002();
 
-      getTypologyExpressionSpy = jest
-        .spyOn(databaseManager, 'getTypologyExpression')
-        .mockImplementationOnce(async (_typology: Typology) => {
-          return new Promise((resolve, _reject) => {
-            resolve([
-              [
-                JSON.parse(
-                  '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"}]}}',
-                ),
-              ],
-            ]);
-          });
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+        return new Promise((resolve, _reject) => {
+          resolve([
+            [
+              JSON.parse(
+                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"}]}}',
+              ),
+            ],
+          ]);
         });
+      });
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -336,7 +332,7 @@ describe('Logic Service', () => {
         ruleResult,
       });
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(2); // +1 to CMS for interdiction
@@ -371,13 +367,13 @@ describe('Logic Service', () => {
       };
 
       await handleTransaction({ transaction: Req, ruleResult: badRuleResult, networkMap: networkMap });
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(0);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(0);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should handle successful request, getTypologyExpression error', async () => {
+    it('should handle successful request, getTypologyConfig error', async () => {
       const Req = getMockReqPacs002();
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
@@ -389,7 +385,7 @@ describe('Logic Service', () => {
         subRuleRef: '.01',
       };
 
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockRejectedValue(async (_typology: Typology) => {
+      jest.spyOn(databaseManager, 'getTypologyConfig').mockRejectedValue(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
           resolve(new Error('Test'));
         });
@@ -401,7 +397,7 @@ describe('Logic Service', () => {
         console.log('Error handle transaction');
       }
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(0);
@@ -419,14 +415,14 @@ describe('Logic Service', () => {
         subRuleRef: 'ref1',
       };
 
-      jest.spyOn(databaseManager, 'getTypologyExpression').mockImplementation(async (_typology: Typology) => {
+      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: Typology) => {
         return new Promise((resolve, _reject) => {
           resolve([[]]);
         });
       });
 
       await handleTransaction({ transaction: Req, networkMap, ruleResult });
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(0);
@@ -455,7 +451,7 @@ describe('Logic Service', () => {
         expect(true).toEqual(true);
       }
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(1);
@@ -488,7 +484,7 @@ describe('Logic Service', () => {
         expect(true).toEqual(false);
       }
 
-      expect(getTypologyExpressionSpy).toHaveBeenCalledTimes(1);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(errorSpy).toHaveBeenCalledTimes(1);

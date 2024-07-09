@@ -10,13 +10,6 @@ import { handleTransaction } from './logic.service';
 import { Singleton } from './services/services';
 
 const databaseManagerConfig = {
-  networkMap: {
-    certPath: configuration.db.dbCertPath,
-    databaseName: configuration.db.networkMap,
-    user: configuration.db.user,
-    password: configuration.db.password,
-    url: configuration.db.url,
-  },
   redisConfig: {
     db: configuration.redis.db,
     servers: configuration.redis.servers,
