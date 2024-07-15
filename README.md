@@ -84,13 +84,12 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
 
 | Variable | Purpose | Example
 | ------ | ------ | ------ |
-| `DATABASE_NAME` | ArangoDB database for TP | `Configuration`
+| `DATABASE_NAME` | ArangoDB database for TP | `configuration`
 | `DATABASE_URL` | ArangoDB server URL | `tcp://arango:8529`
-| `COLLECTION_NAME` | ArangoDB collection inside database for Typology Expressions | `typologyExpression`
-| `DATABASE_NETWORKMAP` | ArangoDB collection inside database for Network Map | `networkmap`
 | `DATABASE_USER` | ArangoDB username | `root`
 | `DATABASE_PASSWORD` | ArangoDB password for username | `<secure_user_password>`
 | `DATABASE_CERT_PATH` | Certificate's path used for TLS by Arango | `<path_to_certificate>`
+| `SUPPRESS_ALERTS` | Suppress forwarding of Typology Result to CMS | `false`
 
 ## Deployment
 
