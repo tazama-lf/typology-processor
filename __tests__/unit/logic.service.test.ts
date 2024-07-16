@@ -1315,7 +1315,7 @@ describe('Typology Evaluation', () => {
     expect(evaluation2).toEqual(0);
   });
 
-  it('should handle a mixture of constants', async () => {
+  it('should handle simplify fractions', async () => {
     const ruleValues = [
       {
         id: '003@1.0.0',
