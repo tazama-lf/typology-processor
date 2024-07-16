@@ -3,7 +3,7 @@
 import { type SemiBoxedExpression } from '@cortex-js/compute-engine';
 import { type RuleResult } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { computeEngine, loggerService } from '..';
-import { type ExpressionMathJSON, type IRuleValue } from '../interfaces/iTypologyExpression';
+import { type IWeight, type ExpressionMathJSON, type IRuleValue } from '../interfaces/iTypologyExpression';
 
 export const evaluateTypologyExpression = (
   ruleValues: IRuleValue[],
@@ -12,18 +12,19 @@ export const evaluateTypologyExpression = (
 ): number => {
   const logContext = 'evaluateTypologyExpression()';
   // Map for efficient rule weight lookup
-  const valueMap = new Map<string, [string, number]>();
-  ruleValues.forEach((r) => valueMap.set(`${r.id}${r.cfg}${r.ref}`, [r.termId, r.wght]));
+  const valueMap = new Map<string, [string, IWeight[]]>();
+  ruleValues.forEach((r) => valueMap.set(`${r.id}${r.cfg}`, [r.termId, r.wghts]));
 
   // Map for efficient rule term lookup
   const ruleTermMap = new Map<string, number>();
 
   ruleResults.forEach((r) => {
-    const values = valueMap.get(`${r.id}${r.cfg}${r.subRuleRef}`);
+    const values = valueMap.get(`${r.id}${r.cfg}`);
     if (values) {
       const [term, wght] = values;
-      ruleTermMap.set(term, wght);
-      r.wght = wght;
+      const [{ wght: weight }] = wght.filter((eachWeight) => eachWeight.ref === r.subRuleRef);
+      ruleTermMap.set(term, weight);
+      r.wght = weight;
     }
   });
 
