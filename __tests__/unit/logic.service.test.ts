@@ -1246,7 +1246,7 @@ describe('Typology Evaluation', () => {
     };
 
     const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
-    expect(evaluation).toEqual(null);
+    expect(evaluation).toEqual(0);
   });
 
   it('should fail on incorrect number of arguments for "Subtract" and "Divide"', async () => {
@@ -1304,7 +1304,7 @@ describe('Typology Evaluation', () => {
 
     const evaluation1 = evaluateTypologyExpression(ruleValues, ruleResults, subtractExpression.expression);
     // This is will change on @cortex-js/compute-engine v0.25.1 and newer
-    expect(evaluation1).toEqual(null);
+    expect(evaluation1).toEqual(0);
 
     const divideExpression = {
       expression: ['Divide', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
@@ -1312,6 +1312,63 @@ describe('Typology Evaluation', () => {
 
     const evaluation2 = evaluateTypologyExpression(ruleValues, ruleResults, divideExpression.expression);
     // This is will change on @cortex-js/compute-engine v0.25.1 and newer
-    expect(evaluation2).toEqual(null);
+    expect(evaluation2).toEqual(0);
+  });
+
+  it('should handle a mixture of constants', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 200,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Divide', 'v003at100at100', 'v004at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(0.5);
   });
 });
