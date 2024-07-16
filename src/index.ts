@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import './apm';
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import { LoggerService, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
 import { StartupFactory, type IStartupService } from '@frmscoe/frms-coe-startup-lib';
 import { getRoutesFromNetworkMap } from '@frmscoe/frms-coe-lib/lib/helpers/networkMapIdentifiers';
@@ -29,6 +30,8 @@ const databaseManagerConfig = {
 
 export const loggerService: LoggerService = new LoggerService(configuration.sidecarHost);
 let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
+
+export const computeEngine = new ComputeEngine();
 
 export const dbInit = async (): Promise<void> => {
   databaseManager = await Singleton.getDatabaseManager(databaseManagerConfig);

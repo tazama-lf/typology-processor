@@ -110,33 +110,29 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
       "id": "003@1.0.0",
       "cfg": "1.0.0",
       "ref": ".err",
-      "true": 0,
-      "false": 0
+      "wght": 0,
+      "termId": "v003at100at100"
     },
     {
       "id": "003@1.0.0",
       "cfg": "1.0.0",
       "ref": ".01",
-      "true": 0,
-      "false": 0
+      "wght": 0,
+      "termId": "v003at100at100"
     },
     {
       "id": "003@1.0.0",
       "cfg": "1.0.0",
       "ref": ".02",
-      "true": 400,
-      "false": 0
+      "wght": 400,
+      "termId": "v003at100at100"
     }
   ],
-  "expression": {
-    "operator": "+",
-    "terms": [
-      {
-        "id": "083@1.0.0",
-        "cfg": "1.0.0"
-      }
-    ]
-  }
+  "expression": [
+    "Add",
+    "v003at100at100",
+    "v003at100at100"
+  ]
 }
 ```
 

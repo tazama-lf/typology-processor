@@ -4,6 +4,7 @@ export interface IRuleValue {
   cfg: string;
   ref: string;
   wght: number;
+  termId: string;
 }
 
 export interface IRule {
@@ -12,11 +13,7 @@ export interface IRule {
   ref?: string;
 }
 
-export interface IExpression {
-  operator: string;
-  terms: IRule[];
-  expression: IExpression | undefined;
-}
+export type ExpressionMathJSON = Array<string | number | ExpressionMathJSON>;
 
 export interface IWorkFlow {
   alertThreshold: number;
@@ -28,6 +25,6 @@ export interface ITypologyExpression {
   cfg: string;
   desc?: string | undefined;
   rules: IRuleValue[];
-  expression: IExpression;
+  expression: ExpressionMathJSON;
   workflow: IWorkFlow;
 }

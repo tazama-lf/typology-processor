@@ -5,6 +5,7 @@ import { configuration } from '../../src/config';
 import { databaseManager, dbInit, runServer, server } from '../../src/index';
 import { ITypologyExpression } from '../../src/interfaces/iTypologyExpression';
 import { handleTransaction } from '../../src/logic.service';
+import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
 
 const getMockReqPacs002 = (): Pacs002 => {
   return JSON.parse(
@@ -20,13 +21,13 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
 
 const getMockTypologyExp028 = (): ITypologyExpression => {
   return JSON.parse(
-    '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"125","interdictionThreshold":"150"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".err","wght":0},{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":100},{"id":"003@1.0.0","cfg":"1.0.0","ref":".03","wght":300},{"id":"003@1.0.0","cfg":"1.0.0","ref":".x00","wght":500}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"}]}}',
+    '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"125","interdictionThreshold":"150"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".err","wght":0,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":100,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".03","wght":300,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".x00","wght":500,"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
   );
 };
 
 const getMockTypologyExp029 = (): ITypologyExpression => {
   return JSON.parse(
-    '{"cfg":"1.0.0","id":"029@1.0.0","workflow":{"alertThreshold":"350","interdictionThreshold":"700"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".err","wght":1},{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":101},{"id":"003@1.0.0","cfg":"1.0.0","ref":".03","wght":301},{"id":"003@1.0.0","cfg":"1.0.0","ref":".x00","wght":501},{"id":"004@1.0.0","cfg":"1.0.0","ref":".err","wght":51},{"id":"004@1.0.0","cfg":"1.0.0","ref":".01","wght":151},{"id":"004@1.0.0","cfg":"1.0.0","ref":".03","wght":351},{"id":"004@1.0.0","cfg":"1.0.0","ref":".x00","wght":551}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"},{"id":"004@1.0.0","cfg":"1.0.0"}]}}',
+    '{"cfg":"1.0.0","id":"029@1.0.0","workflow":{"alertThreshold":"350","interdictionThreshold":"700"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".err","wght":1,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":101,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".03","wght":301,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".x00","wght":501,"termId":"v003at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".err","wght":51,"termId":"v004at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".01","wght":151,"termId":"v004at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".03","wght":351,"termId":"v004at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".x00","wght":551,"termId":"v004at100at100"}],"expression":["Add","v003at100at100","v004at100at100"]}',
   );
 };
 
@@ -219,36 +220,30 @@ describe('Logic Service', () => {
                     cfg: '1.0.0',
                     ref: '.01',
                     wght: 100,
+                    termId: 'v003at100at100',
                   },
                   {
                     id: '004@1.0.0',
                     cfg: '1.0.0',
                     ref: '.01',
                     wght: 50,
+                    termId: 'v004at100at100',
                   },
                   {
                     id: '005@1.0.0',
                     cfg: '1.0.0',
                     ref: '.01',
                     wght: 25,
+                    termId: 'v005at100at100',
                   },
                 ],
-                expression: {
-                  operator: '+',
-                  terms: [
-                    { id: '003@1.0.0', cfg: '1.0.0' },
-                    { id: '004@1.0.0', cfg: '1.0.0' },
-                    { id: '005@1.0.0', cfg: '1.0.0' },
-                  ],
-                  expression: {
-                    operator: '+',
-                    terms: [
-                      { id: '003@1.0.0', cfg: '1.0.0' },
-                      { id: '004@1.0.0', cfg: '1.0.0' },
-                      { id: '005@1.0.0', cfg: '1.0.0' },
-                    ],
-                  },
-                },
+                expression: [
+                  'Add',
+                  'v003at100at100',
+                  'v004at100at100',
+                  'v005at100at100',
+                  ['Add', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
+                ],
               },
             ],
           ]),
@@ -311,7 +306,7 @@ describe('Logic Service', () => {
           resolve([
             [
               JSON.parse(
-                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"}]}}',
+                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20,"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
               ),
             ],
           ]);
@@ -364,7 +359,7 @@ describe('Logic Service', () => {
           resolve([
             [
               JSON.parse(
-                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20}],"expression":{"operator":"+","terms":[{"id":"003@1.0.0","cfg":"1.0.0"}]}}',
+                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20,"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
               ),
             ],
           ]);
@@ -538,5 +533,842 @@ describe('Logic Service', () => {
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(errorSpy).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('Typology Evaluation', () => {
+  it('should handle simple expressions using "Add"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Add', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(175);
+  });
+
+  it('should handle simple expressions using "Subtract"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Subtract', 'v003at100at100', 'v005at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(75);
+  });
+
+  it('should handle simple expressions using "Multiply"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Multiply', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(125000);
+  });
+
+  it('should handle simple expressions using "Divide"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Divide', 'v003at100at100', 'v005at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(4);
+  });
+
+  it('should handle simple expressions with mixed rule refs', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.03',
+        wght: 50,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.err',
+        wght: 0,
+        termId: 'v003at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: [
+        'Divide',
+        [
+          'Multiply',
+          'v003at100at100',
+          '2',
+          [
+            'Add',
+            'v003at100at100',
+            'v003at100at100',
+            'v003at100at100',
+            'v003at100at100',
+            'v003at100at100',
+            'v003at100at100',
+            'v003at100at100',
+            'v003at100at100',
+          ],
+        ],
+        '160',
+      ],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(1000);
+  });
+
+  it('should handle nested expressions using "Add"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: [
+        'Add',
+        ['Add', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
+        'v003at100at100',
+        'v004at100at100',
+        'v005at100at100',
+      ],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(350);
+  });
+
+  it('should handle nested expressions using "Subtract"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Subtract', ['Subtract', 'v003at100at100', 'v004at100at100'], 'v005at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(25);
+  });
+
+  it('should handle nested expressions using "Multiply"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Multiply', 'v003at100at100', ['Multiply', 'v004at100at100', 'v005at100at100']],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(125000);
+  });
+
+  it('should handle nested expressions using "Divide"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Divide', 'v003at100at100', ['Divide', 'v004at100at100', 'v005at100at100']],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(50);
+  });
+
+  it('should handle complex nested expressions', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: [
+        'Add',
+        ['Add', 'v003at100at100', 'v004at100at100'],
+        ['Subtract', 'v003at100at100'],
+        'v003at100at100',
+        ['Multiply', 'v004at100at100', ['Divide', 'v004at100at100', 'v005at100at100']],
+      ],
+    };
+
+    // (100 + 50) + (-100) + 100 + (50 x (50/2))
+    // 150 - 100 + 100 + 100
+    // = 250
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(250);
+  });
+
+  it('should handle a mixture of constants', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Add', 'v003at100at100', 'v004at100at100', 'v005at100at100', '625'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(800);
+  });
+
+  it('should fail on bad or missing termId - null', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: [
+        'Add',
+        ['Add', 'v003at100at100', 'v004at100at100'],
+        ['Subtract', 'v003at100at100'],
+        'v003at100at100',
+        'v004at100at100',
+        'v005at100at100Z', //bad termId
+      ],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(0);
+  });
+
+  it('should fail on incorrect number of arguments for "Subtract" and "Divide"', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 50,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const subtractExpression = {
+      expression: ['Subtract', 'v003at100at100', 'v004at100at100', 'v005at100at100', 'v005at100at100'],
+    };
+
+    const evaluation1 = evaluateTypologyExpression(ruleValues, ruleResults, subtractExpression.expression);
+    // This is will change on @cortex-js/compute-engine v0.25.1 and newer
+    expect(evaluation1).toEqual(0);
+
+    const divideExpression = {
+      expression: ['Divide', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
+    };
+
+    const evaluation2 = evaluateTypologyExpression(ruleValues, ruleResults, divideExpression.expression);
+    // This is will change on @cortex-js/compute-engine v0.25.1 and newer
+    expect(evaluation2).toEqual(0);
+  });
+
+  it('should handle simplify fractions', async () => {
+    const ruleValues = [
+      {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 100,
+        termId: 'v003at100at100',
+      },
+      {
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 200,
+        termId: 'v004at100at100',
+      },
+      {
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        ref: '.01',
+        wght: 25,
+        termId: 'v005at100at100',
+      },
+    ];
+
+    const ruleResults = [
+      {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '004@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+      {
+        prcgTm: 0,
+        id: '005@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      },
+    ];
+
+    const typologyExpression = {
+      expression: ['Divide', 'v003at100at100', 'v004at100at100'],
+    };
+
+    const evaluation = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
+    expect(evaluation).toEqual(0.5);
   });
 });
