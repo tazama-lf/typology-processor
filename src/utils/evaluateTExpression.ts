@@ -31,11 +31,12 @@ export const evaluateTypologyExpression = (
   const expr: SemiBoxedExpression = replaceTerms(typologyExpression, ruleTermMap);
   const returnValue = computeEngine.box(expr).evaluate();
 
-  if ((returnValue.numericValue as number) === null || returnValue.errors.length > 0) {
+  if (typeof returnValue.value !== 'number' || returnValue.errors.length > 0) {
     loggerService.error(`Expression evaluated to non numeric number: ${returnValue.toString()}`, logContext);
+    return 0;
   }
 
-  return returnValue.numericValue as number;
+  return returnValue.value;
 };
 
 function replaceTerms(arr: ExpressionMathJSON, ruleTermMap: Map<string, number>): ExpressionMathJSON {
