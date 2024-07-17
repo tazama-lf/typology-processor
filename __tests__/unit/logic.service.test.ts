@@ -1564,26 +1564,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simplify fractions', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 200,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 200,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
