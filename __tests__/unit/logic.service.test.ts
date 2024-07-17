@@ -3,7 +3,7 @@
 import { NetworkMap, Pacs002, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
 import { configuration } from '../../src/config';
 import { databaseManager, dbInit, runServer, server } from '../../src/index';
-import { ITypologyExpression } from '../../src/interfaces/iTypologyExpression';
+import { IRuleValue, ITypologyExpression } from '../../src/interfaces/iTypologyExpression';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
 
@@ -21,14 +21,108 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
 
 const getMockTypologyExp028 = (): ITypologyExpression => {
   return JSON.parse(
-    '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"125","interdictionThreshold":"150"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".err","wght":0,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":100,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".03","wght":300,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".x00","wght":500,"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
+    `{
+      "cfg": "1.0.0",
+      "id": "028@1.0.0",
+      "workflow": {
+          "alertThreshold": "125",
+          "interdictionThreshold": "150"
+      },
+      "rules": [
+          {
+              "id": "003@1.0.0",
+              "cfg": "1.0.0",
+              "wghts": [
+                  {
+                      "ref": ".err",
+                      "wght": 0
+                  },
+                  {
+                      "ref": ".01",
+                      "wght": 100
+                  },
+                  {
+                      "ref": ".03",
+                      "wght": 300
+                  },
+                  {
+                      "ref": ".x00",
+                      "wght": 500
+                  }
+              ],
+              "termId": "v003at100at100"
+          }
+      ],
+      "expression": [
+          "Add",
+          "v003at100at100"
+      ]
+  }`,
   );
 };
 
 const getMockTypologyExp029 = (): ITypologyExpression => {
-  return JSON.parse(
-    '{"cfg":"1.0.0","id":"029@1.0.0","workflow":{"alertThreshold":"350","interdictionThreshold":"700"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".err","wght":1,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":101,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".03","wght":301,"termId":"v003at100at100"},{"id":"003@1.0.0","cfg":"1.0.0","ref":".x00","wght":501,"termId":"v003at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".err","wght":51,"termId":"v004at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".01","wght":151,"termId":"v004at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".03","wght":351,"termId":"v004at100at100"},{"id":"004@1.0.0","cfg":"1.0.0","ref":".x00","wght":551,"termId":"v004at100at100"}],"expression":["Add","v003at100at100","v004at100at100"]}',
-  );
+  return JSON.parse(`{
+    "cfg": "1.0.0",
+    "id": "029@1.0.0",
+    "workflow": {
+        "alertThreshold": "350",
+        "interdictionThreshold": "700"
+    },
+    "rules": [
+        {
+            "id": "003@1.0.0",
+            "cfg": "1.0.0",
+            "wghts": [
+                {
+                    "ref": ".err",
+                    "wght": 1
+                },
+                {
+                    "ref": ".01",
+                    "wght": 101
+                },
+                {
+                    "ref": ".03",
+                    "wght": 301
+                },
+                {
+                    "ref": ".x00",
+                    "wght": 501
+                }
+            ],
+            "termId": "v003at100at100"
+        },
+        {
+            "id": "004@1.0.0",
+            "cfg": "1.0.0",
+            "wghts": [
+                {
+                    "ref": ".err",
+                    "wght": 51
+                },
+                {
+                    "ref": ".01",
+                    "wght": 151
+                },
+                {
+                    "ref": ".03",
+                    "wght": 351
+                },
+                {
+                    "ref": ".x00",
+                    "wght": 551
+                }
+            ],
+            "termId": "v004at100at100"
+        }
+    ],
+    "expression": [
+        "Add",
+        "v003at100at100",
+        "v004at100at100"
+    ]
+}`);
 };
 
 beforeAll(async () => {
@@ -218,22 +312,34 @@ describe('Logic Service', () => {
                   {
                     id: '003@1.0.0',
                     cfg: '1.0.0',
-                    ref: '.01',
-                    wght: 100,
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
                     termId: 'v003at100at100',
                   },
                   {
                     id: '004@1.0.0',
                     cfg: '1.0.0',
-                    ref: '.01',
-                    wght: 50,
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 50,
+                      },
+                    ],
                     termId: 'v004at100at100',
                   },
                   {
                     id: '005@1.0.0',
                     cfg: '1.0.0',
-                    ref: '.01',
-                    wght: 25,
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 25,
+                      },
+                    ],
                     termId: 'v005at100at100',
                   },
                 ],
@@ -306,7 +412,7 @@ describe('Logic Service', () => {
           resolve([
             [
               JSON.parse(
-                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20,"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
+                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","wghts":[{"ref":".01","wght":20}],"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
               ),
             ],
           ]);
@@ -359,7 +465,7 @@ describe('Logic Service', () => {
           resolve([
             [
               JSON.parse(
-                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","ref":".01","wght":20,"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
+                '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","wghts":[{"ref":".01","wght":20}],"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
               ),
             ],
           ]);
@@ -538,26 +644,38 @@ describe('Logic Service', () => {
 
 describe('Typology Evaluation', () => {
   it('should handle simple expressions using "Add"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -595,26 +713,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions using "Subtract"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -652,26 +782,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions using "Multiply"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -709,26 +851,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions using "Divide"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -766,26 +920,24 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions with mixed rule refs', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
-        termId: 'v003at100at100',
-      },
-      {
-        id: '003@1.0.0',
-        cfg: '1.0.0',
-        ref: '.03',
-        wght: 50,
-        termId: 'v003at100at100',
-      },
-      {
-        id: '003@1.0.0',
-        cfg: '1.0.0',
-        ref: '.err',
-        wght: 0,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+          {
+            ref: '.03',
+            wght: 50,
+          },
+          {
+            ref: '.err',
+            wght: 0,
+          },
+        ],
         termId: 'v003at100at100',
       },
     ];
@@ -828,26 +980,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Add"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -891,26 +1055,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Subtract"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -948,26 +1124,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Multiply"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -1005,26 +1193,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Divide"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -1062,26 +1262,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle complex nested expressions', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -1129,26 +1341,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle a mixture of constants', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -1186,26 +1410,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should fail on bad or missing termId - null', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -1250,26 +1486,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should fail on incorrect number of arguments for "Subtract" and "Divide"', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 50,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 50,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];
@@ -1316,26 +1564,38 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simplify fractions', async () => {
-    const ruleValues = [
+    const ruleValues: IRuleValue[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 100,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 100,
+          },
+        ],
         termId: 'v003at100at100',
       },
       {
         id: '004@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 200,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 200,
+          },
+        ],
         termId: 'v004at100at100',
       },
       {
         id: '005@1.0.0',
         cfg: '1.0.0',
-        ref: '.01',
-        wght: 25,
+        wghts: [
+          {
+            ref: '.01',
+            wght: 25,
+          },
+        ],
         termId: 'v005at100at100',
       },
     ];

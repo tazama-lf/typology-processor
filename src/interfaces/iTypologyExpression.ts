@@ -2,9 +2,13 @@
 export interface IRuleValue {
   id: string;
   cfg: string;
+  wghts: IWeight[];
+  termId: string;
+}
+
+export interface IWeight {
   ref: string;
   wght: number;
-  termId: string;
 }
 
 export interface IRule {

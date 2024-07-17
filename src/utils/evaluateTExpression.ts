@@ -13,7 +13,11 @@ export const evaluateTypologyExpression = (
   const logContext = 'evaluateTypologyExpression()';
   // Map for efficient rule weight lookup
   const valueMap = new Map<string, [string, number]>();
-  ruleValues.forEach((r) => valueMap.set(`${r.id}${r.cfg}${r.ref}`, [r.termId, r.wght]));
+  ruleValues.forEach((r) => {
+    r.wghts.forEach((w) => {
+      valueMap.set(`${r.id}${r.cfg}${w.ref}`, [r.termId, w.wght]);
+    });
+  });
 
   // Map for efficient rule term lookup
   const ruleTermMap = new Map<string, number>();
