@@ -109,7 +109,6 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
     {
       "id": "003@1.0.0",
       "cfg": "1.0.0",
-      
       "termId": "v003at100at100",
       "wghts":[
         {
