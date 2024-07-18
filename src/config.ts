@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // config settings, env variables
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -26,9 +25,7 @@ export interface IConfig {
     password: string;
     url: string;
     user: string;
-    collectionName: string;
     dbCertPath: string;
-    networkMap: string;
     cacheEnabled?: boolean;
     cacheTTL?: number;
   };
@@ -39,12 +36,8 @@ export interface IConfig {
     logstashLevel: string;
   };
   redis: RedisConfig;
-  transactionRouting: {
-    host: string;
-    path: string;
-    port: number;
-  };
   sidecarHost: string;
+  suppressAlerts: boolean;
 }
 
 export const configuration: IConfig = {
@@ -61,11 +54,9 @@ export const configuration: IConfig = {
     password: process.env.DATABASE_PASSWORD!,
     url: process.env.DATABASE_URL!,
     user: process.env.DATABASE_USER!,
-    collectionName: process.env.COLLECTION_NAME!,
     dbCertPath: process.env.DATABASE_CERT_PATH!,
     cacheEnabled: process.env.CACHE_ENABLED === 'true',
     cacheTTL: parseInt(process.env.CACHE_TTL!, 10),
-    networkMap: process.env.DATABASE_NETWORKMAP!,
   },
   env: process.env.NODE_ENV!,
   functionName: process.env.FUNCTION_NAME!,
@@ -80,10 +71,6 @@ export const configuration: IConfig = {
     password: process.env.REDIS_AUTH!,
     isCluster: process.env.REDIS_IS_CLUSTER === 'true',
   },
-  transactionRouting: {
-    host: process.env.TRANSACTION_ROUTING_HOST!,
-    path: process.env.TRANSACTION_ROUTING_PATH!,
-    port: parseInt(process.env.TRANSACTION_ROUTING_PORT!, 10),
-  },
   sidecarHost: process.env.SIDECAR_HOST!,
+  suppressAlerts: process.env.SUPPRESS_ALERTS === 'true',
 };

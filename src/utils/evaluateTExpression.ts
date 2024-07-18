@@ -1,70 +1,55 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { type IExpression, type IRuleValue } from '../interfaces/iTypologyExpression';
+// SPDX-License-Identifier: Apache-2.0
+
+import { type SemiBoxedExpression } from '@cortex-js/compute-engine';
 import { type RuleResult } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { computeEngine, loggerService } from '..';
+import { type ExpressionMathJSON, type IRuleValue } from '../interfaces/iTypologyExpression';
 
 export const evaluateTypologyExpression = (
   ruleValues: IRuleValue[],
   ruleResults: RuleResult[],
-  typologyExpression: IExpression,
+  typologyExpression: ExpressionMathJSON,
 ): number => {
-  let toReturn = 0.0;
-  // eslint-disable-next-line @typescript-eslint/no-for-in-array
-  for (const rule in typologyExpression.terms) {
-    const ruleResult = ruleResults.find((r) => r.id === typologyExpression.terms[rule].id && r.cfg === typologyExpression.terms[rule].cfg);
-    let ruleVal = 0.0;
-    if (!ruleResult) return ruleVal;
-    if (ruleResult.result)
-      ruleVal = Number(
-        ruleValues.find(
-          (rv) =>
-            rv.id === typologyExpression.terms[rule].id &&
-            rv.cfg === typologyExpression.terms[rule].cfg &&
-            rv.ref === ruleResult.subRuleRef,
-        )?.true ?? 0.0,
-      );
-    else
-      ruleVal = Number(
-        ruleValues.find(
-          (rv) =>
-            rv.id === typologyExpression.terms[rule].id &&
-            rv.cfg === typologyExpression.terms[rule].cfg &&
-            rv.ref === ruleResult.subRuleRef,
-        )?.false ?? 0.0,
-      );
-    ruleResult.wght = ruleVal;
-    switch (typologyExpression.operator) {
-      case '+':
-        toReturn += ruleVal;
-        break;
-      case '-':
-        toReturn -= ruleVal;
-        break;
-      case '*':
-        toReturn *= ruleVal;
-        break;
-      case '/':
-        if (ruleVal === 0.0) break;
-        toReturn /= ruleVal;
-        break;
+  const logContext = 'evaluateTypologyExpression()';
+  // Map for efficient rule weight lookup
+  const valueMap = new Map<string, [string, number]>();
+  ruleValues.forEach((r) => {
+    r.wghts.forEach((w) => {
+      valueMap.set(`${r.id}${r.cfg}${w.ref}`, [r.termId, w.wght]);
+    });
+  });
+
+  // Map for efficient rule term lookup
+  const ruleTermMap = new Map<string, number>();
+
+  ruleResults.forEach((r) => {
+    const values = valueMap.get(`${r.id}${r.cfg}${r.subRuleRef}`);
+    if (values) {
+      const [term, wght] = values;
+      ruleTermMap.set(term, wght);
+      r.wght = wght;
     }
+  });
+
+  const expr: SemiBoxedExpression = replaceTerms(typologyExpression, ruleTermMap);
+  const returnValue = computeEngine.box(expr).evaluate();
+
+  if (typeof returnValue.value !== 'number' || returnValue.errors.length > 0) {
+    loggerService.error(`Expression evaluated to non numeric number: ${returnValue.toString()}`, logContext);
+    return 0;
   }
-  if (typologyExpression.expression) {
-    const evalRes = evaluateTypologyExpression(ruleValues, ruleResults, typologyExpression.expression);
-    switch (typologyExpression.operator) {
-      case '+':
-        toReturn += evalRes;
-        break;
-      case '-':
-        toReturn -= evalRes;
-        break;
-      case '*':
-        toReturn *= evalRes;
-        break;
-      case '/':
-        if (evalRes === 0.0) break;
-        toReturn /= evalRes;
-        break;
-    }
-  }
-  return toReturn;
+
+  return returnValue.value;
 };
+
+function replaceTerms(arr: ExpressionMathJSON, ruleTermMap: Map<string, number>): ExpressionMathJSON {
+  return arr.map((term) => {
+    if (typeof term === 'string') {
+      const ruleTerm = ruleTermMap.get(term);
+      return ruleTerm ?? term;
+    } else if (Array.isArray(term)) {
+      return replaceTerms(term, ruleTermMap);
+    }
+    return term;
+  });
+}

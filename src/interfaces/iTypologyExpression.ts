@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-/* eslint-disable camelcase */
-
 export interface IRuleValue {
   id: string;
   cfg: string;
+  wghts: IWeight[];
+  termId: string;
+}
+
+export interface IWeight {
   ref: string;
-  true: number;
-  false: number;
+  wght: number;
 }
 
 export interface IRule {
@@ -15,11 +17,7 @@ export interface IRule {
   ref?: string;
 }
 
-export interface IExpression {
-  operator: string;
-  terms: IRule[];
-  expression: IExpression | undefined;
-}
+export type ExpressionMathJSON = Array<string | number | ExpressionMathJSON>;
 
 export interface IWorkFlow {
   alertThreshold: number;
@@ -31,6 +29,6 @@ export interface ITypologyExpression {
   cfg: string;
   desc?: string | undefined;
   rules: IRuleValue[];
-  expression: IExpression;
+  expression: ExpressionMathJSON;
   workflow: IWorkFlow;
 }

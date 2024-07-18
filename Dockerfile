@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 ARG BUILD_IMAGE=node:20-bullseye
 ARG RUN_IMAGE=gcr.io/distroless/nodejs20-debian11:nonroot
 
@@ -61,13 +63,14 @@ ENV PRODUCER_STORAGE=File
 ENV PRODUCER_RETENTION_POLICY=Workqueue
 
 #Database
-ENV DATABASE_NAME=Configuration
-ENV DATABASE_NETWORKMAP=networkmap
+ENV DATABASE_NAME=configuration
 ENV DATABASE_URL=
 ENV DATABASE_USER=root
 ENV DATABASE_PASSWORD=
 ENV DATABASE_CERT_PATH=
-ENV COLLECTION_NAME=typologyExpression
+
+# Alert
+ENV SUPPRESS_ALERTS=false
 
 # Apm
 ENV APM_ACTIVE=true
