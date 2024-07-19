@@ -12,6 +12,31 @@ Description: Create Release v2.0.0 release using Github Actions release workflow
 
 ### ⚙️ Chores
 
+- chore: Update VERSION to v3.0.0 (Linked Issues: 43c491679c6c4acf605f1f061e95bd73c395bf1e)
+- chore: Update CHANGELOG.md for v3.0.0 (Linked Issues: 92d380958b9dd1af9ed5a145bde60c03c758dc79)
+- chore: Update VERSION to v2.0.0 (Linked Issues: cec44e877bc2e31e295434178dbb3ff870886b8b)
+- chore: Update CHANGELOG.md for v2.0.0 (Linked Issues: dd2c4981306f2f5bef57a1b80893f0f0c290c941)
+
+### 🏗️ Build
+
+- build: update lib versions (Linked Issues: b3d45a7623eaaefc8d1eff58b7dbdb02da4148f4)
+
+### 📝 Other Changes
+
+- Merge branch 'main' into release-conflict (Linked Issues: f50baccc00af6b60779999e97d01b20eb2522cce)
+
+## v3.0.0
+
+## Milestone: Release v2.0.0
+Date: 2024-07-18T07:00:00Z
+Description: Create Release v2.0.0 release using Github Actions release workflow.
+
+### 🐞 Bug Fixes
+
+- fix: Update release.yml (Linked Issues: c4ee557d9444be24225542a9410c2c6c0652ab52)
+
+### ⚙️ Chores
+
 - chore: Update VERSION to v2.0.0 (Linked Issues: cec44e877bc2e31e295434178dbb3ff870886b8b)
 - chore: Update CHANGELOG.md for v2.0.0 (Linked Issues: dd2c4981306f2f5bef57a1b80893f0f0c290c941)
 
