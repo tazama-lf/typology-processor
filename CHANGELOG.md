@@ -1,5 +1,29 @@
 # SPDX-License-Identifier: Apache-2.0
 
+## v3.0.0
+
+## Milestone: null
+Date: null
+Description: null
+
+### 🐞 Bug Fixes
+
+- fix: Update release.yml (Linked Issues: c4ee557d9444be24225542a9410c2c6c0652ab52)
+
+### ⚙️ Chores
+
+- chore: Update VERSION to v2.0.0 (Linked Issues: c2da2d5e6c4e2f5f85ca2ab8ab0a5e2a474acc4f)
+- chore: Update CHANGELOG.md for v2.0.0 (Linked Issues: 16330fb327debc2f22a9130779dee3dd4bffd3ef)
+- chore: Update CHANGELOG.md for v3.0.0 (Linked Issues: 6f02cd75be2fa88ed5c4490ee5b96e3cb4325870)
+- chore: Update VERSION to v3.0.0 (Linked Issues: 43c491679c6c4acf605f1f061e95bd73c395bf1e)
+- chore: Update CHANGELOG.md for v3.0.0 (Linked Issues: 92d380958b9dd1af9ed5a145bde60c03c758dc79)
+- chore: Update VERSION to v2.0.0 (Linked Issues: cec44e877bc2e31e295434178dbb3ff870886b8b)
+- chore: Update CHANGELOG.md for v2.0.0 (Linked Issues: dd2c4981306f2f5bef57a1b80893f0f0c290c941)
+
+### 📝 Other Changes
+
+- Merge branch 'main' into release-conflict (Linked Issues: f50baccc00af6b60779999e97d01b20eb2522cce)
+
 ## v2.0.0
 
 ## Milestone: Release v2.0.0
