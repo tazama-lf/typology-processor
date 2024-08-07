@@ -95,7 +95,7 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
 
 ## Usage
 
-### Sample Typology Expression
+### Sample Typology Configuration
 
 ```json
 {
@@ -124,6 +124,25 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
           "wght": 400,
         }
       ]
+    },
+    {
+      "id": "EFRuP@1.0.0",
+      "cfg": "none",
+      "wghts": [
+        {
+          "ref": "block",
+          "wght": 0,
+        },
+        {
+          "ref": "override",
+          "wght": 0,
+        },
+        {
+          "ref": "none",
+          "wgh"t: 0,
+        },
+      ],
+      "termId": "vEFRuPat100",
     }
   ],
   "expression": [
