@@ -85,18 +85,15 @@ const evaluateTypologySendRequest = async (
     const typologyResultValue = evaluateTypologyExpression(expression.rules, typologyResults[index].ruleResults, expression.expression);
 
     typologyResults[index].result = typologyResultValue;
-
-    if (expression.workflow.interdictionThreshold) {
-      typologyResults[index].workflow.interdictionThreshold = expression.workflow.interdictionThreshold;
-    }
-
-    if (expression.workflow.alertThreshold) typologyResults[index].workflow.alertThreshold = expression.workflow.alertThreshold;
+    typologyResults[index].workflow.interdictionThreshold = expression.workflow.interdictionThreshold;
+    typologyResults[index].workflow.alertThreshold = expression.workflow.alertThreshold;
+    typologyResults[index].workflow.flowProcessor = expression.workflow.flowProcessor;
 
     typologyResults[index].review = false;
 
-    if (!expression.workflow.alertThreshold) {
+    if (!typologyResults[index].workflow.alertThreshold) {
       loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`, logContext, msgId);
-    } else if (typologyResultValue >= expression.workflow.alertThreshold) {
+    } else if (typologyResultValue >= typologyResults[index].workflow.alertThreshold) {
       loggerService.log(
         `Typology ${typologyResults[index].cfg} alerting on transaction : with a trigger of: ${typologyResultValue}`,
         logContext,
@@ -111,14 +108,28 @@ const evaluateTypologySendRequest = async (
       networkMap,
     };
 
-    const isInterdicting = expression.workflow.interdictionThreshold && typologyResultValue >= expression.workflow.interdictionThreshold;
+    let efrupStatus: string | undefined;
+    let efrupBlockAlert = false;
 
-    if (isInterdicting) {
-      typologyResults[index].review = true;
-      typologyResults[index].prcgTm = CalculateDuration(startTime);
+    if (typologyResults[index].workflow.flowProcessor) {
+      // if flowProcessor is defined -> get it's status
+      const flowProcessor = typologyResults[index].workflow.flowProcessor;
+      efrupStatus = typologyResults[index].ruleResults.find((r) => r.id === flowProcessor)?.subRuleRef;
+      if (efrupStatus === 'block') {
+        efrupBlockAlert = true;
+        typologyResults[index].review = true; // review even if we don't interdict
+      } else if (efrupStatus === 'override') {
+        efrupBlockAlert = true;
+      }
     }
 
-    if (!configuration.suppressAlerts && isInterdicting) {
+    const isInterdicting =
+      typologyResults[index].workflow.interdictionThreshold !== undefined &&
+      typologyResultValue >= typologyResults[index].workflow.interdictionThreshold!;
+
+    if (!configuration.suppressAlerts && !efrupBlockAlert && isInterdicting) {
+      typologyResults[index].review = true;
+      typologyResults[index].prcgTm = CalculateDuration(startTime);
       // Send Typology to CMS
       const spanCms = apm.startSpan(`[${transactionId}] Send Typology result to CMS`);
       server
