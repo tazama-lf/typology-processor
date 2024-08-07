@@ -132,16 +132,6 @@ const evaluateTypologySendRequest = async (
         });
     }
 
-    if (!expression.workflow.alertThreshold) {
-      loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`, undefined, logContext, msgId);
-    } else if (typologyResultValue >= expression.workflow.alertThreshold) {
-      loggerService.log(
-        `Typology ${typologyResults[index].cfg} alerting on transaction :  with a trigger of: ${typologyResultValue}`,
-        logContext,
-        msgId,
-      );
-      typologyResults[index].review = true;
-    }
     typologyResults[index].prcgTm = CalculateDuration(startTime);
     tadpReqBody.typologyResult = typologyResults[index];
 
