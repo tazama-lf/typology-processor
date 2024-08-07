@@ -7,7 +7,7 @@ import { type TADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor
 import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import { databaseManager, loggerService, server } from '.';
 import { configuration } from './config';
-import { type ITypologyExpression } from './interfaces/iTypologyExpression';
+import { type ITypologyExpression } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
 const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
