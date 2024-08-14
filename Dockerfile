@@ -44,7 +44,7 @@ ENV upstream_url="http://127.0.0.1:3000"
 ENV prefix_logs="false"
 ENV FUNCTION_NAME=typology-processor
 ENV NODE_ENV=production
-ENV CMS_ENDPOINT=
+ENV INTERDICTION_ENDPOINT=
 ENV CACHE_ENABLED=
 ENV MAX_CPU=
 

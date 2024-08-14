@@ -130,16 +130,16 @@ const evaluateTypologySendRequest = async (
     if (!configuration.suppressAlerts && !efrupBlockAlert && isInterdicting) {
       typologyResults[index].review = true;
       typologyResults[index].prcgTm = CalculateDuration(startTime);
-      // Send Typology to CMS
-      const spanCms = apm.startSpan(`[${transactionId}] Send Typology result to CMS`);
+      // Send Typology to interdiction service
+      const spanInterdiction = apm.startSpan(`[${transactionId}] Send Typology result to interdiction service`);
       server
-        .handleResponse({ ...tadpReqBody, metaData }, [configuration.cmsProducer])
+        .handleResponse({ ...tadpReqBody, metaData }, [configuration.interdictionProducer])
         .catch((error) => {
-          loggerService.error('Error while sending Typology result to CMS', error as Error, logContext, msgId);
+          loggerService.error('Error while sending Typology result to interdiction service', error as Error, logContext, msgId);
         })
         .finally(() => {
           spanExecReq?.end();
-          spanCms?.end();
+          spanInterdiction?.end();
         });
     }
 

@@ -33,18 +33,30 @@ An overview of the processor is detailed [here](https://github.com/frmscoe/docs/
 ## Internal process flow
 
 ```mermaid
-graph TD;
-    start[Start] --> saveToRedis;
-    saveToRedis -->|Success| aggregateRules;
-    saveToRedis -->|Failure| logError1[Log Error];
-    aggregateRules --> evaluateTypologySendRequest;
-    evaluateTypologySendRequest -->|Success| checkRuleCount;
-    evaluateTypologySendRequest -->|Failure| logError2[Log Error];
-    checkRuleCount -->|Enough Rules| deleteCacheAndEnd[Delete Cache and End];
-    checkRuleCount -->|Not Enough Rules| End[End];
+flowchart TD
+    start[Start] --> init[Initialize Processor]
+    init --> listen[Listen for Transactions]
+    received[Transaction Received]
+    received --> handle[Handle Transaction]
+    handle --> cache[Check Cache for Rules]
+    cache -->|Cache Hit| hit[Use Cached Rules]
+    cache -->|Cache Miss| nohit[Fetch Rules from DB]
+    hit --> aggregate[Aggregate Rule Results]
+    nohit --> aggregate[Aggregate Rule Results]
+    aggregate --> score[Calculate Typology Score]
+    score --> breach[Check Alert and Interdiction Thresholds]
+    breach  --> interdict{Interdiction<br>Threshold<br>Breached?}
+    interdict --> |Yes| suppress{Suppress<br>interdiction?}
+    interdict --> |No| alert{Alert Threshold Breached}
+    suppress --> |Yes| alert{Alert Threshold Breached}
+    suppress --> |No| suppressN[Send to Interdiction Service]
+    suppressN --> alert{Alert Threshold Breached}
+    alert --> |Yes| alertY[Set review flag]
+    alertY --> send[Send to TADProc]
+    alert --> |No| send[Send to TADProc]
+    send --> cleanup[Cleanup Cache]
+    cleanup --> stop[End]
 ```
-
-![](images/image-20231124-060051.png)
 
 ## Outputs
 ```js
@@ -58,7 +70,7 @@ graph TD;
   }
 };
 
-// CMS on interdiction
+// interdiction-service on interdiction
 {
   typologyResult: TypologyResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/46d1ec1fc9a07b6556baa4fecd80e09c709ccb1b/src/interfaces/processor-files/TypologyResult.ts
   transaction: Pacs002; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/cb464248be1efc45ba2701131e75fcf89c478baf/src/interfaces/Pacs.002.001.12.ts
@@ -87,7 +99,8 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
 | `DATABASE_USER` | ArangoDB username | `root`
 | `DATABASE_PASSWORD` | ArangoDB password for username | `<secure_user_password>`
 | `DATABASE_CERT_PATH` | Certificate's path used for TLS by Arango | `<path_to_certificate>`
-| `SUPPRESS_ALERTS` | Suppress forwarding of Typology Result to CMS | `false`
+| `SUPPRESS_ALERTS` | Suppress forwarding of Typology Result to the interdiction service | `false`
+| `INTERDICTION_PRODUCER` | The interdiction service NATS subject where typology interdiction threshold breaches will be reported | `interdiction-service`
 
 ## Deployment
 
