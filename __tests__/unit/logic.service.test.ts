@@ -497,7 +497,7 @@ describe('Logic Service', () => {
       expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
-      expect(responseSpy).toHaveBeenCalledTimes(2); // +1 to CMS for interdiction
+      expect(responseSpy).toHaveBeenCalledTimes(2); // +1 to interdiction-service for interdiction
       expect(responseSpy.mock.results.length).toEqual(2);
 
       const typology028 = await responseSpy.mock.results[0].value;
@@ -507,12 +507,12 @@ describe('Logic Service', () => {
       expect(typology028.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
       expect(typology028.typologyResult.result).toEqual(20);
 
-      const typology028CMS = await responseSpy.mock.results[1].value;
-      expect(typology028CMS.networkMap).toEqual(networkMap);
-      expect(typology028CMS.transaction).toEqual(Req);
-      expect(typology028CMS.typologyResult.ruleResults.length).toEqual(1);
-      expect(typology028CMS.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
-      expect(typology028CMS.typologyResult.result).toEqual(20);
+      const typology028Interdict = await responseSpy.mock.results[1].value;
+      expect(typology028Interdict.networkMap).toEqual(networkMap);
+      expect(typology028Interdict.transaction).toEqual(Req);
+      expect(typology028Interdict.typologyResult.ruleResults.length).toEqual(1);
+      expect(typology028Interdict.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
+      expect(typology028Interdict.typologyResult.result).toEqual(20);
     });
 
     it('should handle successful request, TP028, Rules 1/1, Interdicting. Suppressed', async () => {
@@ -550,8 +550,8 @@ describe('Logic Service', () => {
       expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
-      expect(responseSpy).toHaveBeenCalledTimes(1); // Suppressed CMS
-      expect(responseSpy.mock.results.length).toEqual(1); // Suppressed CMS
+      expect(responseSpy).toHaveBeenCalledTimes(1); // Suppressed Interdiction
+      expect(responseSpy.mock.results.length).toEqual(1); // Suppressed Interdiction
 
       const typology028 = await responseSpy.mock.results[0].value;
       expect(typology028.networkMap).toEqual(networkMap);
@@ -638,7 +638,7 @@ describe('Logic Service', () => {
       expect(responseSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should handle successful request, cms and tadproc result error', async () => {
+    it('should handle successful request, interdiction and tadproc result error', async () => {
       const Req = getMockReqPacs002();
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
@@ -785,7 +785,7 @@ describe('Logic Service', () => {
       expect(responseSpy).toHaveBeenCalledTimes(2); // +1 interdiction call
       expect(responseSpy.mock.results.length).toEqual(2);
 
-      // results[0] is CMS's shallow copy so we only test results[1]
+      // results[0] is interdiction's shallow copy so we only test results[1]
       const tadpRequest: TADPRequest = await responseSpy.mock.results[1].value;
       expect(tadpRequest.typologyResult.review).toEqual(true);
     });
