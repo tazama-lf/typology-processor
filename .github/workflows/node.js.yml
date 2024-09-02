@@ -7,7 +7,7 @@ name: Node.js CI
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_SCOPE: "@frmscoe"
+  NPM_SCOPE: "@tazama-lf"
   NPM_REGISTRY: "https://npm.pkg.github.com/"
   NODE_ENV: 'test'
   STARTUP_TYPE: 'nats'
