@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import './apm';
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { LoggerService, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
-import { StartupFactory, type IStartupService } from '@frmscoe/frms-coe-startup-lib';
-import { getRoutesFromNetworkMap } from '@frmscoe/frms-coe-lib/lib/helpers/networkMapIdentifiers';
+import { LoggerService, type DatabaseManagerInstance } from '@tazama-lf/frms-coe-lib';
+import { StartupFactory, type IStartupService } from '@tazama-lf/frms-coe-startup-lib';
+import { getRoutesFromNetworkMap } from '@tazama-lf/frms-coe-lib/lib/helpers/networkMapIdentifiers';
 import cluster from 'cluster';
 import os from 'os';
 import { configuration } from './config';

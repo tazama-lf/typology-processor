@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type SemiBoxedExpression } from '@cortex-js/compute-engine';
-import { type RuleResult } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { type RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import { computeEngine, loggerService } from '..';
-import { type ExpressionMathJSON, type IRuleValue } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import { type ExpressionMathJSON, type IRuleValue } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 
 export const evaluateTypologyExpression = (
   ruleValues: IRuleValue[],

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
-import { NetworkMap, Pacs002, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
-import { TADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
+import { NetworkMap, Pacs002, RuleResult, Typology } from '@tazama-lf/frms-coe-lib/lib/interfaces';
+import { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import { configuration } from '../../src/config';
 import { databaseManager, dbInit, runServer, server } from '../../src/index';
-import { IRuleValue, ITypologyExpression } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import { IRuleValue, ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
 
