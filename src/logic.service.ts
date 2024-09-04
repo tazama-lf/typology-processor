@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import apm from './apm';
-import { CalculateDuration } from '@frmscoe/frms-coe-lib/lib/helpers/calculatePrcg';
-import { type NetworkMap, type RuleResult } from '@frmscoe/frms-coe-lib/lib/interfaces';
-import { type MetaData } from '@frmscoe/frms-coe-lib/lib/interfaces/metaData';
-import { type TADPRequest } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
-import { type TypologyResult } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
+import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
+import { type NetworkMap, type RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
+import { type MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
+import { type TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
+import { type TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import { databaseManager, loggerService, server } from '.';
 import { configuration } from './config';
-import { type ITypologyExpression } from '@frmscoe/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import { type ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
 const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {

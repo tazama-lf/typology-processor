@@ -3,7 +3,7 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-import { type RedisConfig } from '@frmscoe/frms-coe-lib/lib/interfaces';
+import { type RedisConfig } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 
 // Load .env file into process.env if it exists. This is convenient for running locally.
 dotenv.config({

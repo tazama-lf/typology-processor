@@ -24,13 +24,13 @@ jobs:
       - uses: actions-ecosystem/action-get-merged-pull-request@v1
         id: get-merged-pull-request
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_TOKEN }}
 
       - uses: actions-ecosystem/action-release-label@v1
         id: release-label
         if: ${{ steps.get-merged-pull-request.outputs.title != null }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_TOKEN }}
 
       # Get the latest tag in the repository
       - uses: actions-ecosystem/action-get-latest-tag@v1
@@ -45,13 +45,13 @@ jobs:
         with:
           node-version: 20.x
           registry-url: https://npm.pkg.github.com/
-          scope: '@frmscoe'
+          scope: '@tazama-lf'
           
       # Install dependencies
       - name: Install dependencies
         run: npm ci
         env:
-          GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          GH_TOKEN: '${{ secrets.GH_TOKEN }}'
 
       # Run Tests
       - name: Run Tests
@@ -123,7 +123,7 @@ jobs:
         run: |
           # Retrieve the milestone ID from the workflow input
           MILESTONE_ID=${{ github.event.client_payload.milestone_number }}
-          MILESTONE_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/milestones/${MILESTONE_ID}")
+          MILESTONE_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/milestones/${MILESTONE_ID}")
           MILESTONE_TITLE=$(echo "$MILESTONE_RESPONSE" | jq -r '.title')
           MILESTONE_DESCRIPTION=$(echo "$MILESTONE_RESPONSE" | jq -r '.description')
           MILESTONE_DATE=$(echo "$MILESTONE_RESPONSE" | jq -r '.due_on')
@@ -240,7 +240,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           tag_name: ${{ steps.bump_version.outputs.new_version }}
           release_name: ${{ steps.bump_version.outputs.new_version }}
@@ -261,7 +261,7 @@ jobs:
           git commit -m "chore: Update CHANGELOG.md for $NEW_VERSION"
           git push origin HEAD:main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           STARTUP_TYPE: 'nats'
         
       # Update the VERSION file
@@ -275,5 +275,5 @@ jobs:
           git commit -m "chore: Update VERSION to $NEW_VERSION"
           git push origin HEAD:main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           STARTUP_TYPE: 'nats'
