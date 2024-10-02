@@ -10,6 +10,55 @@ import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression'
 
 const evaluation = jest.requireActual('../../src/utils/evaluateTExpression');
 
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/monitoring.config', () => ({
+  validateAPMConfig: jest.fn().mockReturnValue({
+    apmServiceName: '',
+  }),
+  validateLogConfig: jest.fn().mockReturnValue({}),
+}));
+
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/processor.config', () => ({
+  validateProcessorConfig: jest.fn().mockReturnValue({
+    functionName: 'test-tp',
+    nodeEnv: 'test',
+    maxCPU: 0,
+  }),
+}));
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({
+  validateEnvVar: jest.fn().mockReturnValue(''),
+}));
+
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/redis.config', () => ({
+  validateRedisConfig: jest.fn().mockReturnValue({
+    db: 0,
+    servers: [
+      {
+        host: 'redis://localhost',
+        port: 6379,
+      },
+    ],
+    password: '',
+    isCluster: false,
+  }),
+}));
+
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/database.config', () => ({
+  validateDatabaseConfig: jest.fn().mockReturnValue({}),
+  Database: {
+    CONFIGURATION: 'MOCK_DB',
+  },
+}));
+
+jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () => ({
+  startupConfig: {
+    startupType: 'nats',
+    consumerStreamName: 'consumer',
+    serverUrl: 'server',
+    producerStreamName: 'producer',
+    functionName: 'producer',
+  },
+}));
+
 const getMockReqPacs002 = (): Pacs002 => {
   return JSON.parse(
     '{"TxTp":"pacs.002.001.12","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
@@ -62,11 +111,11 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
               "id": "typology-processor@1.0.0",
               "cfg": "028@1.0.0",
               "rules": [
-                { 
+                {
                   "id": "003@1.0.0",
                   "cfg": "1.0.0"
                 },
-                { 
+                {
                   "id": "EFRuP@1.0.0",
                   "cfg": "none"
                 }
