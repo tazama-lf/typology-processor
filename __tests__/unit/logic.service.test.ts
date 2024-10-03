@@ -10,25 +10,17 @@ import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression'
 
 const evaluation = jest.requireActual('../../src/utils/evaluateTExpression');
 
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/monitoring.config', () => ({
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({
   validateAPMConfig: jest.fn().mockReturnValue({
     apmServiceName: '',
   }),
   validateLogConfig: jest.fn().mockReturnValue({}),
-}));
-
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/processor.config', () => ({
   validateProcessorConfig: jest.fn().mockReturnValue({
     functionName: 'test-tp',
     nodeEnv: 'test',
     maxCPU: 0,
   }),
-}));
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({
   validateEnvVar: jest.fn().mockReturnValue(''),
-}));
-
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/redis.config', () => ({
   validateRedisConfig: jest.fn().mockReturnValue({
     db: 0,
     servers: [
@@ -40,10 +32,10 @@ jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/redis.config', () => ({
     password: '',
     isCluster: false,
   }),
+  validateDatabaseConfig: jest.fn().mockReturnValue({}),
 }));
 
 jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/database.config', () => ({
-  validateDatabaseConfig: jest.fn().mockReturnValue({}),
   Database: {
     CONFIGURATION: 'MOCK_DB',
   },

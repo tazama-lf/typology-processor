@@ -4,10 +4,14 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 import { type RedisConfig } from '@tazama-lf/frms-coe-lib/lib/interfaces';
-import { validateEnvVar } from '@tazama-lf/frms-coe-lib/lib/helpers/env';
-import { validateProcessorConfig } from '@tazama-lf/frms-coe-lib/lib/helpers/env/processor.config';
-import { validateRedisConfig } from '@tazama-lf/frms-coe-lib/lib/helpers/env/redis.config';
-import { Database, validateDatabaseConfig } from '@tazama-lf/frms-coe-lib/lib/helpers/env/database.config';
+import {
+  validateEnvVar,
+  validateProcessorConfig,
+  validateRedisConfig,
+  validateDatabaseConfig,
+} from '@tazama-lf/frms-coe-lib/lib/helpers/env';
+import { Database } from '@tazama-lf/frms-coe-lib/lib/helpers/env/database.config';
+import { type DBConfig } from '@tazama-lf/frms-coe-lib/lib/services/dbManager';
 
 // Load .env file into process.env if it exists. This is convenient for running locally.
 dotenv.config({
@@ -18,15 +22,7 @@ export interface IConfig {
   maxCPU: number;
   env: string;
   functionName: string;
-  db: {
-    name: string;
-    password: string;
-    url: string;
-    user: string;
-    dbCertPath: string;
-    cacheEnabled?: boolean;
-    cacheTTL?: number;
-  };
+  db: DBConfig;
   interdictionProducer: string;
   logstashLevel: string;
   redis: RedisConfig;
@@ -40,20 +36,12 @@ const interdictionProducer = validateEnvVar<string>('INTERDICTION_PRODUCER', 'st
 
 const authEnabled = generalConfig.nodeEnv === 'production';
 const redisConfig = validateRedisConfig(authEnabled);
-const configDBConfig = validateDatabaseConfig(authEnabled, Database.CONFIGURATION);
+const db = validateDatabaseConfig(authEnabled, Database.CONFIGURATION);
 
 export const configuration: IConfig = {
   maxCPU: generalConfig.maxCPU,
   interdictionProducer,
-  db: {
-    name: configDBConfig.name,
-    password: configDBConfig.password ?? '',
-    url: configDBConfig.url,
-    user: configDBConfig.user,
-    dbCertPath: configDBConfig.certPath,
-    cacheEnabled: validateEnvVar<boolean>('CACHE_ENABLED', 'boolean'),
-    cacheTTL: validateEnvVar<number>('CACHETTL', 'number'),
-  },
+  db,
   env: generalConfig.nodeEnv,
   functionName: generalConfig.functionName,
   logstashLevel: validateEnvVar('LOGSTASH_LEVEL', 'string'),
