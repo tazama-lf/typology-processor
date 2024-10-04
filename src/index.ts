@@ -11,21 +11,8 @@ import { handleTransaction } from './logic.service';
 import { Singleton } from './services/services';
 
 const databaseManagerConfig = {
-  redisConfig: {
-    db: configuration.redis.db,
-    servers: configuration.redis.servers,
-    password: configuration.redis.password,
-    isCluster: configuration.redis.isCluster,
-  },
-  configuration: {
-    databaseName: configuration.db.name,
-    certPath: configuration.db.dbCertPath,
-    password: configuration.db.password,
-    url: configuration.db.url,
-    user: configuration.db.user,
-    localCacheEnabled: configuration.db.cacheEnabled,
-    localCacheTTL: configuration.db.cacheTTL,
-  },
+  redisConfig: configuration.redis,
+  configuration: configuration.db,
 };
 
 export const loggerService: LoggerService = new LoggerService(configuration.sidecarHost);
