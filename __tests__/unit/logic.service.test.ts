@@ -20,6 +20,7 @@ jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({
     nodeEnv: 'test',
     maxCPU: 0,
   }),
+  validateLocalCacheConfig: jest.fn().mockReturnValue({}),
   validateEnvVar: jest.fn().mockReturnValue(''),
   validateRedisConfig: jest.fn().mockReturnValue({
     db: 0,
@@ -246,7 +247,7 @@ describe('Logic Service', () => {
   beforeEach(() => {
     addOneGetAllSpy = jest
       .spyOn(databaseManager, 'addOneGetAll')
-      .mockImplementation((key: string, value: Record<string, unknown>): Promise<Array<Record<string, unknown>>> => {
+      .mockImplementation((key: any, value: any): Promise<Array<Record<string, unknown>>> => {
         return new Promise<Record<string, unknown>[]>((resolve, _reject) => {
           if (cacheStringArr.get(key)) {
             // Care for value dupes
@@ -258,7 +259,7 @@ describe('Logic Service', () => {
         });
       });
 
-    getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: Typology) => {
+    getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
       switch (_typology.cfg) {
         case '028@1.0.0': {
           return new Promise((resolve, _reject) => {
@@ -278,7 +279,7 @@ describe('Logic Service', () => {
       }
     });
 
-    deleteKeySpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
+    deleteKeySpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: any): Promise<void> => {
       return new Promise<void>((resolve, _reject) => {
         cacheStringArr.delete(key);
         resolve();
@@ -401,7 +402,7 @@ describe('Logic Service', () => {
       const Req = getMockReqPacs002();
 
       getTypologyConfigSpy.mockRestore();
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -508,7 +509,7 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting', async () => {
       const Req = getMockReqPacs002();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([
             [
@@ -561,7 +562,7 @@ describe('Logic Service', () => {
 
       configuration.suppressAlerts = true;
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([
             [
@@ -666,7 +667,7 @@ describe('Logic Service', () => {
         subRuleRef: 'ref1',
       };
 
-      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: Typology) => {
+      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([[]]);
         });
@@ -836,7 +837,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -927,7 +928,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -1021,7 +1022,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -1115,7 +1116,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -1206,7 +1207,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -1300,7 +1301,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -1394,7 +1395,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -1494,7 +1495,7 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: unknown) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [

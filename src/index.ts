@@ -10,10 +10,7 @@ import { configuration } from './config';
 import { handleTransaction } from './logic.service';
 import { Singleton } from './services/services';
 
-const databaseManagerConfig = {
-  redisConfig: configuration.redis,
-  configuration: configuration.db,
-};
+const databaseManagerConfig = configuration.db;
 
 export const loggerService: LoggerService = new LoggerService(configuration.sidecarHost);
 let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
