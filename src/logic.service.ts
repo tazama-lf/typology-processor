@@ -12,7 +12,7 @@ import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
 const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
-  const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => res.ruleResult as RuleResult);
+  const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res: { ruleResult: RuleResult }) => res.ruleResult);
   return ruleResults;
 };
 
