@@ -9,8 +9,6 @@ import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression'
 
 const evaluation = jest.requireActual('../../src/utils/evaluateTExpression');
 
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({}));
-
 jest.mock('@tazama-lf/frms-coe-lib/lib/services/dbManager', () => ({
   CreateStorageManager: jest.fn().mockReturnValue({
     db: {
@@ -21,12 +19,6 @@ jest.mock('@tazama-lf/frms-coe-lib/lib/services/dbManager', () => ({
       isReadyCheck: jest.fn().mockReturnValue({ nodeEnv: 'test' }),
     },
   }),
-}));
-
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/database.config', () => ({
-  Database: {
-    CONFIGURATION: 'MOCK_DB',
-  },
 }));
 
 jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () => ({
