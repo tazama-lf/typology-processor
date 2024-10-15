@@ -2,8 +2,7 @@
 /* eslint-disable */
 import { NetworkMap, Pacs002, RuleResult, Typology } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
-import { configuration } from '../../src/config';
-import { databaseManager, dbInit, runServer, server } from '../../src/index';
+import { configuration, databaseManager, dbInit, runServer, server } from '../../src/index';
 import { IRuleValue, ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
@@ -509,6 +508,8 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting', async () => {
       const Req = getMockReqPacs002();
 
+      configuration.SUPPRESS_ALERTS = false;
+
       getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([
@@ -560,7 +561,7 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting. Suppressed', async () => {
       const Req = getMockReqPacs002();
 
-      configuration.suppressAlerts = true;
+      configuration.SUPPRESS_ALERTS = true;
 
       getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
@@ -602,7 +603,7 @@ describe('Logic Service', () => {
       expect(typology028.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
       expect(typology028.typologyResult.result).toEqual(20);
 
-      configuration.suppressAlerts = false;
+      configuration.SUPPRESS_ALERTS = false;
     });
 
     it('should handle successful request, with a unmatched ruleId', async () => {
