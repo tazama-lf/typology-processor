@@ -9,30 +9,18 @@ import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression'
 
 const evaluation = jest.requireActual('../../src/utils/evaluateTExpression');
 
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({
-  validateAPMConfig: jest.fn().mockReturnValue({
-    apmServiceName: '',
+jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({}));
+
+jest.mock('@tazama-lf/frms-coe-lib/lib/services/dbManager', () => ({
+  CreateStorageManager: jest.fn().mockReturnValue({
+    db: {
+      getNetworkMap: jest.fn(),
+      addOneGetAll: jest.fn(),
+      getTypologyConfig: jest.fn(),
+      deleteKey: jest.fn(),
+      isReadyCheck: jest.fn().mockReturnValue({ nodeEnv: 'test' }),
+    },
   }),
-  validateLogConfig: jest.fn().mockReturnValue({}),
-  validateProcessorConfig: jest.fn().mockReturnValue({
-    functionName: 'test-tp',
-    nodeEnv: 'test',
-    maxCPU: 0,
-  }),
-  validateLocalCacheConfig: jest.fn().mockReturnValue({}),
-  validateEnvVar: jest.fn().mockReturnValue(''),
-  validateRedisConfig: jest.fn().mockReturnValue({
-    db: 0,
-    servers: [
-      {
-        host: 'redis://localhost',
-        port: 6379,
-      },
-    ],
-    password: '',
-    isCluster: false,
-  }),
-  validateDatabaseConfig: jest.fn().mockReturnValue({}),
 }));
 
 jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/database.config', () => ({
