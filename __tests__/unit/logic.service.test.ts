@@ -2,44 +2,23 @@
 /* eslint-disable */
 import { NetworkMap, Pacs002, RuleResult, Typology } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
-import { configuration } from '../../src/config';
-import { databaseManager, dbInit, runServer, server } from '../../src/index';
+import { configuration, databaseManager, dbInit, runServer, server } from '../../src/index';
 import { IRuleValue, ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
 
 const evaluation = jest.requireActual('../../src/utils/evaluateTExpression');
 
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env', () => ({
-  validateAPMConfig: jest.fn().mockReturnValue({
-    apmServiceName: '',
+jest.mock('@tazama-lf/frms-coe-lib/lib/services/dbManager', () => ({
+  CreateStorageManager: jest.fn().mockReturnValue({
+    db: {
+      getNetworkMap: jest.fn(),
+      addOneGetAll: jest.fn(),
+      getTypologyConfig: jest.fn(),
+      deleteKey: jest.fn(),
+      isReadyCheck: jest.fn().mockReturnValue({ nodeEnv: 'test' }),
+    },
   }),
-  validateLogConfig: jest.fn().mockReturnValue({}),
-  validateProcessorConfig: jest.fn().mockReturnValue({
-    functionName: 'test-tp',
-    nodeEnv: 'test',
-    maxCPU: 0,
-  }),
-  validateLocalCacheConfig: jest.fn().mockReturnValue({}),
-  validateEnvVar: jest.fn().mockReturnValue(''),
-  validateRedisConfig: jest.fn().mockReturnValue({
-    db: 0,
-    servers: [
-      {
-        host: 'redis://localhost',
-        port: 6379,
-      },
-    ],
-    password: '',
-    isCluster: false,
-  }),
-  validateDatabaseConfig: jest.fn().mockReturnValue({}),
-}));
-
-jest.mock('@tazama-lf/frms-coe-lib/lib/helpers/env/database.config', () => ({
-  Database: {
-    CONFIGURATION: 'MOCK_DB',
-  },
 }));
 
 jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () => ({
@@ -509,6 +488,8 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting', async () => {
       const Req = getMockReqPacs002();
 
+      configuration.SUPPRESS_ALERTS = false;
+
       getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([
@@ -560,7 +541,7 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting. Suppressed', async () => {
       const Req = getMockReqPacs002();
 
-      configuration.suppressAlerts = true;
+      configuration.SUPPRESS_ALERTS = true;
 
       getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
@@ -602,7 +583,7 @@ describe('Logic Service', () => {
       expect(typology028.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
       expect(typology028.typologyResult.result).toEqual(20);
 
-      configuration.suppressAlerts = false;
+      configuration.SUPPRESS_ALERTS = false;
     });
 
     it('should handle successful request, with a unmatched ruleId', async () => {

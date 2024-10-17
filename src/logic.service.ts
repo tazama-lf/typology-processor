@@ -5,14 +5,16 @@ import { type NetworkMap, type RuleResult } from '@tazama-lf/frms-coe-lib/lib/in
 import { type MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
 import { type TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import { type TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
-import { databaseManager, loggerService, server } from '.';
-import { configuration } from './config';
+import { databaseManager, loggerService, server, configuration } from '.';
 import { type ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
 const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
-  const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res: { ruleResult: RuleResult }) => res.ruleResult);
+  const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => {
+    const result = res as { ruleResult: RuleResult };
+    return result.ruleResult;
+  });
   return ruleResults;
 };
 
@@ -127,13 +129,13 @@ const evaluateTypologySendRequest = async (
       typologyResults[index].workflow.interdictionThreshold !== undefined &&
       typologyResultValue >= typologyResults[index].workflow.interdictionThreshold!;
 
-    if (!configuration.suppressAlerts && !efrupBlockAlert && isInterdicting) {
+    if (!configuration.SUPPRESS_ALERTS && !efrupBlockAlert && isInterdicting) {
       typologyResults[index].review = true;
       typologyResults[index].prcgTm = CalculateDuration(startTime);
       // Send Typology to interdiction service
       const spanInterdiction = apm.startSpan(`[${transactionId}] Send Typology result to interdiction service`);
       server
-        .handleResponse({ ...tadpReqBody, metaData }, [configuration.interdictionProducer])
+        .handleResponse({ ...tadpReqBody, metaData }, [configuration.INTERDICTION_PRODUCER])
         .catch((error) => {
           loggerService.error('Error while sending Typology result to interdiction service', error as Error, logContext, msgId);
         })
