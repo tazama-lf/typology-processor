@@ -3,7 +3,7 @@
 # Typology Processor
 
 ## Overview
-An overview of the processor is detailed [here](https://github.com/frmscoe/docs/blob/main/Product/typology-processing.md)
+An overview of the processor is detailed [here](https://github.com/tazama-lf/docs/blob/main/Product/typology-processing.md)
 
 - [Inputs](#inputs)
 - [Internal process flow](#internal-process-flow)
@@ -22,8 +22,8 @@ An overview of the processor is detailed [here](https://github.com/frmscoe/docs/
 ```js
 {
   transaction: { 
-    networkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
-    ruleResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/rule/RuleResult.ts
+    networkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
+    ruleResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/rule/RuleResult.ts
     transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
     metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
   }
@@ -63,8 +63,8 @@ flowchart TD
 // TADP
 {
   transaction: { 
-    networkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
-    ruleResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/rule/RuleResult.ts
+    networkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
+    ruleResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/rule/RuleResult.ts
     transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
     metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
   }
@@ -72,9 +72,9 @@ flowchart TD
 
 // interdiction-service on interdiction
 {
-  typologyResult: TypologyResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/46d1ec1fc9a07b6556baa4fecd80e09c709ccb1b/src/interfaces/processor-files/TypologyResult.ts
-  transaction: Pacs002; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/cb464248be1efc45ba2701131e75fcf89c478baf/src/interfaces/Pacs.002.001.12.ts
-  networkMap: NetworkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
+  typologyResult: TypologyResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/processor-files/TypologyResult.ts
+  transaction: Pacs002; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/Pacs.002.001.12.ts
+  networkMap: NetworkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
   metaData?: {
     prcgTmDp: number;
     prcgTmED: number;
@@ -88,7 +88,7 @@ You then need to configure your environment: a [sample](.env.template) configura
 ```sh
 cp .env.template .env
 ```
-A [registry](https://github.com/frmscoe/docs) of environment variables is provided to provide more context for what each variable is used for.
+A [registry](https://github.com/tazama-lf/docs) of environment variables is provided to provide more context for what each variable is used for.
 
 ##### Additional Variables
 

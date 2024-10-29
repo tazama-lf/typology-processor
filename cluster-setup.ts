@@ -1,6 +1,6 @@
 process.env.FUNCTION_NAME = 'tadp';
 process.env.NODE_ENV = 'test';
-process.env.MAX_CPU = '';
+process.env.MAX_CPU = '1';
 process.env.SUPPRESS_ALERTS = 'true';
 process.env.INTERDICTION_PRODUCER = '';
 
