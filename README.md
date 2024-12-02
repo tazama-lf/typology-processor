@@ -3,7 +3,7 @@
 # Typology Processor
 
 ## Overview
-An overview of the processor is detailed [here](https://github.com/frmscoe/docs/blob/main/Product/typology-processing.md)
+An overview of the processor is detailed [here](https://github.com/tazama-lf/docs/blob/main/Product/typology-processing.md)
 
 - [Inputs](#inputs)
 - [Internal process flow](#internal-process-flow)
@@ -22,8 +22,8 @@ An overview of the processor is detailed [here](https://github.com/frmscoe/docs/
 ```js
 {
   transaction: { 
-    networkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
-    ruleResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/rule/RuleResult.ts
+    networkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
+    ruleResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/rule/RuleResult.ts
     transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
     metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
   }
@@ -33,38 +33,48 @@ An overview of the processor is detailed [here](https://github.com/frmscoe/docs/
 ## Internal process flow
 
 ```mermaid
-graph TD;
-    start[Start] --> saveToRedis;
-    saveToRedis -->|Success| aggregateRules;
-    saveToRedis -->|Failure| logError1[Log Error];
-    aggregateRules --> evaluateTypologySendRequest;
-    evaluateTypologySendRequest -->|Success| checkRuleCount;
-    evaluateTypologySendRequest -->|Failure| logError2[Log Error];
-    checkRuleCount -->|Enough Rules| deleteCacheAndEnd[Delete Cache and End];
-    checkRuleCount -->|Not Enough Rules| End[End];
+flowchart TD
+    start[Start] --> init[Initialize Processor]
+    init --> listen[Listen for Transactions]
+    received[Transaction Received]
+    received --> handle[Handle Transaction]
+    handle --> cache[Check Cache for Rules]
+    cache -->|Cache Hit| hit[Use Cached Rules]
+    cache -->|Cache Miss| nohit[Fetch Rules from DB]
+    hit --> aggregate[Aggregate Rule Results]
+    nohit --> aggregate[Aggregate Rule Results]
+    aggregate --> score[Calculate Typology Score]
+    score --> breach[Check Alert and Interdiction Thresholds]
+    breach  --> interdict{Interdiction<br>Threshold<br>Breached?}
+    interdict --> |Yes| suppress{Suppress<br>interdiction?}
+    interdict --> |No| alert{Alert Threshold Breached}
+    suppress --> |Yes| alert{Alert Threshold Breached}
+    suppress --> |No| suppressN[Send to Interdiction Service]
+    suppressN --> alert{Alert Threshold Breached}
+    alert --> |Yes| alertY[Set review flag]
+    alertY --> send[Send to TADProc]
+    alert --> |No| send[Send to TADProc]
+    send --> cleanup[Cleanup Cache]
+    cleanup --> stop[End]
 ```
-
-![](images/image-20231124-060051.png)
-
-[https://github.com/frmscoe/uml-diagrams/blob/main/TP.plantuml](https://github.com/frmscoe/uml-diagrams/blob/main/TP.plantuml)
 
 ## Outputs
 ```js
 // TADP
 {
   transaction: { 
-    networkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
-    ruleResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/rule/RuleResult.ts
+    networkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
+    ruleResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/rule/RuleResult.ts
     transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
     metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
   }
 };
 
-// CMS on interdiction
+// interdiction-service on interdiction
 {
-  typologyResult: TypologyResult; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/46d1ec1fc9a07b6556baa4fecd80e09c709ccb1b/src/interfaces/processor-files/TypologyResult.ts
-  transaction: Pacs002; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/cb464248be1efc45ba2701131e75fcf89c478baf/src/interfaces/Pacs.002.001.12.ts
-  networkMap: NetworkMap; // https://raw.githubusercontent.com/frmscoe/frms-coe-lib/aad0f12d07a82dd948fa9d8033f96e9bf8cb3dde/src/interfaces/NetworkMap.ts
+  typologyResult: TypologyResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/processor-files/TypologyResult.ts
+  transaction: Pacs002; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/Pacs.002.001.12.ts
+  networkMap: NetworkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
   metaData?: {
     prcgTmDp: number;
     prcgTmED: number;
@@ -78,7 +88,7 @@ You then need to configure your environment: a [sample](.env.template) configura
 ```sh
 cp .env.template .env
 ```
-A [registry](https://github.com/frmscoe/docs) of environment variables is provided to provide more context for what each variable is used for.
+A [registry](https://github.com/tazama-lf/docs) of environment variables is provided to provide more context for what each variable is used for.
 
 ##### Additional Variables
 
@@ -89,13 +99,14 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
 | `DATABASE_USER` | ArangoDB username | `root`
 | `DATABASE_PASSWORD` | ArangoDB password for username | `<secure_user_password>`
 | `DATABASE_CERT_PATH` | Certificate's path used for TLS by Arango | `<path_to_certificate>`
-| `SUPPRESS_ALERTS` | Suppress forwarding of Typology Result to CMS | `false`
+| `SUPPRESS_ALERTS` | Suppress forwarding of Typology Result to the interdiction service | `false`
+| `INTERDICTION_PRODUCER` | The interdiction service NATS subject where typology interdiction threshold breaches will be reported | `interdiction-service`
 
 ## Deployment
 
 ## Usage
 
-### Sample Typology Expression
+### Sample Typology Configuration
 
 ```json
 {
@@ -110,28 +121,48 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
       "id": "003@1.0.0",
       "cfg": "1.0.0",
       "termId": "v003at100at100",
-      "wghts":[
+      "wghts": [
         {
           "ref": ".err",
           "wght": 0
         },
         {
           "ref": ".01",
-          "wght": 0,
+          "wght": 0
         },
         {
           "ref": ".02",
-          "wght": 400,
+          "wght": 400
+        }
+      ]
+    },
+    {
+      "id": "EFRuP@1.0.0",
+      "cfg": "none",
+      "termId": "vEFRuPat100at100",
+      "wghts": [
+        {
+          "ref": "block",
+          "wght": 0
+        },
+        {
+          "ref": "override",
+          "wght": 0
+        },
+        {
+          "ref": "none",
+          "wght": 0
         }
       ]
     }
   ],
   "expression": [
-    "Add",
-    "v003at100at100",
+    "Add", 
+    "v003at100at100", 
     "v003at100at100"
   ]
 }
+
 ```
 
 ### Sample NATS subscription payload
@@ -351,23 +382,16 @@ A [registry](https://github.com/frmscoe/docs) of environment variables is provid
                 "host": "NATS Server",
                 "cfg": "1.0.0",
                 "txTp": "pacs.002.001.12",
-                "channels": [
+                "typologies": [
                     {
-                        "id": "001@1.0.0",
+                        "id": "typology-processor@1.0.0",
                         "host": "NATS Server",
-                        "cfg": "1.0.0",
-                        "typologies": [
+                        "cfg": "001@1.0.0",
+                        "rules": [
                             {
-                                "id": "typology-processor@1.0.0",
-                                "host": "NATS Server",
-                                "cfg": "001@1.0.0",
-                                "rules": [
-                                    {
-                                        "id": "003@1.0.0",
-                                        "host": "RuleRequest003",
-                                        "cfg": "1.0.0"
-                                    }
-                                ]
+                                "id": "003@1.0.0",
+                                "host": "RuleRequest003",
+                                "cfg": "1.0.0"
                             }
                         ]
                     }

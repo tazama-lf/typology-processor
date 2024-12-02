@@ -1,11 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 /* eslint-disable */
-import { NetworkMap, Pacs002, RuleResult, Typology } from '@frmscoe/frms-coe-lib/lib/interfaces';
-import { configuration } from '../../src/config';
-import { databaseManager, dbInit, runServer, server } from '../../src/index';
-import { IRuleValue, ITypologyExpression } from '../../src/interfaces/iTypologyExpression';
+import { NetworkMap, Pacs002, RuleResult, Typology } from '@tazama-lf/frms-coe-lib/lib/interfaces';
+import { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
+import { configuration, databaseManager, dbInit, runServer, server } from '../../src/index';
+import { IRuleValue, ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
+
+const evaluation = jest.requireActual('../../src/utils/evaluateTExpression');
+
+jest.mock('@tazama-lf/frms-coe-lib/lib/services/dbManager', () => ({
+  CreateStorageManager: jest.fn().mockReturnValue({
+    db: {
+      getNetworkMap: jest.fn(),
+      addOneGetAll: jest.fn(),
+      getTypologyConfig: jest.fn(),
+      deleteKey: jest.fn(),
+      isReadyCheck: jest.fn().mockReturnValue({ nodeEnv: 'test' }),
+    },
+  }),
+}));
+
+jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () => ({
+  startupConfig: {
+    startupType: 'nats',
+    consumerStreamName: 'consumer',
+    serverUrl: 'server',
+    producerStreamName: 'producer',
+    functionName: 'producer',
+  },
+}));
 
 const getMockReqPacs002 = (): Pacs002 => {
   return JSON.parse(
@@ -15,7 +39,64 @@ const getMockReqPacs002 = (): Pacs002 => {
 
 const getMockNetworkMapPacs002 = (): NetworkMap => {
   return JSON.parse(
-    '{"active":true,"cfg":"1.0.0","messages":[{"id":"004@1.0.0","cfg":"1.0.0","txTp":"pacs.002.001.12","typologies":[{"id":"typology-processor@1.0.0","cfg":"028@1.0.0","rules":[{"id":"003@1.0.0","cfg":"1.0.0"}]},{"id":"typology-processor@1.0.0","cfg":"029@1.0.0","rules":[{"id":"003@1.0.0","cfg":"1.0.0"},{"id":"004@1.0.0","cfg":"1.0.0"}]}]}]}',
+    `{
+      "active": true,
+      "cfg": "1.0.0",
+      "messages": [
+        {
+          "id": "004@1.0.0",
+          "cfg": "1.0.0",
+          "txTp": "pacs.002.001.12",
+          "typologies": [
+            {
+              "id": "typology-processor@1.0.0",
+              "cfg": "028@1.0.0",
+              "rules": [{ "id": "003@1.0.0", "cfg": "1.0.0" }]
+            },
+            {
+              "id": "typology-processor@1.0.0",
+              "cfg": "029@1.0.0",
+              "rules": [
+                { "id": "003@1.0.0", "cfg": "1.0.0" },
+                { "id": "004@1.0.0", "cfg": "1.0.0" }
+              ]
+            }
+          ]
+        }
+      ]
+    }`,
+  );
+};
+
+const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
+  return JSON.parse(
+    `{
+      "active": true,
+      "cfg": "1.0.0",
+      "messages": [
+        {
+          "id": "004@1.0.0",
+          "cfg": "1.0.0",
+          "txTp": "pacs.002.001.12",
+          "typologies": [
+            {
+              "id": "typology-processor@1.0.0",
+              "cfg": "028@1.0.0",
+              "rules": [
+                {
+                  "id": "003@1.0.0",
+                  "cfg": "1.0.0"
+                },
+                {
+                  "id": "EFRuP@1.0.0",
+                  "cfg": "none"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }`,
   );
 };
 
@@ -145,7 +226,7 @@ describe('Logic Service', () => {
   beforeEach(() => {
     addOneGetAllSpy = jest
       .spyOn(databaseManager, 'addOneGetAll')
-      .mockImplementation((key: string, value: Record<string, unknown>): Promise<Array<Record<string, unknown>>> => {
+      .mockImplementation((key: any, value: any): Promise<Array<Record<string, unknown>>> => {
         return new Promise<Record<string, unknown>[]>((resolve, _reject) => {
           if (cacheStringArr.get(key)) {
             // Care for value dupes
@@ -157,7 +238,7 @@ describe('Logic Service', () => {
         });
       });
 
-    getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: Typology) => {
+    getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
       switch (_typology.cfg) {
         case '028@1.0.0': {
           return new Promise((resolve, _reject) => {
@@ -177,7 +258,7 @@ describe('Logic Service', () => {
       }
     });
 
-    deleteKeySpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: string): Promise<void> => {
+    deleteKeySpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: any): Promise<void> => {
       return new Promise<void>((resolve, _reject) => {
         cacheStringArr.delete(key);
         resolve();
@@ -300,7 +381,7 @@ describe('Logic Service', () => {
       const Req = getMockReqPacs002();
 
       getTypologyConfigSpy.mockRestore();
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) =>
           resolve([
             [
@@ -407,7 +488,9 @@ describe('Logic Service', () => {
     it('should handle successful request, TP028, Rules 1/1, Interdicting', async () => {
       const Req = getMockReqPacs002();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      configuration.SUPPRESS_ALERTS = false;
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([
             [
@@ -437,7 +520,7 @@ describe('Logic Service', () => {
       expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
-      expect(responseSpy).toHaveBeenCalledTimes(2); // +1 to CMS for interdiction
+      expect(responseSpy).toHaveBeenCalledTimes(2); // +1 to interdiction-service for interdiction
       expect(responseSpy.mock.results.length).toEqual(2);
 
       const typology028 = await responseSpy.mock.results[0].value;
@@ -447,20 +530,20 @@ describe('Logic Service', () => {
       expect(typology028.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
       expect(typology028.typologyResult.result).toEqual(20);
 
-      const typology028CMS = await responseSpy.mock.results[1].value;
-      expect(typology028CMS.networkMap).toEqual(networkMap);
-      expect(typology028CMS.transaction).toEqual(Req);
-      expect(typology028CMS.typologyResult.ruleResults.length).toEqual(1);
-      expect(typology028CMS.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
-      expect(typology028CMS.typologyResult.result).toEqual(20);
+      const typology028Interdict = await responseSpy.mock.results[1].value;
+      expect(typology028Interdict.networkMap).toEqual(networkMap);
+      expect(typology028Interdict.transaction).toEqual(Req);
+      expect(typology028Interdict.typologyResult.ruleResults.length).toEqual(1);
+      expect(typology028Interdict.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
+      expect(typology028Interdict.typologyResult.result).toEqual(20);
     });
 
     it('should handle successful request, TP028, Rules 1/1, Interdicting. Suppressed', async () => {
       const Req = getMockReqPacs002();
 
-      configuration.suppressAlerts = true;
+      configuration.SUPPRESS_ALERTS = true;
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: Typology) => {
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([
             [
@@ -490,8 +573,8 @@ describe('Logic Service', () => {
       expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
-      expect(responseSpy).toHaveBeenCalledTimes(1); // Suppressed CMS
-      expect(responseSpy.mock.results.length).toEqual(1); // Suppressed CMS
+      expect(responseSpy).toHaveBeenCalledTimes(1); // Suppressed Interdiction
+      expect(responseSpy.mock.results.length).toEqual(1); // Suppressed Interdiction
 
       const typology028 = await responseSpy.mock.results[0].value;
       expect(typology028.networkMap).toEqual(networkMap);
@@ -500,7 +583,7 @@ describe('Logic Service', () => {
       expect(typology028.typologyResult.ruleResults[0]).toEqual({ ...ruleResult, wght: 20 });
       expect(typology028.typologyResult.result).toEqual(20);
 
-      configuration.suppressAlerts = false;
+      configuration.SUPPRESS_ALERTS = false;
     });
 
     it('should handle successful request, with a unmatched ruleId', async () => {
@@ -565,7 +648,7 @@ describe('Logic Service', () => {
         subRuleRef: 'ref1',
       };
 
-      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: Typology) => {
+      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
         return new Promise((resolve, _reject) => {
           resolve([[]]);
         });
@@ -578,7 +661,7 @@ describe('Logic Service', () => {
       expect(responseSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should handle successful request, cms and tadproc result error', async () => {
+    it('should handle successful request, interdiction and tadproc result error', async () => {
       const Req = getMockReqPacs002();
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
@@ -638,6 +721,848 @@ describe('Logic Service', () => {
       expect(addOneGetAllSpy).toHaveBeenCalledTimes(1);
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(errorSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Review flag, alerts, and interdiction', () => {
+    afterEach(() => {
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockRestore();
+    });
+
+    it('no EFRuP, no alertThreshold breach, not interdicting - review false', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002();
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(false);
+    });
+
+    it('no EFRuP, alertThreshold breached, not interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002();
+
+      // larger than or equal to 125 (alert) but not 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(125);
+
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+    });
+
+    it('no EFRuP, interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002();
+
+      // larger than or equal to 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
+
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(2); // +1 interdiction call
+      expect(responseSpy.mock.results.length).toEqual(2);
+
+      // results[0] is interdiction's shallow copy so we only test results[1]
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[1].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+    });
+
+    it('EFRuP - block, no alertThreshold breach, not interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'block',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual({ ...efrupResult, wght: 0 });
+    });
+
+    it('EFRuP - block, alertThreshold breached, not interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      // larger than or equal to 125 (alert) but not 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(125);
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'block',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
+    });
+
+    it('EFRuP - block, interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      // larger than or equal to 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'block',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1); // -1 block blocks interdiction
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
+    });
+
+    it('EFRuP - override, no alertThreshold breach, not interdicting - review false', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: '2000',
+                  interdictionThreshold: '4000',
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'override',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(false);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual({ ...efrupResult, wght: 0 });
+    });
+
+    it('EFRuP - override, alertThreshold breached, not interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      // larger than or equal to 125 (alert) but not 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(125);
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'override',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
+    });
+
+    it('EFRuP - override, interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      // larger than or equal to 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'override',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(1); // -1 override blocks interdiction
+      expect(responseSpy.mock.results.length).toEqual(1);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
+    });
+
+    it('EFRuP - none, interdicting - review true', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  flowProcessor: 'EFRuP@1.0.0',
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      // larger than or equal to 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'none',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(2); // +1 none doesn't block interdiction
+      expect(responseSpy.mock.results.length).toEqual(2);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
+    });
+  });
+
+  describe('EFRuP failures', () => {
+    afterEach(() => {
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockRestore();
+    });
+
+    it('EFRuP - block, interdicting but missing from typology config workflow - block ignored', async () => {
+      const Req = getMockReqPacs002();
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
+
+      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: unknown) => {
+        return new Promise((resolve, _reject) =>
+          resolve([
+            [
+              {
+                cfg: '1.0.0',
+                id: '030@1.0.0',
+                workflow: {
+                  alertThreshold: 125,
+                  interdictionThreshold: 150,
+                  // missing flowprocessor
+                },
+                rules: [
+                  {
+                    id: '003@1.0.0',
+                    cfg: '1.0.0',
+                    wghts: [
+                      {
+                        ref: '.01',
+                        wght: 100,
+                      },
+                    ],
+                    termId: 'v003at100at100',
+                  },
+                  {
+                    id: 'EFRuP@1.0.0',
+                    cfg: 'none',
+                    wghts: [
+                      {
+                        ref: 'block',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'override',
+                        wght: 0,
+                      },
+                      {
+                        ref: 'none',
+                        wght: 0,
+                      },
+                    ],
+                    termId: 'vEFRuPat100at100',
+                  },
+                ],
+                expression: ['Add', 'v003at100at100'],
+              },
+            ],
+          ]),
+        );
+      });
+
+      // larger than or equal to 150 (interdict)
+      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
+
+      const ruleResult: RuleResult = {
+        id: '003@1.0.0',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+
+      const efrupResult: RuleResult = {
+        id: 'EFRuP@1.0.0',
+        cfg: 'none',
+        subRuleRef: 'none',
+      };
+
+      await handleTransaction({
+        transaction: Req,
+        networkMap,
+        ruleResult: efrupResult,
+      });
+
+      expect(responseSpy).toHaveBeenCalledTimes(2); // Block skipped workflow missing
+      expect(responseSpy.mock.results.length).toEqual(2);
+
+      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
     });
   });
 });

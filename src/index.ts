@@ -1,52 +1,38 @@
 // SPDX-License-Identifier: Apache-2.0
 import './apm';
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { LoggerService, type DatabaseManagerInstance } from '@frmscoe/frms-coe-lib';
-import { StartupFactory, type IStartupService } from '@frmscoe/frms-coe-startup-lib';
-import { getRoutesFromNetworkMap } from '@frmscoe/frms-coe-lib/lib/helpers/networkMapIdentifiers';
+import { LoggerService, type DatabaseManagerInstance } from '@tazama-lf/frms-coe-lib';
+import { StartupFactory, type IStartupService } from '@tazama-lf/frms-coe-startup-lib';
+import { getRoutesFromNetworkMap } from '@tazama-lf/frms-coe-lib/lib/helpers/networkMapIdentifiers';
 import cluster from 'cluster';
 import os from 'os';
-import { configuration } from './config';
+import { additionalEnvironmentVariables, type Configuration } from './config';
 import { handleTransaction } from './logic.service';
-import { Singleton } from './services/services';
+import { type Databases, Singleton } from './services/services';
+import { validateProcessorConfig } from '@tazama-lf/frms-coe-lib/lib/config/processor.config';
 
-const databaseManagerConfig = {
-  redisConfig: {
-    db: configuration.redis.db,
-    servers: configuration.redis.servers,
-    password: configuration.redis.password,
-    isCluster: configuration.redis.isCluster,
-  },
-  configuration: {
-    databaseName: configuration.db.name,
-    certPath: configuration.db.dbCertPath,
-    password: configuration.db.password,
-    url: configuration.db.url,
-    user: configuration.db.user,
-    localCacheEnabled: configuration.db.cacheEnabled,
-    localCacheTTL: configuration.db.cacheTTL,
-  },
-};
-
-export const loggerService: LoggerService = new LoggerService(configuration.sidecarHost);
-let databaseManager: DatabaseManagerInstance<typeof databaseManagerConfig>;
+let configuration = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
+export const loggerService: LoggerService = new LoggerService(configuration);
+let databaseManager: DatabaseManagerInstance<Databases>;
 
 export const computeEngine = new ComputeEngine();
 
 export const dbInit = async (): Promise<void> => {
-  databaseManager = await Singleton.getDatabaseManager(databaseManagerConfig);
+  const { db, config } = await Singleton.getDatabaseManager(configuration);
+  databaseManager = db;
+  configuration = { ...configuration, ...config };
 };
 
 export let server: IStartupService;
 
 export const runServer = async (): Promise<void> => {
   server = new StartupFactory();
-  if (configuration.env !== 'test') {
+  if (configuration.nodeEnv !== 'test') {
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
       const { consumers } = await getRoutesFromNetworkMap(databaseManager, configuration.functionName);
-      if (!(await server.init(handleTransaction, undefined, consumers, 'temp-pub-tadp'))) {
+      if (!(await server.init(handleTransaction, undefined, consumers, configuration.INTERDICTION_PRODUCER))) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         loggerService.log('Connected to nats');
@@ -88,7 +74,7 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   // In this case it is an NATS server
   (async () => {
     try {
-      if (configuration.env !== 'test') {
+      if (configuration.nodeEnv !== 'test') {
         await dbInit();
         await runServer();
       }
@@ -100,4 +86,4 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
   loggerService.log(`Worker ${process.pid} started`);
 }
 
-export { databaseManager };
+export { databaseManager, configuration };
