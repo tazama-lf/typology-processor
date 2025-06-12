@@ -5,15 +5,20 @@
 ## Overview
 An overview of the processor is detailed [here](https://github.com/tazama-lf/docs/blob/main/Product/typology-processing.md)
 
-- [Inputs](#inputs)
-- [Internal process flow](#internal-process-flow)
-- [Outputs](#outputs)
-- [Deployment](#deployment)
-- [Usage](#usage)
-    - [Sample Typology Expression](#sample-typology-expression)
+- [Typology Processor](#typology-processor)
+  - [Overview](#overview)
+  - [Inputs](#inputs)
+  - [Internal process flow](#internal-process-flow)
+  - [Example Output](#example-output)
+  - [Environment variables](#environment-variables)
+        - [Additional Variables](#additional-variables)
+  - [Deployment](#deployment)
+  - [Usage](#usage)
+    - [Sample Typology Configuration](#sample-typology-configuration)
     - [Sample NATS subscription payload](#sample-nats-subscription-payload)
-    - [Sample response from TP:](#sample-response-from-tp)
-- [Troubleshooting](#troubleshooting)
+  - [Troubleshooting](#troubleshooting)
+      - [npm install](#npm-install)
+      - [npm build](#npm-build)
 
 ![](images/image-20220706-133859.png)
 
@@ -58,28 +63,161 @@ flowchart TD
     cleanup --> stop[End]
 ```
 
-## Outputs
-```js
-// TADP
-{
-  transaction: { 
-    networkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
-    ruleResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/rule/RuleResult.ts
-    transaction; // { TxTp: "pacs.002.001.12", "FIToFIPmtSts": { /* Pacs002 */ } }
-    metaData: // { traceParent: "00-4bf92f3577b34da6a3ce928d0e0e4736-00f067aa0ba902b7-01" }
-  }
-};
+## Example Output
+<details>
 
-// interdiction-service on interdiction
+<summary>JSON structure of the payload the typology processor outputs</summary>
+
+```js
 {
-  typologyResult: TypologyResult; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/processor-files/TypologyResult.ts
-  transaction: Pacs002; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/Pacs.002.001.12.ts
-  networkMap: NetworkMap; // https://raw.githubusercontent.com/tazama-lf/frms-coe-lib/f2368a9b4613f446528feba55ffbe8d1b887038d/src/interfaces/NetworkMap.ts
-  metaData?: {
-    prcgTmDp: number;
-    prcgTmED: number;
+  typologyResult: {
+    id: "typology-processor@1.0.0",
+    cfg: "999@1.0.0",
+    result: 100,
+    ruleResults: [
+      {
+        id: "EFRuP@1.0.0",
+        cfg: "none",
+        subRuleRef: "none",
+        prcgTm: 8145412,
+        wght: "0",
+      },
+      {
+        id: "901@1.0.0",
+        cfg: "1.0.0",
+        subRuleRef: ".01",
+        prcgTm: 67631142,
+        wght: "100",
+      },
+    ],
+    workflow: {
+      alertThreshold: 200,
+      interdictionThreshold: 400,
+      flowProcessor: "EFRuP@1.0.0",
+    },
+    review: true,
+    prcgTm: 25819313473,
+  },
+  transaction: {
+    TxTp: "pacs.002.001.12",
+    FIToFIPmtSts: {
+      GrpHdr: {
+        MsgId: "cf60b5b7734a4cec88778937a5a0d501",
+        CreDtTm: "2025-06-12T08:08:08.472Z",
+      },
+      TxInfAndSts: {
+        OrgnlInstrId: "b85b0975def8426895b7950d4962e808",
+        OrgnlEndToEndId: "4b76ad6885ee4c948ce731fc06d68d31",
+        TxSts: "ACCC",
+        ChrgsInf: [
+          {
+            Amt: {
+              Amt: 0,
+              Ccy: "USD",
+            },
+            Agt: {
+              FinInstnId: {
+                ClrSysMmbId: {
+                  MmbId: "fsp001",
+                },
+              },
+            },
+          },
+          {
+            Amt: {
+              Amt: 0,
+              Ccy: "USD",
+            },
+            Agt: {
+              FinInstnId: {
+                ClrSysMmbId: {
+                  MmbId: "fsp001",
+                },
+              },
+            },
+          },
+          {
+            Amt: {
+              Amt: 0,
+              Ccy: "USD",
+            },
+            Agt: {
+              FinInstnId: {
+                ClrSysMmbId: {
+                  MmbId: "fsp002",
+                },
+              },
+            },
+          },
+        ],
+        AccptncDtTm: "2023-06-02T07:52:31.000Z",
+        InstgAgt: {
+          FinInstnId: {
+            ClrSysMmbId: {
+              MmbId: "fsp001",
+            },
+          },
+        },
+        InstdAgt: {
+          FinInstnId: {
+            ClrSysMmbId: {
+              MmbId: "fsp002",
+            },
+          },
+        },
+      },
+    },
+  },
+  networkMap: {
+    active: true,
+    cfg: "1.0.0",
+    messages: [
+      {
+        id: "004@1.0.0",
+        cfg: "1.0.0",
+        txTp: "pacs.002.001.12",
+        typologies: [
+          {
+            id: "typology-processor@1.0.0",
+            cfg: "999@1.0.0",
+            rules: [
+              {
+                id: "EFRuP@1.0.0",
+                cfg: "none",
+              },
+              {
+                id: "901@1.0.0",
+                cfg: "1.0.0",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  DataCache: {
+    dbtrId: "dbtr_8abc80a7b7bc4ec88fd02a9adc56d3eaMSISDN",
+    cdtrId: "cdtr_0938580d34414a4eaf45c3f8f201b9deTAZAMA_EID",
+    cdtrAcctId: "cdtrAcct_95e04bcc6e54492599b8b4dd03e3333fTAZAMA_EIDfsp002",
+    dbtrAcctId: "dbtrAcct_d87971a0bcc74519ae20c45a8b4d9dc5MSISDNfsp001",
+    instdAmt: {
+      amt: 110.05,
+      ccy: "XTS",
+    },
+    intrBkSttlmAmt: {
+      amt: 110.05,
+      ccy: "XTS",
+    },
+    creDtTm: "2025-06-12T08:03:08.472Z",
+  },
+  metaData: {
+    prcgTmDP: 12644208,
+    prcgTmED: 35151190,
+  },
 }
 ```
+
+<details>
 
 ## Environment variables
 
