@@ -1,25 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { DatabaseManagerInstance, ManagerConfig } from '@tazama-lf/frms-coe-lib';
 import { Database } from '@tazama-lf/frms-coe-lib/lib/config/database.config';
-import type { ProcessorConfig } from '@tazama-lf/frms-coe-lib/lib/config/processor.config';
 import { Cache } from '@tazama-lf/frms-coe-lib/lib/config/redis.config';
 import { CreateStorageManager } from '@tazama-lf/frms-coe-lib/lib/services/dbManager';
-/* eslint-disable @typescript-eslint/no-extraneous-class */
-export type Databases = Required<Pick<ManagerConfig, 'configuration' | 'localCacheConfig' | 'redisConfig'>>;
+import type { Configuration } from '../config';
+/* eslint-disable @typescript-eslint/no-extraneous-class -- singleton */
 export class Singleton {
-  private static dbManager: {
-    db: DatabaseManagerInstance<Databases>;
-    config: ManagerConfig;
-  };
+  private static dbManager: DatabaseManagerInstance<Configuration>;
 
   public static async getDatabaseManager(
-    configuration: ProcessorConfig,
-  ): Promise<{ db: DatabaseManagerInstance<Databases>; config: ManagerConfig }> {
-    const requireAuth = configuration.nodeEnv === 'production';
+    configuration: Configuration,
+  ): Promise<{ db: DatabaseManagerInstance<Configuration>; config: ManagerConfig }> {
     if (!Singleton.dbManager) {
-      Singleton.dbManager = await CreateStorageManager([Database.CONFIGURATION, Cache.LOCAL, Cache.DISTRIBUTED], requireAuth);
-    }
+      const requireAuth = configuration.nodeEnv === 'production';
 
-    return Singleton.dbManager;
+      const { db } = await CreateStorageManager<typeof configuration>(
+        [Database.CONFIGURATION, Cache.LOCAL, Cache.DISTRIBUTED],
+        requireAuth,
+      );
+
+      Singleton.dbManager = db;
+    }
+    return { db: Singleton.dbManager, config: configuration };
   }
 }
+/* eslint-enable @typescript-eslint/no-extraneous-class */
