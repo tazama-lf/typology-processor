@@ -8,11 +8,17 @@ import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/proc
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
+import { Singleton } from './services/services';
 
-const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
-  const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
+const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult, tenantId: string): Promise<RuleResult[] | undefined> => {
+  // The cacheKey already includes tenant separation from the caller
+  // Store the tenantId separately, not as part of the rule result to avoid breaking tests
+  const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
+    ruleResult,
+    tenantId,
+  });
   const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => {
-    const result = res as { ruleResult: RuleResult };
+    const result = res as { ruleResult: RuleResult; tenantId: string };
     return result.ruleResult;
   });
   return ruleResults;
@@ -56,7 +62,7 @@ const evaluateTypologySendRequest = async (
   metaData: MetaData,
   transactionId: string,
   msgId: string,
-  dataCache: DataCache,
+  tenantId: string,
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
   for (const currTypologyResult of typologyResults) {
@@ -70,20 +76,43 @@ const evaluateTypologySendRequest = async (
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
-    const expressionRes = (await databaseManager.getTypologyConfig({
-      id: currTypologyResult.id,
-      cfg: currTypologyResult.cfg,
-      host: '',
-      desc: '',
-      rules: [],
-    })) as unknown[][];
+    // Try to get typology configuration from cache first
+    let expression = Singleton.getTypologyConfigFromCache(tenantId, currTypologyResult.id, currTypologyResult.cfg);
 
-    if (!expressionRes?.[0]?.[0]) {
-      loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg},`, logContext, msgId);
-      continue;
+    if (!expression) {
+      // If not in cache, fetch from database with tenant filter
+      const expressionRes = (await databaseManager.getTypologyConfig({
+        id: currTypologyResult.id,
+        cfg: currTypologyResult.cfg,
+        host: '',
+        desc: '',
+        rules: [],
+      })) as unknown[][];
+
+      if (!expressionRes?.[0]?.[0]) {
+        loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
+        continue;
+      }
+
+      // Filter results by tenantId - expressions should include tenantId field
+      const expressions = expressionRes[0] as ITypologyExpression[];
+      const tenantExpression = expressions.find(
+        (expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId || (!expr.tenantId && tenantId === 'default'),
+      );
+
+      if (!tenantExpression) {
+        loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
+        continue;
+      }
+
+      expression = tenantExpression;
+
+      // Cache the expression for future use
+      const cache = Singleton.getTypologyConfigCache();
+      const cacheKey = `${tenantId}:${currTypologyResult.id}:${currTypologyResult.cfg}`;
+      cache.set(cacheKey, expression);
     }
 
-    const expression = expressionRes[0][0] as ITypologyExpression;
     const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
 
     currTypologyResult.result = typologyResultValue;
@@ -133,10 +162,19 @@ const evaluateTypologySendRequest = async (
     if (!configuration.SUPPRESS_ALERTS && !efrupBlockAlert && isInterdicting) {
       currTypologyResult.review = true;
       currTypologyResult.prcgTm = CalculateDuration(startTime);
+
+      // Determine interdiction destination based on configuration
+      let interdictionDestination: string[];
+      if (configuration.INTERDICTION_DESTINATION === 'tenant') {
+        interdictionDestination = [`${configuration.INTERDICTION_PRODUCER}-${tenantId}`];
+      } else {
+        interdictionDestination = [configuration.INTERDICTION_PRODUCER];
+      }
+
       // Send Typology to interdiction service
       const spanInterdiction = apm.startSpan(`[${transactionId}] Send Typology result to interdiction service`);
       server
-        .handleResponse({ ...tadpReqBody, metaData }, [configuration.INTERDICTION_PRODUCER])
+        .handleResponse({ ...tadpReqBody, metaData }, interdictionDestination)
         .catch((error: unknown) => {
           loggerService.error('Error while sending Typology result to interdiction service', util.inspect(error), logContext, msgId);
         })
@@ -180,16 +218,24 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
   });
 
+  const { networkMap } = parsedReq;
+  const { ruleResult } = parsedReq;
+  const parsedTrans = parsedReq.transaction as Pacs002 & { TenantId?: string };
+
   const transactionType = 'FIToFIPmtSts';
 
   const id = parsedTrans[transactionType].GrpHdr.MsgId;
   loggerService.log('tx received', context, id);
 
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
-  const cacheKey = `TP_${transactionId}`;
+
+  // Extract tenantId from transaction payload or default to 'default'
+  const tenantId = parsedTrans.TenantId || 'default';
+
+  const cacheKey = `TP_${tenantId}_${transactionId}`;
 
   // Save the rules Result to Redis and continue with the available
-  const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult);
+  const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult, tenantId);
 
   if (!rulesList) {
     loggerService.error('Redis records should never be undefined', undefined, context, id);
@@ -200,7 +246,7 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache);
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, tenantId);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
