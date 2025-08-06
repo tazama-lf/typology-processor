@@ -174,7 +174,7 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     ruleResult: RuleResult;
   };
 
-  const { metaData , networkMap, ruleResult, transaction, DataCache: dataCache } = parsedReq;
+  const { metaData, networkMap, ruleResult, transaction, DataCache: dataCache } = parsedReq;
   const parsedTrans = transaction as Pacs002;
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
