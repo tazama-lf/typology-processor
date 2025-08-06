@@ -21,11 +21,17 @@ export const additionalEnvironmentVariables: AdditionalConfig[] = [
     type: 'string',
     optional: false,
   },
+  {
+    name: 'INTERDICTION_DESTINATION',
+    type: 'string',
+    optional: false,
+  },
 ];
 
 export interface ExtendedConfig {
   INTERDICTION_PRODUCER: string;
   SUPPRESS_ALERTS: boolean;
+  INTERDICTION_DESTINATION: string;
 }
 
 export type Databases = Required<Pick<ManagerConfig, 'configuration' | 'localCacheConfig' | 'redisConfig'>>;

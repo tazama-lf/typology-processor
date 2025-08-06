@@ -23,6 +23,9 @@ export const dbInit = async (): Promise<void> => {
   const { db, config } = await Singleton.getDatabaseManager(configuration);
   databaseManager = db;
   configuration = { ...configuration, ...config };
+
+  // Load all typology configurations into cache at startup
+  Singleton.loadAllTypologyConfigs();
 };
 
 export let server: IStartupService;
@@ -33,7 +36,10 @@ export const runServer = async (): Promise<void> => {
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
+
+      // Get routes from all active network configurations across all tenants
       const { consumers } = await getRoutesFromNetworkMap(databaseManager, configuration.functionName);
+
       if (!(await server.init(handleTransaction, undefined, consumers, configuration.INTERDICTION_PRODUCER))) {
         await setTimeout(5000);
       } else {
