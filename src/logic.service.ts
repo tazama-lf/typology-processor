@@ -3,7 +3,6 @@ import apm from './apm';
 import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
 import type { DataCache, NetworkMap, Pacs002, RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import type { MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
-import type { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import type { ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import * as util from 'node:util';
@@ -63,7 +62,7 @@ const evaluateTypologySendRequest = async (
   metaData: MetaData,
   transactionId: string,
   msgId: string,
-  tenantId: string,
+  dataCache: DataCache,
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
   for (const currTypologyResult of typologyResults) {
@@ -134,10 +133,11 @@ const evaluateTypologySendRequest = async (
       currTypologyResult.review = true;
     }
 
-    const tadpReqBody: TADPRequest = {
+    const tadpReqBody = {
       typologyResult: currTypologyResult,
       transaction: transaction as Pacs002,
       networkMap,
+      DataCache: dataCache,
     };
 
     let efrupStatus: string | undefined;
@@ -212,14 +212,15 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     ruleResult: RuleResult;
   };
 
-  const { metaData } = parsedReq;
+  const { metaData, networkMap, ruleResult, transaction, DataCache: dataCache } = parsedReq;
+  const parsedTrans = transaction as Pacs002;
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
   });
 
   const { networkMap } = parsedReq;
   const { ruleResult } = parsedReq;
-  const parsedTrans = parsedReq.transaction as Pacs002 & { TenantId?: string };
+  const parsedTrans = parsedReq.transaction as Pacs002;
 
   const transactionType = 'FIToFIPmtSts';
 
@@ -245,7 +246,8 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, tenantId);
+
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
