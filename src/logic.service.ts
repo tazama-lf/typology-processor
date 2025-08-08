@@ -63,6 +63,7 @@ const evaluateTypologySendRequest = async (
   transactionId: string,
   msgId: string,
   dataCache: DataCache,
+  tenantId: string,
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
   for (const currTypologyResult of typologyResults) {
@@ -218,10 +219,6 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
   });
 
-  const { networkMap } = parsedReq;
-  const { ruleResult } = parsedReq;
-  const parsedTrans = parsedReq.transaction as Pacs002;
-
   const transactionType = 'FIToFIPmtSts';
 
   const id = parsedTrans[transactionType].GrpHdr.MsgId;
@@ -230,7 +227,10 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
 
   // Extract tenantId from transaction payload or default to 'default'
-  const tenantId = parsedTrans.TenantId || 'default';
+  // Support both legacy TenantId and new standardized tenantId properties
+  type TenantAwareTransaction = Pacs002 & { tenantId?: string };
+  const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
+  const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId ?? 'default';
 
   const cacheKey = `TP_${tenantId}_${transactionId}`;
 
@@ -247,7 +247,7 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
 
   // Typology evaluation and Send to TADP interdiction determining
 
-  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache);
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache, tenantId);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
