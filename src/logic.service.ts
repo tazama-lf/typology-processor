@@ -62,6 +62,10 @@ const evaluateTypologySendRequest = async (
   metaData: MetaData,
   transactionId: string,
   msgId: string,
+<<<<<<< HEAD
+=======
+  dataCache: DataCache,
+>>>>>>> 6b75eb5 (fixes: lint and formatting)
   tenantId: string,
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
@@ -218,10 +222,13 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
   });
 
+<<<<<<< HEAD
   const { networkMap } = parsedReq;
   const { ruleResult } = parsedReq;
   const parsedTrans = parsedReq.transaction as Pacs002 & { TenantId?: string };
 
+=======
+>>>>>>> 6b75eb5 (fixes: lint and formatting)
   const transactionType = 'FIToFIPmtSts';
 
   const id = parsedTrans[transactionType].GrpHdr.MsgId;
@@ -230,7 +237,10 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
 
   // Extract tenantId from transaction payload or default to 'default'
-  const tenantId = parsedTrans.TenantId || 'default';
+  // Support both legacy TenantId and new standardized tenantId properties
+  type TenantAwareTransaction = Pacs002 & { tenantId?: string };
+  const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
+  const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId ?? 'default';
 
   const cacheKey = `TP_${tenantId}_${transactionId}`;
 
@@ -246,7 +256,12 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
+<<<<<<< HEAD
   await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, tenantId);
+=======
+
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache, tenantId);
+>>>>>>> 6b75eb5 (fixes: lint and formatting)
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
