@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import apm from './apm';
 import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
-import { type NetworkMap, type RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
-import { type MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
-import { type TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
-import { type TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
-import { databaseManager, loggerService, server, configuration } from '.';
-import { type ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import type { DataCache, NetworkMap, Pacs002, RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
+import type { MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
+import type { ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
+import * as util from 'node:util';
+import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
 const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
@@ -52,92 +52,93 @@ const ruleResultAggregation = (
 const evaluateTypologySendRequest = async (
   typologyResults: TypologyResult[],
   networkMap: NetworkMap,
-  /* eslint-disable  @typescript-eslint/no-explicit-any*/
-  transaction: any,
+  transaction: unknown,
   metaData: MetaData,
   transactionId: string,
   msgId: string,
+  dataCache: DataCache,
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
-  for (let index = 0; index < typologyResults.length; index++) {
+  for (const currTypologyResult of typologyResults) {
     // Typology Wait for enough rules if they are not matching the number configured
     const networkMapRules = networkMap.messages[0].typologies.find(
-      (typology) => typology.cfg === typologyResults[index].cfg && typology.id === typologyResults[index].id,
+      (typology) => typology.cfg === currTypologyResult.cfg && typology.id === currTypologyResult.id,
     );
-    const typologyResultRules = typologyResults[index].ruleResults;
+    const typologyResultRules = currTypologyResult.ruleResults;
     if (networkMapRules && typologyResultRules.length < networkMapRules.rules.length) continue;
 
     const startTime = process.hrtime.bigint();
-    const spanExecReq = apm.startSpan(`${typologyResults[index].cfg}.exec.Req`);
+    const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
     const expressionRes = (await databaseManager.getTypologyConfig({
-      id: typologyResults[index].id,
-      cfg: typologyResults[index].cfg,
+      id: currTypologyResult.id,
+      cfg: currTypologyResult.cfg,
       host: '',
       desc: '',
       rules: [],
     })) as unknown[][];
 
     if (!expressionRes?.[0]?.[0]) {
-      loggerService.warn(`No Typology Expression found for Typology ${typologyResults[index].cfg},`, logContext, msgId);
+      loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg},`, logContext, msgId);
       continue;
     }
 
     const expression = expressionRes[0][0] as ITypologyExpression;
-    const typologyResultValue = evaluateTypologyExpression(expression.rules, typologyResults[index].ruleResults, expression.expression);
+    const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
 
-    typologyResults[index].result = typologyResultValue;
-    typologyResults[index].workflow.interdictionThreshold = expression.workflow.interdictionThreshold;
-    typologyResults[index].workflow.alertThreshold = expression.workflow.alertThreshold;
-    typologyResults[index].workflow.flowProcessor = expression.workflow.flowProcessor;
+    currTypologyResult.result = typologyResultValue;
+    currTypologyResult.workflow.interdictionThreshold = expression.workflow.interdictionThreshold;
+    currTypologyResult.workflow.alertThreshold = expression.workflow.alertThreshold;
+    currTypologyResult.workflow.flowProcessor = expression.workflow.flowProcessor;
 
-    typologyResults[index].review = false;
+    currTypologyResult.review = false;
 
-    if (!typologyResults[index].workflow.alertThreshold) {
-      loggerService.error(`Typology ${typologyResults[index].cfg} config missing alert Threshold`, logContext, msgId);
-    } else if (typologyResultValue >= typologyResults[index].workflow.alertThreshold) {
+    if (!currTypologyResult.workflow.alertThreshold) {
+      loggerService.error(`Typology ${currTypologyResult.cfg} config missing alert Threshold`, logContext, msgId);
+    } else if (typologyResultValue >= currTypologyResult.workflow.alertThreshold) {
       loggerService.log(
-        `Typology ${typologyResults[index].cfg} alerting on transaction : with a trigger of: ${typologyResultValue}`,
+        `Typology ${currTypologyResult.cfg} alerting on transaction : with a trigger of: ${typologyResultValue}`,
         logContext,
         msgId,
       );
-      typologyResults[index].review = true;
+      currTypologyResult.review = true;
     }
 
-    const tadpReqBody: TADPRequest = {
-      typologyResult: typologyResults[index],
-      transaction,
+    const tadpReqBody = {
+      typologyResult: currTypologyResult,
+      transaction: transaction as Pacs002,
       networkMap,
+      DataCache: dataCache,
     };
 
     let efrupStatus: string | undefined;
     let efrupBlockAlert = false;
 
-    if (typologyResults[index].workflow.flowProcessor) {
+    if (currTypologyResult.workflow.flowProcessor) {
       // if flowProcessor is defined -> get it's status
-      const flowProcessor = typologyResults[index].workflow.flowProcessor;
-      efrupStatus = typologyResults[index].ruleResults.find((r) => r.id === flowProcessor)?.subRuleRef;
+      const { flowProcessor } = currTypologyResult.workflow;
+      efrupStatus = currTypologyResult.ruleResults.find((r) => r.id === flowProcessor)?.subRuleRef;
       if (efrupStatus === 'block') {
         efrupBlockAlert = true;
-        typologyResults[index].review = true; // review even if we don't interdict
+        currTypologyResult.review = true; // review even if we don't interdict
       } else if (efrupStatus === 'override') {
         efrupBlockAlert = true;
       }
     }
 
     const isInterdicting =
-      typologyResults[index].workflow.interdictionThreshold !== undefined &&
-      typologyResultValue >= typologyResults[index].workflow.interdictionThreshold!;
+      currTypologyResult.workflow.interdictionThreshold !== undefined &&
+      typologyResultValue >= currTypologyResult.workflow.interdictionThreshold;
 
     if (!configuration.SUPPRESS_ALERTS && !efrupBlockAlert && isInterdicting) {
-      typologyResults[index].review = true;
-      typologyResults[index].prcgTm = CalculateDuration(startTime);
+      currTypologyResult.review = true;
+      currTypologyResult.prcgTm = CalculateDuration(startTime);
       // Send Typology to interdiction service
       const spanInterdiction = apm.startSpan(`[${transactionId}] Send Typology result to interdiction service`);
       server
         .handleResponse({ ...tadpReqBody, metaData }, [configuration.INTERDICTION_PRODUCER])
-        .catch((error) => {
-          loggerService.error('Error while sending Typology result to interdiction service', error as Error, logContext, msgId);
+        .catch((error: unknown) => {
+          loggerService.error('Error while sending Typology result to interdiction service', util.inspect(error), logContext, msgId);
         })
         .finally(() => {
           spanExecReq?.end();
@@ -145,15 +146,15 @@ const evaluateTypologySendRequest = async (
         });
     }
 
-    typologyResults[index].prcgTm = CalculateDuration(startTime);
-    tadpReqBody.typologyResult = typologyResults[index];
+    currTypologyResult.prcgTm = CalculateDuration(startTime);
+    tadpReqBody.typologyResult = currTypologyResult;
 
     // Send Typology to TADProc
     const spanTadpr = apm.startSpan(`[${transactionId}] Send Typology result to TADP`);
     server
       .handleResponse({ ...tadpReqBody, metaData }, [`typology-${networkMapRules ? networkMapRules.cfg : '000@0.0.0'}`])
-      .catch((error) => {
-        loggerService.error('Error while sending Typology result to TADP', error as Error, logContext, msgId);
+      .catch((error: unknown) => {
+        loggerService.error('Error while sending Typology result to TADP', util.inspect(error), logContext, msgId);
       })
       .finally(() => {
         spanExecReq?.end();
@@ -162,24 +163,30 @@ const evaluateTypologySendRequest = async (
   }
 };
 
-export const handleTransaction = async (transaction: any): Promise<void> => {
+export const handleTransaction = async (req: unknown): Promise<void> => {
   const context = 'handleTransaction()';
-  const metaData = transaction.metaData;
-  const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
-    childOf: metaData?.traceParent,
-  });
 
-  const networkMap: NetworkMap = transaction.networkMap;
-  const ruleResult: RuleResult = transaction.ruleResult;
-  const parsedTrans = transaction.transaction;
+  const parsedReq = req as {
+    transaction: unknown;
+    networkMap: NetworkMap;
+    DataCache: DataCache;
+    metaData?: MetaData;
+    ruleResult: RuleResult;
+  };
+
+  const { metaData, networkMap, ruleResult, transaction, DataCache: dataCache } = parsedReq;
+  const parsedTrans = transaction as Pacs002;
+  const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
+    childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
+  });
 
   const transactionType = 'FIToFIPmtSts';
 
-  const id = parsedTrans[transactionType].GrpHdr.MsgId as string;
+  const id = parsedTrans[transactionType].GrpHdr.MsgId;
   loggerService.log('tx received', context, id);
 
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
-  const cacheKey = `TP_${String(transactionId)}`;
+  const cacheKey = `TP_${transactionId}`;
 
   // Save the rules Result to Redis and continue with the available
   const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult);
@@ -193,11 +200,11 @@ export const handleTransaction = async (transaction: any): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData as MetaData, cacheKey, id);
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
-    const spanDelete = apm.startSpan(`cache.delete.[${String(transactionId)}].Typology interim cache key`);
+    const spanDelete = apm.startSpan(`cache.delete.[${transactionId}].Typology interim cache key`);
     databaseManager.deleteKey(cacheKey);
     apmTransaction?.end();
     spanDelete?.end();

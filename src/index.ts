@@ -2,14 +2,16 @@
 import './apm';
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { LoggerService, type DatabaseManagerInstance } from '@tazama-lf/frms-coe-lib';
-import { StartupFactory, type IStartupService } from '@tazama-lf/frms-coe-startup-lib';
-import { getRoutesFromNetworkMap } from '@tazama-lf/frms-coe-lib/lib/helpers/networkMapIdentifiers';
-import cluster from 'cluster';
-import os from 'os';
-import { additionalEnvironmentVariables, type Configuration } from './config';
-import { handleTransaction } from './logic.service';
-import { type Databases, Singleton } from './services/services';
 import { validateProcessorConfig } from '@tazama-lf/frms-coe-lib/lib/config/processor.config';
+import { getRoutesFromNetworkMap } from '@tazama-lf/frms-coe-lib/lib/helpers/networkMapIdentifiers';
+import { StartupFactory, type IStartupService } from '@tazama-lf/frms-coe-startup-lib';
+import cluster from 'node:cluster';
+import os from 'node:os';
+import { setTimeout } from 'node:timers/promises';
+import * as util from 'node:util';
+import { additionalEnvironmentVariables, type Databases, type Configuration } from './config';
+import { handleTransaction } from './logic.service';
+import { Singleton } from './services/services';
 
 let configuration = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
 export const loggerService: LoggerService = new LoggerService(configuration);
@@ -33,7 +35,7 @@ export const runServer = async (): Promise<void> => {
       loggerService.log('Connecting to nats server...');
       const { consumers } = await getRoutesFromNetworkMap(databaseManager, configuration.functionName);
       if (!(await server.init(handleTransaction, undefined, consumers, configuration.INTERDICTION_PRODUCER))) {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await setTimeout(5000);
       } else {
         loggerService.log('Connected to nats');
         isConnected = true;
@@ -48,11 +50,11 @@ export const runServer = async (): Promise<void> => {
 };
 
 process.on('uncaughtException', (err) => {
-  loggerService.error('process on uncaughtException error', err, 'index.ts');
+  loggerService.error('process on uncaughtException error', util.inspect(err), 'index.ts');
 });
 
 process.on('unhandledRejection', (err) => {
-  loggerService.error(`process on unhandledRejection error: ${JSON.stringify(err) ?? '[NoMetaData]'}`);
+  loggerService.error(`process on unhandledRejection error: ${util.inspect(err)}`);
 });
 
 const numCPUs = os.cpus().length > configuration.maxCPU ? configuration.maxCPU + 1 : os.cpus().length + 1;
@@ -79,11 +81,11 @@ if (cluster.isPrimary && configuration.maxCPU !== 1) {
         await runServer();
       }
     } catch (err) {
-      loggerService.error(`Error while starting services on Worker ${process.pid}`, err);
+      loggerService.error(`Error while starting services on Worker ${process.pid}`, util.inspect(err));
       process.exit(1);
     }
   })();
   loggerService.log(`Worker ${process.pid} started`);
 }
 
-export { databaseManager, configuration };
+export { configuration, databaseManager };
