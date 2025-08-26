@@ -242,8 +242,7 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
   const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId ?? 'default';
 
-  const cacheKey = `TP_${tenantId}_${transactionId}`;
-
+  const cacheKey = `${tenantId}:${transactionId}`;
   // Save the rules Result to Redis and continue with the available
   const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult, tenantId);
 
