@@ -42,25 +42,29 @@ export class Singleton {
 
     const cache = Singleton.getTypologyConfigCache();
 
-    try {
-      // Get all typology configurations from the database
-      // This assumes the database manager has a method to get all typology configurations
-      // Since the exact method signature may vary, we'll implement lazy loading for now
-      // and load configurations as they are requested
-      cache.flushAll(); // Clear existing cache to prepare for new configs
-
-      // Note: In a full implementation, you would query the database here
-      // to load all typology configurations and cache them by tenant
-      // For example:
-      // const allConfigs = await Singleton.dbManager.getAllTypologyConfigs();
-      // allConfigs.forEach(config => {
-      //   const cacheKey = `${config.tenantId || 'default'}:${config.id}:${config.cfg}`;
-      //   cache.set(cacheKey, config);
-      // });
-    } catch (error) {
-      loggerService.error('Error loading typology configurations:', error);
-      // Don't throw here - allow lazy loading to work as fallback
-    }
+    // Now implemented: load all typology configurations and cache them by tenant
+    (async () => {
+      try {
+        cache.flushAll(); // Clear existing cache to prepare for new configs
+        if (typeof Singleton.dbManager!.getAllTypologyConfigs === 'function') {
+          const getAllTypologyConfigs = Singleton.dbManager!.getAllTypologyConfigs as () => Promise<
+            Array<ITypologyExpression & { tenantId?: string }>
+          >;
+          const allConfigs = await getAllTypologyConfigs();
+          if (Array.isArray(allConfigs)) {
+            allConfigs.forEach((config: ITypologyExpression & { tenantId?: string }) => {
+              const cacheKey = `${config.tenantId ?? 'default'}:${config.id}:${config.cfg}`;
+              cache.set(cacheKey, config);
+            });
+          }
+        } else {
+          loggerService.error('Database manager does not implement getAllTypologyConfigs');
+        }
+      } catch (error) {
+        loggerService.error('Error loading typology configurations:', error);
+        // Don't throw here - allow lazy loading to work as fallback
+      }
+    })();
   }
 
   public static getTypologyConfigFromCache(tenantId: string, id: string, cfg: string): ITypologyExpression | undefined {
