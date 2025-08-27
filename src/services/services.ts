@@ -35,14 +35,12 @@ export class Singleton {
   }
   public static loadAllTypologyConfigs(): void {
     if (!Singleton.dbManager) {
-      // Database manager not initialized yet - this is expected during startup
-      // Configurations will be loaded lazily when needed
       return;
     }
 
     const cache = Singleton.getTypologyConfigCache();
 
-    // Now implemented: load all typology configurations and cache them by tenant
+    // Load all typology configurations and cache them by tenant
     (async () => {
       try {
         cache.flushAll(); // Clear existing cache to prepare for new configs
@@ -62,7 +60,6 @@ export class Singleton {
         }
       } catch (error) {
         loggerService.error('Error loading typology configurations:', error);
-        // Don't throw here - allow lazy loading to work as fallback
       }
     })();
   }
