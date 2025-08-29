@@ -82,13 +82,16 @@ const evaluateTypologySendRequest = async (
 
     if (!expression) {
       // If not in cache, fetch from database with tenant filter
-      const expressionRes = (await databaseManager.getTypologyConfig({
+      const typologyQuery = {
         id: currTypologyResult.id,
         cfg: currTypologyResult.cfg,
         host: '',
         desc: '',
         rules: [],
-      })) as unknown[][];
+        tenantId,
+      };
+
+      const expressionRes = (await databaseManager.getTypologyConfig(typologyQuery)) as ITypologyExpression[][];
 
       if (!expressionRes?.[0]?.[0]) {
         loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
@@ -96,9 +99,9 @@ const evaluateTypologySendRequest = async (
       }
 
       // Filter results by tenantId - expressions should include tenantId field
-      const expressions = expressionRes[0] as ITypologyExpression[];
+      const expressions = expressionRes[0];
       const tenantExpression = expressions.find(
-        (expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId || (!expr.tenantId && tenantId === 'default'),
+        (expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId || (!expr.tenantId && tenantId === 'DEFAULT'),
       );
 
       if (!tenantExpression) {
