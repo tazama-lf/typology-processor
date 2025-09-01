@@ -97,9 +97,7 @@ const evaluateTypologySendRequest = async (
 
       // Filter results by tenantId - expressions should include tenantId field
       const expressions = expressionRes[0];
-      expression = expressions.find(
-        (expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId || (!expr.tenantId && tenantId === 'default'),
-      );
+      expression = expressions.find((expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId);
 
       if (!expression) {
         loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
@@ -224,11 +222,11 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
 
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
 
-  // Extract tenantId from transaction payload or default to 'default'
+  // Extract tenantId from transaction payload
   // Support both legacy TenantId and new standardized tenantId properties
   type TenantAwareTransaction = Pacs002 & { tenantId?: string };
   const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
-  const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId ?? 'default';
+  const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId;
 
   const cacheKey = `${tenantId}:${transactionId}`;
   // Save the rules Result to Redis and continue with the available

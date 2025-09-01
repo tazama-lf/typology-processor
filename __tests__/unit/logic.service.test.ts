@@ -313,7 +313,7 @@ describe('Logic Service', () => {
 
   describe('Handle Transaction', () => {
     it('should handle successful request, TP028, Rules 1/1', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -345,7 +345,7 @@ describe('Logic Service', () => {
     });
 
     it('should handle successful request, TP028+TP029, Rules 2/2 and Typologies 2/2', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -696,7 +696,7 @@ describe('Logic Service', () => {
     });
 
     it('should handle successful request, interdiction and tadproc result error', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult03: RuleResult = {
@@ -725,7 +725,7 @@ describe('Logic Service', () => {
     });
 
     it('Should handle failure to post to TADP', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -764,7 +764,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, no alertThreshold breach, not interdicting - review false', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -789,7 +789,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, alertThreshold breached, not interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
 
@@ -818,7 +818,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
 
