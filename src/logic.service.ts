@@ -3,7 +3,6 @@ import apm from './apm';
 import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
 import type { DataCache, NetworkMap, Pacs002, RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import type { MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
-import type { ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
@@ -70,20 +69,13 @@ const evaluateTypologySendRequest = async (
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
-    const expressionRes = (await databaseManager.getTypologyConfig({
-      id: currTypologyResult.id,
-      cfg: currTypologyResult.cfg,
-      host: '',
-      desc: '',
-      rules: [],
-    })) as unknown[][];
+    const expression = await databaseManager.getTypologyConfig(currTypologyResult.id, currTypologyResult.cfg);
 
-    if (!expressionRes?.[0]?.[0]) {
+    if (!expression) {
       loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg},`, logContext, msgId);
       continue;
     }
 
-    const expression = expressionRes[0][0] as ITypologyExpression;
     const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
 
     currTypologyResult.result = typologyResultValue;

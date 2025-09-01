@@ -3,7 +3,7 @@
 import { NetworkMap, Pacs002, RuleResult, Typology } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import { configuration, databaseManager, dbInit, runServer, server } from '../../src/index';
-import { IRuleValue, ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import { RuleWeight, TypologyConfig, TypologyRuleConfig } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
 
@@ -100,7 +100,7 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
   );
 };
 
-const getMockTypologyExp028 = (): ITypologyExpression => {
+const getMockTypologyExp028 = (): TypologyConfig => {
   return JSON.parse(
     `{
       "cfg": "1.0.0",
@@ -142,7 +142,7 @@ const getMockTypologyExp028 = (): ITypologyExpression => {
   );
 };
 
-const getMockTypologyExp029 = (): ITypologyExpression => {
+const getMockTypologyExp029 = (): TypologyConfig => {
   return JSON.parse(`{
     "cfg": "1.0.0",
     "id": "029@1.0.0",
@@ -238,25 +238,27 @@ describe('Logic Service', () => {
         });
       });
 
-    getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
-      switch (_typology.cfg) {
-        case '028@1.0.0': {
-          return new Promise((resolve, _reject) => {
-            resolve([[getMockTypologyExp028()]]);
-          });
+    getTypologyConfigSpy = jest
+      .spyOn(databaseManager, 'getTypologyConfig')
+      .mockImplementation(async (typologyId: string, typologyCfg: string) => {
+        switch (typologyCfg) {
+          case '028@1.0.0': {
+            return new Promise((resolve, _reject) => {
+              resolve(getMockTypologyExp028());
+            });
+          }
+          case '029@1.0.0': {
+            return new Promise((resolve, _reject) => {
+              resolve(getMockTypologyExp029());
+            });
+          }
+          default: {
+            return new Promise((resolve, _reject) => {
+              throw new Error('Extend getTypologyConfig Case');
+            });
+          }
         }
-        case '029@1.0.0': {
-          return new Promise((resolve, _reject) => {
-            resolve([[getMockTypologyExp029()]]);
-          });
-        }
-        default: {
-          return new Promise((resolve, _reject) => {
-            throw new Error('Extend getTypologyConfig Case');
-          });
-        }
-      }
-    });
+      });
 
     deleteKeySpy = jest.spyOn(databaseManager, 'deleteKey').mockImplementation((key: any): Promise<void> => {
       return new Promise<void>((resolve, _reject) => {
@@ -381,66 +383,64 @@ describe('Logic Service', () => {
       const Req = getMockReqPacs002();
 
       getTypologyConfigSpy.mockRestore();
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: { alertThreshold: '2000', interdictionThreshold: '4000' },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: '004@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 50,
-                      },
-                    ],
-                    termId: 'v004at100at100',
-                  },
-                  {
-                    id: '005@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 25,
-                      },
-                    ],
-                    termId: 'v005at100at100',
-                  },
-                ],
-                expression: [
-                  'Add',
-                  'v003at100at100',
-                  'v004at100at100',
-                  'v005at100at100',
-                  ['Add', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
-                ],
-              },
-            ],
-          ]),
-        );
-      });
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: { alertThreshold: 2000, interdictionThreshold: 4000 },
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: '004@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 50,
+                    },
+                  ],
+                  termId: 'v004at100at100',
+                },
+                {
+                  id: '005@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 25,
+                    },
+                  ],
+                  termId: 'v005at100at100',
+                },
+              ],
+              expression: [
+                'Add',
+                'v003at100at100',
+                'v004at100at100',
+                'v005at100at100',
+                ['Add', 'v003at100at100', 'v004at100at100', 'v005at100at100'],
+              ],
+            }),
+          );
+        });
 
-      const localNetworkMap = JSON.parse(
+      const localNetworkMap: NetworkMap = JSON.parse(
         '{"active":true,"cfg":"1.0.0","messages":[{"id":"004@1.0.0","cfg":"1.0.0","txTp":"pacs.002.001.12","typologies":[{"id":"typology-processor@1.0.0","cfg":"030@1.0.0","rules":[{"id":"003@1.0.0","cfg":"1.0.0"},{"id":"004@1.0.0","cfg":"1.0.0"},{"id":"005@1.0.0","cfg":"1.0.0"}]}]}]}',
       );
-      const networkMap: NetworkMap = Object.assign(new NetworkMap(), localNetworkMap);
+      const networkMap: NetworkMap = localNetworkMap;
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
@@ -490,17 +490,17 @@ describe('Logic Service', () => {
 
       configuration.SUPPRESS_ALERTS = false;
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) => {
-          resolve([
-            [
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) => {
+            resolve(
               JSON.parse(
                 '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","wghts":[{"ref":".01","wght":20}],"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
               ),
-            ],
-          ]);
+            );
+          });
         });
-      });
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -543,17 +543,17 @@ describe('Logic Service', () => {
 
       configuration.SUPPRESS_ALERTS = true;
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) => {
-          resolve([
-            [
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) => {
+            resolve(
               JSON.parse(
                 '{"cfg":"1.0.0","id":"028@1.0.0","workflow":{"alertThreshold":"10","interdictionThreshold":"20"},"rules":[{"id":"003@1.0.0","cfg":"1.0.0","wghts":[{"ref":".01","wght":20}],"termId":"v003at100at100"}],"expression":["Add","v003at100at100"]}',
               ),
-            ],
-          ]);
+            );
+          });
         });
-      });
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
@@ -618,7 +618,7 @@ describe('Logic Service', () => {
         subRuleRef: '.01',
       };
 
-      jest.spyOn(databaseManager, 'getTypologyConfig').mockRejectedValue(async (_typology: Typology) => {
+      jest.spyOn(databaseManager, 'getTypologyConfig').mockRejectedValue(async (typologyId: string, typologyCfg: string) => {
         return new Promise((resolve, _reject) => {
           resolve(new Error('Test'));
         });
@@ -648,9 +648,9 @@ describe('Logic Service', () => {
         subRuleRef: 'ref1',
       };
 
-      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
+      jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (typologyId: string, typologyCfg: string) => {
         return new Promise((resolve, _reject) => {
-          resolve([[]]);
+          resolve(undefined);
         });
       });
 
@@ -818,56 +818,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
@@ -909,56 +907,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       // larger than or equal to 125 (alert) but not 150 (interdict)
       jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(125);
@@ -1003,56 +999,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       // larger than or equal to 150 (interdict)
       jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
@@ -1097,56 +1091,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: '2000',
-                  interdictionThreshold: '4000',
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 2000,
+                interdictionThreshold: 4000,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
@@ -1188,56 +1180,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       // larger than or equal to 125 (alert) but not 150 (interdict)
       jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(125);
@@ -1282,56 +1272,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       // larger than or equal to 150 (interdict)
       jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
@@ -1376,56 +1364,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                flowProcessor: 'EFRuP@1.0.0',
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       // larger than or equal to 150 (interdict)
       jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
@@ -1476,56 +1462,54 @@ describe('Logic Service', () => {
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
 
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: unknown) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  // missing flowprocessor
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
+      getTypologyConfigSpy = jest
+        .spyOn(databaseManager, 'getTypologyConfig')
+        .mockImplementationOnce(async (typologyId: string, typologyCfg: string) => {
+          return new Promise((resolve, _reject) =>
+            resolve({
+              cfg: '1.0.0',
+              id: '030@1.0.0',
+              workflow: {
+                alertThreshold: 125,
+                interdictionThreshold: 150,
+                // missing flowprocessor
               },
-            ],
-          ]),
-        );
-      });
+              rules: [
+                {
+                  id: '003@1.0.0',
+                  cfg: '1.0.0',
+                  wghts: [
+                    {
+                      ref: '.01',
+                      wght: 100,
+                    },
+                  ],
+                  termId: 'v003at100at100',
+                },
+                {
+                  id: 'EFRuP@1.0.0',
+                  cfg: 'none',
+                  wghts: [
+                    {
+                      ref: 'block',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'override',
+                      wght: 0,
+                    },
+                    {
+                      ref: 'none',
+                      wght: 0,
+                    },
+                  ],
+                  termId: 'vEFRuPat100at100',
+                },
+              ],
+              expression: ['Add', 'v003at100at100'],
+            }),
+          );
+        });
 
       // larger than or equal to 150 (interdict)
       jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
@@ -1569,7 +1553,7 @@ describe('Logic Service', () => {
 
 describe('Typology Evaluation', () => {
   it('should handle simple expressions using "Add"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -1638,7 +1622,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions using "Subtract"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -1707,7 +1691,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions using "Multiply"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -1776,7 +1760,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions using "Divide"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -1845,7 +1829,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simple expressions with mixed rule refs', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -1905,7 +1889,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Add"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -1980,7 +1964,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Subtract"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2049,7 +2033,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Multiply"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2118,7 +2102,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle nested expressions using "Divide"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2187,7 +2171,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle complex nested expressions', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2266,7 +2250,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle a mixture of constants', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2335,7 +2319,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should fail on bad or missing termId - null', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2411,7 +2395,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should fail on incorrect number of arguments for "Subtract" and "Divide"', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
@@ -2489,7 +2473,7 @@ describe('Typology Evaluation', () => {
   });
 
   it('should handle simplify fractions', async () => {
-    const ruleValues: IRuleValue[] = [
+    const ruleValues: TypologyRuleConfig[] = [
       {
         id: '003@1.0.0',
         cfg: '1.0.0',
