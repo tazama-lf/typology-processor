@@ -41,27 +41,14 @@ export class Singleton {
     const cache = Singleton.getTypologyConfigCache();
 
     // Load all typology configurations and cache them by tenant
-    (async () => {
-      try {
-        cache.flushAll(); // Clear existing cache to prepare for new configs
-        if (typeof Singleton.dbManager!.getAllTypologyConfigs === 'function') {
-          const getAllTypologyConfigs = Singleton.dbManager!.getAllTypologyConfigs as () => Promise<
-            Array<ITypologyExpression & { tenantId?: string }>
-          >;
-          const allConfigs = await getAllTypologyConfigs();
-          if (Array.isArray(allConfigs)) {
-            allConfigs.forEach((config: ITypologyExpression & { tenantId?: string }) => {
-              const cacheKey = `${config.tenantId ?? 'default'}:${config.id}:${config.cfg}`;
-              cache.set(cacheKey, config);
-            });
-          }
-        } else {
-          loggerService.error('Database manager does not implement getAllTypologyConfigs');
-        }
-      } catch (error) {
-        loggerService.error('Error loading typology configurations:', error);
-      }
-    })();
+    try {
+      cache.flushAll(); // Clear existing cache to prepare for new configs
+      // Note: getAllTypologyConfigs method does not exist in frms-coe-lib
+      // This functionality would need to be implemented if required
+      loggerService.warn('getAllTypologyConfigs method is not available in the database manager');
+    } catch (error) {
+      loggerService.error('Error loading typology configurations:', error);
+    }
   }
 
   public static getTypologyConfigFromCache(tenantId: string, id: string, cfg: string): ITypologyExpression | undefined {

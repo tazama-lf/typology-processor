@@ -276,12 +276,12 @@ describe('Logic Service', () => {
       switch (_typology.cfg) {
         case '028@1.0.0': {
           return new Promise((resolve, _reject) => {
-            resolve([[getMockTypologyExp028()]]);
+            resolve([[getMockTypologyExp028ForTenant('default')]]);
           });
         }
         case '029@1.0.0': {
           return new Promise((resolve, _reject) => {
-            resolve([[getMockTypologyExp029()]]);
+            resolve([[getMockTypologyExp029ForTenant('default')]]);
           });
         }
         default: {

@@ -81,17 +81,14 @@ const evaluateTypologySendRequest = async (
     let expression = Singleton.getTypologyConfigFromCache(tenantId, currTypologyResult.id, currTypologyResult.cfg);
 
     if (!expression) {
-      // If not in cache, fetch from database with tenant filter
-      const typologyQuery = {
+      // If not in cache, fetch from database
+      const expressionRes = (await databaseManager.getTypologyConfig({
         id: currTypologyResult.id,
         cfg: currTypologyResult.cfg,
         host: '',
         desc: '',
         rules: [],
-        tenantId,
-      };
-
-      const expressionRes = (await databaseManager.getTypologyConfig(typologyQuery)) as ITypologyExpression[][];
+      })) as ITypologyExpression[][];
 
       if (!expressionRes?.[0]?.[0]) {
         loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
@@ -100,16 +97,14 @@ const evaluateTypologySendRequest = async (
 
       // Filter results by tenantId - expressions should include tenantId field
       const expressions = expressionRes[0];
-      const tenantExpression = expressions.find(
-        (expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId || (!expr.tenantId && tenantId === 'DEFAULT'),
+      expression = expressions.find(
+        (expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId || (!expr.tenantId && tenantId === 'default'),
       );
 
-      if (!tenantExpression) {
+      if (!expression) {
         loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
         continue;
       }
-
-      expression = tenantExpression;
 
       // Cache the expression for future use
       const cache = Singleton.getTypologyConfigCache();
