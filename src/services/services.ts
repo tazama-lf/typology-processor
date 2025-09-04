@@ -37,18 +37,10 @@ export class Singleton {
     if (!Singleton.dbManager) {
       return;
     }
-
     const cache = Singleton.getTypologyConfigCache();
+    cache.flushAll();
 
-    // Load all typology configurations and cache them by tenant
-    try {
-      cache.flushAll(); // Clear existing cache to prepare for new configs
-      // Note: getAllTypologyConfigs method does not exist in frms-coe-lib
-      // This functionality would need to be implemented if required
-      loggerService.warn('getAllTypologyConfigs method is not available in the database manager');
-    } catch (error) {
-      loggerService.error('Error loading typology configurations:', error);
-    }
+    loggerService.log('Typology configuration cache initialized - configurations will be loaded on-demand by tenant');
   }
 
   public static getTypologyConfigFromCache(tenantId: string, id: string, cfg: string): ITypologyExpression | undefined {

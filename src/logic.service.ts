@@ -11,8 +11,6 @@ import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 import { Singleton } from './services/services';
 
 const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult, tenantId: string): Promise<RuleResult[] | undefined> => {
-  // The cacheKey already includes tenant separation from the caller
-  // Store the tenantId separately, not as part of the rule result to avoid breaking tests
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
     ruleResult,
     tenantId,
@@ -81,7 +79,7 @@ const evaluateTypologySendRequest = async (
     let expression = Singleton.getTypologyConfigFromCache(tenantId, currTypologyResult.id, currTypologyResult.cfg);
 
     if (!expression) {
-      // If not in cache, fetch from database
+      // If not in cache, fetch from database with tenant filter
       const expressionRes = (await databaseManager.getTypologyConfig({
         id: currTypologyResult.id,
         cfg: currTypologyResult.cfg,
@@ -104,7 +102,6 @@ const evaluateTypologySendRequest = async (
         continue;
       }
 
-      // Cache the expression for future use
       const cache = Singleton.getTypologyConfigCache();
       const cacheKey = `${tenantId}:${currTypologyResult.id}:${currTypologyResult.cfg}`;
       cache.set(cacheKey, expression);
@@ -141,12 +138,11 @@ const evaluateTypologySendRequest = async (
     let efrupBlockAlert = false;
 
     if (currTypologyResult.workflow.flowProcessor) {
-      // if flowProcessor is defined -> get it's status
       const { flowProcessor } = currTypologyResult.workflow;
       efrupStatus = currTypologyResult.ruleResults.find((r) => r.id === flowProcessor)?.subRuleRef;
       if (efrupStatus === 'block') {
         efrupBlockAlert = true;
-        currTypologyResult.review = true; // review even if we don't interdict
+        currTypologyResult.review = true;
       } else if (efrupStatus === 'override') {
         efrupBlockAlert = true;
       }
@@ -223,7 +219,6 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
 
   // Extract tenantId from transaction payload
-  // Support both legacy TenantId and new standardized tenantId properties
   type TenantAwareTransaction = Pacs002 & { tenantId?: string };
   const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
   const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId;
@@ -241,7 +236,6 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
   // Typology evaluation and Send to TADP interdiction determining
-
   await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache, tenantId);
 
   // Garbage collection
