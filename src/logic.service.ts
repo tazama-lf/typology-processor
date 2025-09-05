@@ -191,6 +191,11 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   // Aggregations of typology config merge with rule result
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
+  if (!typologyResult.length) {
+    loggerService.warn(`RuleResult ${ruleResult.id}@${ruleResult.cfg} does not belong to a Typology in active network map`, context, id);
+    return;
+  }
+
   // Typology evaluation and Send to TADP interdiction determining
   await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache);
 
