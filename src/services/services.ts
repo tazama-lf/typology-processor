@@ -37,9 +37,6 @@ export class Singleton {
     if (!Singleton.dbManager) {
       return;
     }
-    const cache = Singleton.getTypologyConfigCache();
-    cache.flushAll();
-
     loggerService.log('Typology configuration cache initialized - configurations will be loaded on-demand by tenant');
   }
 
