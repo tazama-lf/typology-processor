@@ -29,6 +29,7 @@ const ruleResultAggregation = (
 ): { typologyResult: TypologyResult[]; ruleCount: number } => {
   const typologyResult: TypologyResult[] = [];
   const allRuleSet = new Set();
+  const { tenantId } = networkMap;
   networkMap.messages.forEach((message) => {
     message.typologies.forEach((typology) => {
       const set = new Set();
@@ -45,6 +46,7 @@ const ruleResultAggregation = (
           result: -1,
           ruleResults,
           workflow: { alertThreshold: -1 },
+          tenantId,
         });
       }
     });
@@ -86,6 +88,7 @@ const evaluateTypologySendRequest = async (
         host: '',
         desc: '',
         rules: [],
+        tenantId,
       })) as ITypologyExpression[][];
 
       if (!expressionRes?.[0]?.[0]) {
