@@ -254,8 +254,8 @@ describe('Logic Service', () => {
 
   beforeEach(() => {
     // Clear the typology config cache before each test
-    const { Singleton } = require('../../src/services/services');
-    const cache = Singleton.getTypologyConfigCache();
+    const { getTypologyConfigCache } = require('../../src/services/services');
+    const cache = getTypologyConfigCache();
     cache.flushAll();
 
     addOneGetAllSpy = jest

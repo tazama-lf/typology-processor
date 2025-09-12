@@ -8,7 +8,7 @@ import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/proc
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
-import { Singleton } from './services/services';
+import { getTypologyConfigFromCache, setTypologyConfigInCache } from './services/services';
 
 const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult, tenantId: string): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
@@ -78,7 +78,7 @@ const evaluateTypologySendRequest = async (
     const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
     // Try to get typology configuration from cache first
-    let expression = Singleton.getTypologyConfigFromCache(tenantId, currTypologyResult.id, currTypologyResult.cfg);
+    let expression = getTypologyConfigFromCache(tenantId, currTypologyResult.id, currTypologyResult.cfg);
 
     if (!expression) {
       // If not in cache, fetch from database with tenant filter
@@ -96,18 +96,9 @@ const evaluateTypologySendRequest = async (
         continue;
       }
 
-      // Filter results by tenantId - expressions should include tenantId field
-      const expressions = expressionRes[0];
-      expression = expressions.find((expr: ITypologyExpression & { tenantId?: string }) => expr.tenantId === tenantId);
+      expression = expressionRes[0][0];
 
-      if (!expression) {
-        loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
-        continue;
-      }
-
-      const cache = Singleton.getTypologyConfigCache();
-      const cacheKey = `${tenantId}:${currTypologyResult.id}:${currTypologyResult.cfg}`;
-      cache.set(cacheKey, expression);
+      setTypologyConfigInCache(tenantId, currTypologyResult.id, currTypologyResult.cfg, expression);
     }
 
     const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
@@ -222,7 +213,7 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
 
   // Extract tenantId from transaction payload
-  type TenantAwareTransaction = Pacs002 & { tenantId?: string };
+  type TenantAwareTransaction = Pacs002 & { tenantId: string };
   const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
   const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId;
 

@@ -23,9 +23,6 @@ export const dbInit = async (): Promise<void> => {
   const { db, config } = await Singleton.getDatabaseManager(configuration);
   databaseManager = db;
   configuration = { ...configuration, ...config };
-
-  // Load all typology configurations into cache at startup
-  Singleton.loadAllTypologyConfigs();
 };
 
 export let server: IStartupService;
