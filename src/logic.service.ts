@@ -8,15 +8,14 @@ import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/proc
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
-import { getTypologyConfigFromCache, setTypologyConfigInCache } from './services/services';
+// import { getTypologyConfigFromCache, setTypologyConfigInCache } from './services/services';
 
-const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult, tenantId: string): Promise<RuleResult[] | undefined> => {
+const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
     ruleResult,
-    tenantId,
   });
   const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => {
-    const result = res as { ruleResult: RuleResult; tenantId: string };
+    const result = res as { ruleResult: RuleResult };
     return result.ruleResult;
   });
   return ruleResults;
@@ -77,29 +76,21 @@ const evaluateTypologySendRequest = async (
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
-    // Try to get typology configuration from cache first
-    let expression = getTypologyConfigFromCache(tenantId, currTypologyResult.id, currTypologyResult.cfg);
+    const expressionRes = (await databaseManager.getTypologyConfig({
+      id: currTypologyResult.id,
+      cfg: currTypologyResult.cfg,
+      host: '',
+      desc: '',
+      rules: [],
+      tenantId,
+    })) as ITypologyExpression[][];
 
-    if (!expression) {
-      // If not in cache, fetch from database with tenant filter
-      const expressionRes = (await databaseManager.getTypologyConfig({
-        id: currTypologyResult.id,
-        cfg: currTypologyResult.cfg,
-        host: '',
-        desc: '',
-        rules: [],
-        tenantId,
-      })) as ITypologyExpression[][];
-
-      if (!expressionRes?.[0]?.[0]) {
-        loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
-        continue;
-      }
-
-      expression = expressionRes[0][0];
-
-      setTypologyConfigInCache(tenantId, currTypologyResult.id, currTypologyResult.cfg, expression);
+    if (!expressionRes?.[0]?.[0]) {
+      loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
+      continue;
     }
+
+    const expression = expressionRes[0][0];
 
     const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
 
@@ -132,6 +123,7 @@ const evaluateTypologySendRequest = async (
     let efrupBlockAlert = false;
 
     if (currTypologyResult.workflow.flowProcessor) {
+      // if flowProcessor is defined -> get it's status
       const { flowProcessor } = currTypologyResult.workflow;
       efrupStatus = currTypologyResult.ruleResults.find((r) => r.id === flowProcessor)?.subRuleRef;
       if (efrupStatus === 'block') {
@@ -211,15 +203,10 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   loggerService.log('tx received', context, id);
 
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
-
-  // Extract tenantId from transaction payload
-  type TenantAwareTransaction = Pacs002 & { tenantId: string };
-  const tenantAwareTransaction = parsedTrans as TenantAwareTransaction;
-  const tenantId = tenantAwareTransaction.tenantId ?? parsedTrans.TenantId;
-
+  const tenantId = parsedTrans.TenantId;
   const cacheKey = `${tenantId}:${transactionId}`;
   // Save the rules Result to Redis and continue with the available
-  const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult, tenantId);
+  const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult);
 
   if (!rulesList) {
     loggerService.error('Redis records should never be undefined', undefined, context, id);

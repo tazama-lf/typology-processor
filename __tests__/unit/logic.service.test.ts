@@ -33,13 +33,14 @@ jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () =>
 
 const getMockReqPacs002 = (): Pacs002 => {
   return JSON.parse(
-    '{"TxTp":"pacs.002.001.12","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
+    '{"TxTp":"pacs.002.001.12", "TenantId":"DEFAULT","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
   );
 };
 
 const getMockNetworkMapPacs002 = (): NetworkMap => {
   return JSON.parse(
     `{
+      "tenantId": "DEFAULT",
       "active": true,
       "cfg": "1.0.0",
       "messages": [
@@ -50,11 +51,13 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
           "typologies": [
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "028@1.0.0",
               "rules": [{ "id": "003@1.0.0", "cfg": "1.0.0" }]
             },
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "029@1.0.0",
               "rules": [
                 { "id": "003@1.0.0", "cfg": "1.0.0" },
@@ -71,6 +74,7 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
 const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
   return JSON.parse(
     `{
+      "tenantId": "DEFAULT",
       "active": true,
       "cfg": "1.0.0",
       "messages": [
@@ -81,6 +85,7 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
           "typologies": [
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "028@1.0.0",
               "rules": [
                 {
@@ -254,9 +259,7 @@ describe('Logic Service', () => {
 
   beforeEach(() => {
     // Clear the typology config cache before each test
-    const { getTypologyConfigCache } = require('../../src/services/services');
-    const cache = getTypologyConfigCache();
-    cache.flushAll();
+    // Note: Cache functionality is not implemented, so this is a no-op
 
     addOneGetAllSpy = jest
       .spyOn(databaseManager, 'addOneGetAll')
@@ -319,6 +322,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -351,6 +355,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -378,6 +383,7 @@ describe('Logic Service', () => {
       const ruleResultTwo: RuleResult = {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -478,6 +484,7 @@ describe('Logic Service', () => {
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -486,6 +493,7 @@ describe('Logic Service', () => {
       const ruleResult04: RuleResult = {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -494,6 +502,7 @@ describe('Logic Service', () => {
       const ruleResult05: RuleResult = {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -540,6 +549,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -593,6 +603,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -628,6 +639,7 @@ describe('Logic Service', () => {
       const badRuleResult: RuleResult = {
         prcgTm: 0,
         id: '001_Derived_account_age_payee',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
@@ -647,6 +659,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -677,6 +690,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
@@ -702,6 +716,7 @@ describe('Logic Service', () => {
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -731,6 +746,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -770,6 +786,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -799,6 +816,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -828,6 +846,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -905,6 +924,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -921,6 +941,7 @@ describe('Logic Service', () => {
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
         cfg: 'none',
+        tenantId: 'DEFAULT',
         subRuleRef: 'block',
       };
 
@@ -999,6 +1020,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1014,6 +1036,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
       };
@@ -1093,6 +1116,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1108,6 +1132,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
       };
@@ -1187,6 +1212,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1202,6 +1228,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
       };
@@ -1287,6 +1314,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1302,6 +1330,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
       };
@@ -1364,6 +1393,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1371,6 +1401,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1378,6 +1409,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1433,6 +1465,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1440,6 +1473,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1447,6 +1481,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1502,6 +1537,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1509,6 +1545,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1516,6 +1553,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1571,6 +1609,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1578,6 +1617,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1585,6 +1625,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1626,6 +1667,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1700,6 +1742,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1707,6 +1750,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1714,6 +1758,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1775,6 +1820,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1782,6 +1828,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1789,6 +1836,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1844,6 +1892,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1851,6 +1900,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1858,6 +1908,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1913,6 +1964,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1920,6 +1972,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1927,6 +1980,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1982,6 +2036,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1989,6 +2044,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1996,6 +2052,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2061,6 +2118,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2068,6 +2126,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2075,6 +2134,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2130,6 +2190,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2137,6 +2198,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2144,6 +2206,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2206,6 +2269,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2213,6 +2277,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2220,6 +2285,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2284,6 +2350,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2291,6 +2358,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2298,6 +2366,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
