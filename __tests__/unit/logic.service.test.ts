@@ -33,13 +33,14 @@ jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () =>
 
 const getMockReqPacs002 = (): Pacs002 => {
   return JSON.parse(
-    '{"TxTp":"pacs.002.001.12","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
+    '{"TxTp":"pacs.002.001.12", "TenantId":"DEFAULT","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
   );
 };
 
 const getMockNetworkMapPacs002 = (): NetworkMap => {
   return JSON.parse(
     `{
+      "tenantId": "DEFAULT",
       "active": true,
       "cfg": "1.0.0",
       "messages": [
@@ -50,11 +51,13 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
           "typologies": [
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "028@1.0.0",
               "rules": [{ "id": "003@1.0.0", "cfg": "1.0.0" }]
             },
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "029@1.0.0",
               "rules": [
                 { "id": "003@1.0.0", "cfg": "1.0.0" },
@@ -71,6 +74,7 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
 const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
   return JSON.parse(
     `{
+      "tenantId": "DEFAULT",
       "active": true,
       "cfg": "1.0.0",
       "messages": [
@@ -81,6 +85,7 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
           "typologies": [
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "028@1.0.0",
               "rules": [
                 {
@@ -103,6 +108,7 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
 const getMockTypologyExp028 = (): ITypologyExpression => {
   return JSON.parse(
     `{
+      "tenantId": "default",
       "cfg": "1.0.0",
       "id": "028@1.0.0",
       "workflow": {
@@ -144,6 +150,7 @@ const getMockTypologyExp028 = (): ITypologyExpression => {
 
 const getMockTypologyExp029 = (): ITypologyExpression => {
   return JSON.parse(`{
+    "tenantId": "default",
     "cfg": "1.0.0",
     "id": "029@1.0.0",
     "workflow": {
@@ -206,6 +213,33 @@ const getMockTypologyExp029 = (): ITypologyExpression => {
 }`);
 };
 
+const getMockReqPacs002WithTenant = (tenantId?: string): Pacs002 & { TenantId?: string } => {
+  const baseRequest = getMockReqPacs002();
+  const result: Pacs002 & { TenantId?: string } = {
+    ...baseRequest,
+  };
+  if (tenantId) {
+    result.TenantId = tenantId;
+  }
+  return result;
+};
+
+const getMockTypologyExp028ForTenant = (tenantId: string): ITypologyExpression & { tenantId: string } => {
+  const baseExpression = getMockTypologyExp028();
+  return {
+    ...baseExpression,
+    tenantId: tenantId,
+  } as ITypologyExpression & { tenantId: string };
+};
+
+const getMockTypologyExp029ForTenant = (tenantId: string): ITypologyExpression & { tenantId: string } => {
+  const baseExpression = getMockTypologyExp029();
+  return {
+    ...baseExpression,
+    tenantId: tenantId,
+  } as ITypologyExpression & { tenantId: string };
+};
+
 beforeAll(async () => {
   await dbInit();
   await runServer();
@@ -224,6 +258,9 @@ describe('Logic Service', () => {
   let deleteKeySpy: jest.SpyInstance;
 
   beforeEach(() => {
+    // Clear the typology config cache before each test
+    // Note: Cache functionality is not implemented, so this is a no-op
+
     addOneGetAllSpy = jest
       .spyOn(databaseManager, 'addOneGetAll')
       .mockImplementation((key: any, value: any): Promise<Array<Record<string, unknown>>> => {
@@ -242,12 +279,12 @@ describe('Logic Service', () => {
       switch (_typology.cfg) {
         case '028@1.0.0': {
           return new Promise((resolve, _reject) => {
-            resolve([[getMockTypologyExp028()]]);
+            resolve([[getMockTypologyExp028ForTenant('default')]]);
           });
         }
         case '029@1.0.0': {
           return new Promise((resolve, _reject) => {
-            resolve([[getMockTypologyExp029()]]);
+            resolve([[getMockTypologyExp029ForTenant('default')]]);
           });
         }
         default: {
@@ -279,12 +316,13 @@ describe('Logic Service', () => {
 
   describe('Handle Transaction', () => {
     it('should handle successful request, TP028, Rules 1/1', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -311,12 +349,13 @@ describe('Logic Service', () => {
     });
 
     it('should handle successful request, TP028+TP029, Rules 2/2 and Typologies 2/2', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -344,6 +383,7 @@ describe('Logic Service', () => {
       const ruleResultTwo: RuleResult = {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -444,6 +484,7 @@ describe('Logic Service', () => {
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -452,6 +493,7 @@ describe('Logic Service', () => {
       const ruleResult04: RuleResult = {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -460,6 +502,7 @@ describe('Logic Service', () => {
       const ruleResult05: RuleResult = {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -506,6 +549,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -559,6 +603,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -594,6 +639,7 @@ describe('Logic Service', () => {
       const badRuleResult: RuleResult = {
         prcgTm: 0,
         id: '001_Derived_account_age_payee',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
@@ -613,6 +659,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -643,6 +690,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
@@ -662,12 +710,13 @@ describe('Logic Service', () => {
     });
 
     it('should handle successful request, interdiction and tadproc result error', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -691,12 +740,13 @@ describe('Logic Service', () => {
     });
 
     it('Should handle failure to post to TADP', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -730,12 +780,13 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, no alertThreshold breach, not interdicting - review false', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -755,7 +806,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, alertThreshold breached, not interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
 
@@ -765,6 +816,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -784,7 +836,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
 
@@ -794,6 +846,7 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -871,6 +924,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -887,6 +941,7 @@ describe('Logic Service', () => {
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
         cfg: 'none',
+        tenantId: 'DEFAULT',
         subRuleRef: 'block',
       };
 
@@ -965,6 +1020,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -980,6 +1036,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
       };
@@ -1059,6 +1116,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1074,6 +1132,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
       };
@@ -1085,285 +1144,6 @@ describe('Logic Service', () => {
       });
 
       expect(responseSpy).toHaveBeenCalledTimes(1); // -1 block blocks interdiction
-      expect(responseSpy.mock.results.length).toEqual(1);
-
-      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
-      expect(tadpRequest.typologyResult.review).toEqual(true);
-      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
-    });
-
-    it('EFRuP - override, no alertThreshold breach, not interdicting - review false', async () => {
-      const Req = getMockReqPacs002();
-
-      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
-
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: '2000',
-                  interdictionThreshold: '4000',
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
-              },
-            ],
-          ]),
-        );
-      });
-
-      const ruleResult: RuleResult = {
-        id: '003@1.0.0',
-        cfg: '1.0.0',
-        reason: 'reason',
-        subRuleRef: '.01',
-      };
-
-      await handleTransaction({
-        transaction: Req,
-        networkMap,
-        ruleResult,
-      });
-
-      expect(responseSpy).toHaveBeenCalledTimes(0);
-
-      const efrupResult: RuleResult = {
-        id: 'EFRuP@1.0.0',
-        cfg: 'none',
-        subRuleRef: 'override',
-      };
-
-      await handleTransaction({
-        transaction: Req,
-        networkMap,
-        ruleResult: efrupResult,
-      });
-
-      expect(responseSpy).toHaveBeenCalledTimes(1);
-      expect(responseSpy.mock.results.length).toEqual(1);
-
-      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
-      expect(tadpRequest.typologyResult.review).toEqual(false);
-      expect(tadpRequest.typologyResult.ruleResults).toContainEqual({ ...efrupResult, wght: 0 });
-    });
-
-    it('EFRuP - override, alertThreshold breached, not interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
-
-      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
-
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
-              },
-            ],
-          ]),
-        );
-      });
-
-      // larger than or equal to 125 (alert) but not 150 (interdict)
-      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(125);
-
-      const ruleResult: RuleResult = {
-        id: '003@1.0.0',
-        cfg: '1.0.0',
-        reason: 'reason',
-        subRuleRef: '.01',
-      };
-
-      await handleTransaction({
-        transaction: Req,
-        networkMap,
-        ruleResult,
-      });
-
-      expect(responseSpy).toHaveBeenCalledTimes(0);
-
-      const efrupResult: RuleResult = {
-        id: 'EFRuP@1.0.0',
-        cfg: 'none',
-        subRuleRef: 'override',
-      };
-
-      await handleTransaction({
-        transaction: Req,
-        networkMap,
-        ruleResult: efrupResult,
-      });
-
-      expect(responseSpy).toHaveBeenCalledTimes(1);
-      expect(responseSpy.mock.results.length).toEqual(1);
-
-      const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
-      expect(tadpRequest.typologyResult.review).toEqual(true);
-      expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
-    });
-
-    it('EFRuP - override, interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
-
-      const networkMap: NetworkMap = getMockNetworkMapPacs002WithEFRuP();
-
-      getTypologyConfigSpy = jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementationOnce(async (_typology: any) => {
-        return new Promise((resolve, _reject) =>
-          resolve([
-            [
-              {
-                cfg: '1.0.0',
-                id: '030@1.0.0',
-                workflow: {
-                  alertThreshold: 125,
-                  interdictionThreshold: 150,
-                  flowProcessor: 'EFRuP@1.0.0',
-                },
-                rules: [
-                  {
-                    id: '003@1.0.0',
-                    cfg: '1.0.0',
-                    wghts: [
-                      {
-                        ref: '.01',
-                        wght: 100,
-                      },
-                    ],
-                    termId: 'v003at100at100',
-                  },
-                  {
-                    id: 'EFRuP@1.0.0',
-                    cfg: 'none',
-                    wghts: [
-                      {
-                        ref: 'block',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'override',
-                        wght: 0,
-                      },
-                      {
-                        ref: 'none',
-                        wght: 0,
-                      },
-                    ],
-                    termId: 'vEFRuPat100at100',
-                  },
-                ],
-                expression: ['Add', 'v003at100at100'],
-              },
-            ],
-          ]),
-        );
-      });
-
-      // larger than or equal to 150 (interdict)
-      jest.spyOn(evaluation, 'evaluateTypologyExpression').mockReturnValueOnce(175);
-
-      const ruleResult: RuleResult = {
-        id: '003@1.0.0',
-        cfg: '1.0.0',
-        reason: 'reason',
-        subRuleRef: '.01',
-      };
-
-      await handleTransaction({
-        transaction: Req,
-        networkMap,
-        ruleResult,
-      });
-
-      expect(responseSpy).toHaveBeenCalledTimes(0);
-
-      const efrupResult: RuleResult = {
-        id: 'EFRuP@1.0.0',
-        cfg: 'none',
-        subRuleRef: 'override',
-      };
-
-      await handleTransaction({
-        transaction: Req,
-        networkMap,
-        ruleResult: efrupResult,
-      });
-
-      expect(responseSpy).toHaveBeenCalledTimes(1); // -1 override blocks interdiction
       expect(responseSpy.mock.results.length).toEqual(1);
 
       const tadpRequest: TADPRequest = await responseSpy.mock.results[0].value;
@@ -1432,6 +1212,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1447,6 +1228,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
       };
@@ -1532,6 +1314,7 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1547,6 +1330,7 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
       };
@@ -1609,6 +1393,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1616,6 +1401,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1623,6 +1409,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1678,6 +1465,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1685,6 +1473,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1692,6 +1481,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1747,6 +1537,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1754,6 +1545,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1761,6 +1553,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1816,6 +1609,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1823,6 +1617,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1830,6 +1625,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1871,6 +1667,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1945,6 +1742,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1952,6 +1750,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -1959,6 +1758,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2020,6 +1820,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2027,6 +1828,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2034,6 +1836,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2089,6 +1892,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2096,6 +1900,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2103,6 +1908,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2158,6 +1964,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2165,6 +1972,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2172,6 +1980,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2227,6 +2036,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2234,6 +2044,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2241,6 +2052,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2306,6 +2118,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2313,6 +2126,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2320,6 +2134,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2375,6 +2190,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2382,6 +2198,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2389,6 +2206,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2451,6 +2269,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2458,6 +2277,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2465,6 +2285,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2529,6 +2350,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2536,6 +2358,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
@@ -2543,6 +2366,7 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',

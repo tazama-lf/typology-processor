@@ -3,7 +3,9 @@ import type { DatabaseManagerInstance, ManagerConfig } from '@tazama-lf/frms-coe
 import { Database } from '@tazama-lf/frms-coe-lib/lib/config/database.config';
 import { Cache } from '@tazama-lf/frms-coe-lib/lib/config/redis.config';
 import { CreateStorageManager } from '@tazama-lf/frms-coe-lib/lib/services/dbManager';
-import type { Configuration } from '../config';
+import type { Configuration, Databases } from '../config';
+import type { NetworkMap } from '@tazama-lf/frms-coe-lib/lib/interfaces';
+
 /* eslint-disable @typescript-eslint/no-extraneous-class -- singleton */
 export class Singleton {
   private static dbManager: DatabaseManagerInstance<Configuration>;
@@ -25,3 +27,16 @@ export class Singleton {
   }
 }
 /* eslint-enable @typescript-eslint/no-extraneous-class */
+
+export async function loadAllTypologyConfigs(databaseManager: DatabaseManagerInstance<Databases>): Promise<void> {
+  const networkMapsList: NetworkMap[][] = (await databaseManager.getNetworkMap()) as NetworkMap[][];
+  for (const networkMaps of networkMapsList) {
+    for (const networkMap of networkMaps) {
+      for (const message of networkMap.messages) {
+        for (const typology of message.typologies) {
+          await databaseManager.getTypologyConfig(typology);
+        }
+      }
+    }
+  }
+}

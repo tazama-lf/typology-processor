@@ -11,7 +11,7 @@ import { setTimeout } from 'node:timers/promises';
 import * as util from 'node:util';
 import { additionalEnvironmentVariables, type Databases, type Configuration } from './config';
 import { handleTransaction } from './logic.service';
-import { Singleton } from './services/services';
+import { loadAllTypologyConfigs, Singleton } from './services/services';
 
 let configuration = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
 export const loggerService: LoggerService = new LoggerService(configuration);
@@ -33,7 +33,11 @@ export const runServer = async (): Promise<void> => {
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
+
+      loggerService.log('Loading all typology configurations into cache...', 'runServer');
+      await loadAllTypologyConfigs(databaseManager);
       const { consumers } = await getRoutesFromNetworkMap(databaseManager, configuration.functionName);
+
       if (!(await server.init(handleTransaction, undefined, consumers, configuration.INTERDICTION_PRODUCER))) {
         await setTimeout(5000);
       } else {
