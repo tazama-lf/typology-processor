@@ -326,6 +326,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -359,6 +360,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -387,6 +389,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -488,6 +491,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       const ruleResult04: RuleResult = {
@@ -497,6 +501,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       const ruleResult05: RuleResult = {
@@ -506,6 +511,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({ transaction: Req, networkMap, ruleResult: ruleResult03 });
@@ -553,6 +559,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -607,6 +614,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -643,6 +651,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({ transaction: Req, ruleResult: badRuleResult, networkMap: networkMap });
@@ -663,6 +672,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       jest.spyOn(databaseManager, 'getTypologyConfig').mockRejectedValue(async (_typology: Typology) => {
@@ -694,6 +704,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
+        indpdntVarbl: 0,
       };
 
       jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (_typology: any) => {
@@ -720,6 +731,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       responseSpy.mockImplementation().mockReturnValue(new Error('Test Failure Path'));
@@ -750,6 +762,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       const errorSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
@@ -790,6 +803,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -820,6 +834,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -850,6 +865,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -928,6 +944,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -943,6 +960,7 @@ describe('Logic Service', () => {
         cfg: 'none',
         tenantId: 'DEFAULT',
         subRuleRef: 'block',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1024,6 +1042,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1039,6 +1058,7 @@ describe('Logic Service', () => {
         tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1120,6 +1140,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1135,6 +1156,7 @@ describe('Logic Service', () => {
         tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1216,6 +1238,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1231,6 +1254,7 @@ describe('Logic Service', () => {
         tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1318,6 +1342,7 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1333,6 +1358,7 @@ describe('Logic Service', () => {
         tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1397,6 +1423,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1405,6 +1432,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1413,6 +1441,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1469,6 +1498,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1477,6 +1507,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1485,6 +1516,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1541,6 +1573,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1549,6 +1582,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1557,6 +1591,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1613,6 +1648,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1621,6 +1657,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1629,6 +1666,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1671,6 +1709,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1746,6 +1785,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1754,6 +1794,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1762,6 +1803,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1824,6 +1866,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1832,6 +1875,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1840,6 +1884,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1896,6 +1941,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1904,6 +1950,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1912,6 +1959,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1968,6 +2016,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1976,6 +2025,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -1984,6 +2034,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2040,6 +2091,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2048,6 +2100,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2056,6 +2109,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2122,6 +2176,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2130,6 +2185,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2138,6 +2194,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2194,6 +2251,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2202,6 +2260,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2210,6 +2269,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2273,6 +2333,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2281,6 +2342,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2289,6 +2351,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2354,6 +2417,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2362,6 +2426,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
@@ -2370,6 +2435,7 @@ describe('Typology Evaluation', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
