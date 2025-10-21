@@ -3,7 +3,7 @@
 import { NetworkMap, Pacs002, RuleResult, Typology } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import { TADPRequest } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TADPRequest';
 import { configuration, databaseManager, dbInit, runServer, server } from '../../src/index';
-import { RuleWeight, TypologyConfig, TypologyRuleConfig } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import { TypologyConfig, TypologyRuleConfig } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import { handleTransaction } from '../../src/logic.service';
 import { evaluateTypologyExpression } from '../../src/utils/evaluateTExpression';
 
@@ -33,13 +33,14 @@ jest.mock('@tazama-lf/frms-coe-startup-lib/lib/interfaces/iStartupConfig', () =>
 
 const getMockReqPacs002 = (): Pacs002 => {
   return JSON.parse(
-    '{"TxTp":"pacs.002.001.12","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
+    '{"TxTp":"pacs.002.001.12", "TenantId":"DEFAULT","FIToFIPmtSts":{"GrpHdr":{"MsgId":"136a-dbb6-43d8-a565-86b8f322411e","CreDtTm":"2023-02-03T09:53:58.069Z"},"TxInfAndSts":{"OrgnlInstrId":"5d158d92f70142a6ac7ffba30ac6c2db","OrgnlEndToEndId":"701b-ae14-46fd-a2cf-88dda2875fdd","TxSts":"ACCC","ChrgsInf":[{"Amt":{"Amt":307.14,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":153.57,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}}},{"Amt":{"Amt":300.71,"Ccy":"USD"},"Agt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}],"AccptncDtTm":"2023-02-03T09:53:58.069Z","InstgAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"typolog028"}}},"InstdAgt":{"FinInstnId":{"ClrSysMmbId":{"MmbId":"dfsp002"}}}}}}',
   );
 };
 
 const getMockNetworkMapPacs002 = (): NetworkMap => {
   return JSON.parse(
     `{
+      "tenantId": "DEFAULT",
       "active": true,
       "cfg": "1.0.0",
       "messages": [
@@ -50,11 +51,13 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
           "typologies": [
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "028@1.0.0",
               "rules": [{ "id": "003@1.0.0", "cfg": "1.0.0" }]
             },
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "029@1.0.0",
               "rules": [
                 { "id": "003@1.0.0", "cfg": "1.0.0" },
@@ -71,6 +74,7 @@ const getMockNetworkMapPacs002 = (): NetworkMap => {
 const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
   return JSON.parse(
     `{
+      "tenantId": "DEFAULT",
       "active": true,
       "cfg": "1.0.0",
       "messages": [
@@ -81,6 +85,7 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
           "typologies": [
             {
               "id": "typology-processor@1.0.0",
+              "tenantId": "DEFAULT",
               "cfg": "028@1.0.0",
               "rules": [
                 {
@@ -103,6 +108,7 @@ const getMockNetworkMapPacs002WithEFRuP = (): NetworkMap => {
 const getMockTypologyExp028 = (): TypologyConfig => {
   return JSON.parse(
     `{
+      "tenantId": "default",
       "cfg": "1.0.0",
       "id": "028@1.0.0",
       "workflow": {
@@ -144,6 +150,7 @@ const getMockTypologyExp028 = (): TypologyConfig => {
 
 const getMockTypologyExp029 = (): TypologyConfig => {
   return JSON.parse(`{
+    "tenantId": "default",
     "cfg": "1.0.0",
     "id": "029@1.0.0",
     "workflow": {
@@ -206,6 +213,33 @@ const getMockTypologyExp029 = (): TypologyConfig => {
 }`);
 };
 
+const getMockReqPacs002WithTenant = (tenantId?: string): Pacs002 & { TenantId?: string } => {
+  const baseRequest = getMockReqPacs002();
+  const result: Pacs002 & { TenantId?: string } = {
+    ...baseRequest,
+  };
+  if (tenantId) {
+    result.TenantId = tenantId;
+  }
+  return result;
+};
+
+const getMockTypologyExp028ForTenant = (tenantId: string): TypologyConfig => {
+  const baseExpression = getMockTypologyExp028();
+  return {
+    ...baseExpression,
+    tenantId: tenantId,
+  };
+};
+
+const getMockTypologyExp029ForTenant = (tenantId: string): TypologyConfig => {
+  const baseExpression = getMockTypologyExp029();
+  return {
+    ...baseExpression,
+    tenantId: tenantId,
+  };
+};
+
 beforeAll(async () => {
   await dbInit();
   await runServer();
@@ -224,6 +258,9 @@ describe('Logic Service', () => {
   let deleteKeySpy: jest.SpyInstance;
 
   beforeEach(() => {
+    // Clear the typology config cache before each test
+    // Note: Cache functionality is not implemented, so this is a no-op
+
     addOneGetAllSpy = jest
       .spyOn(databaseManager, 'addOneGetAll')
       .mockImplementation((key: any, value: any): Promise<Array<Record<string, unknown>>> => {
@@ -281,15 +318,17 @@ describe('Logic Service', () => {
 
   describe('Handle Transaction', () => {
     it('should handle successful request, TP028, Rules 1/1', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -313,15 +352,17 @@ describe('Logic Service', () => {
     });
 
     it('should handle successful request, TP028+TP029, Rules 2/2 and Typologies 2/2', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -346,9 +387,11 @@ describe('Logic Service', () => {
       const ruleResultTwo: RuleResult = {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -390,6 +433,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: { alertThreshold: 2000, interdictionThreshold: 4000 },
               rules: [
                 {
@@ -444,25 +488,31 @@ describe('Logic Service', () => {
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       const ruleResult04: RuleResult = {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       const ruleResult05: RuleResult = {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({ transaction: Req, networkMap, ruleResult: ruleResult03 });
@@ -506,9 +556,11 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -559,9 +611,11 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -594,9 +648,11 @@ describe('Logic Service', () => {
       const badRuleResult: RuleResult = {
         prcgTm: 0,
         id: '001_Derived_account_age_payee',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({ transaction: Req, ruleResult: badRuleResult, networkMap: networkMap });
@@ -613,9 +669,11 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       jest.spyOn(databaseManager, 'getTypologyConfig').mockRejectedValue(async (typologyId: string, typologyCfg: string) => {
@@ -643,9 +701,11 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: 'ref1',
+        indpdntVarbl: 0,
       };
 
       jest.spyOn(databaseManager, 'getTypologyConfig').mockImplementation(async (typologyId: string, typologyCfg: string) => {
@@ -662,15 +722,17 @@ describe('Logic Service', () => {
     });
 
     it('should handle successful request, interdiction and tadproc result error', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult03: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       responseSpy.mockImplementation().mockReturnValue(new Error('Test Failure Path'));
@@ -691,15 +753,17 @@ describe('Logic Service', () => {
     });
 
     it('Should handle failure to post to TADP', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       const errorSpy = jest.spyOn(server, 'handleResponse').mockRejectedValue(() => {
@@ -730,15 +794,17 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, no alertThreshold breach, not interdicting - review false', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -755,7 +821,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, alertThreshold breached, not interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
 
@@ -765,9 +831,11 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -784,7 +852,7 @@ describe('Logic Service', () => {
     });
 
     it('no EFRuP, interdicting - review true', async () => {
-      const Req = getMockReqPacs002();
+      const Req = getMockReqPacs002WithTenant('default');
 
       const networkMap: NetworkMap = getMockNetworkMapPacs002();
 
@@ -794,9 +862,11 @@ describe('Logic Service', () => {
       const ruleResult: RuleResult = {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -825,6 +895,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -869,9 +940,11 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -885,7 +958,9 @@ describe('Logic Service', () => {
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
         cfg: 'none',
+        tenantId: 'DEFAULT',
         subRuleRef: 'block',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -914,6 +989,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -961,9 +1037,11 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -976,8 +1054,10 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1006,6 +1086,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -1053,9 +1134,11 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1068,8 +1151,10 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'block',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1098,6 +1183,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: {
                 alertThreshold: 2000,
                 interdictionThreshold: 4000,
@@ -1145,6 +1231,8 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        tenantId: 'DEFAULT',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1159,6 +1247,8 @@ describe('Logic Service', () => {
         id: 'EFRuP@1.0.0',
         cfg: 'none',
         subRuleRef: 'override',
+        tenantId: 'DEFAULT',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1187,6 +1277,8 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
+
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -1237,6 +1329,8 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        tenantId: 'DEFAULT',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1250,7 +1344,9 @@ describe('Logic Service', () => {
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
         cfg: 'none',
+        tenantId: 'DEFAULT',
         subRuleRef: 'override',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1279,6 +1375,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -1329,6 +1426,8 @@ describe('Logic Service', () => {
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        tenantId: 'DEFAULT',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1343,6 +1442,8 @@ describe('Logic Service', () => {
         id: 'EFRuP@1.0.0',
         cfg: 'none',
         subRuleRef: 'override',
+        tenantId: 'DEFAULT',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1371,6 +1472,7 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -1418,9 +1520,11 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1433,8 +1537,10 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1469,6 +1575,8 @@ describe('Logic Service', () => {
             resolve({
               cfg: '1.0.0',
               id: '030@1.0.0',
+              tenantId: 'DEFAULT',
+
               workflow: {
                 alertThreshold: 125,
                 interdictionThreshold: 150,
@@ -1516,9 +1624,11 @@ describe('Logic Service', () => {
 
       const ruleResult: RuleResult = {
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1531,8 +1641,10 @@ describe('Logic Service', () => {
 
       const efrupResult: RuleResult = {
         id: 'EFRuP@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: 'none',
         subRuleRef: 'none',
+        indpdntVarbl: 0,
       };
 
       await handleTransaction({
@@ -1593,23 +1705,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1662,23 +1780,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1731,23 +1855,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1800,23 +1930,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1855,9 +1991,11 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -1929,23 +2067,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2004,23 +2148,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2073,23 +2223,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2142,23 +2298,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2211,23 +2373,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2290,23 +2458,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2359,23 +2533,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2435,23 +2615,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
@@ -2513,23 +2699,29 @@ describe('Typology Evaluation', () => {
       {
         prcgTm: 0,
         id: '003@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '004@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
       {
         prcgTm: 0,
         id: '005@1.0.0',
+        tenantId: 'DEFAULT',
         cfg: '1.0.0',
         reason: 'reason',
         subRuleRef: '.01',
+        indpdntVarbl: 0,
       },
     ];
 
