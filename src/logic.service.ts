@@ -3,7 +3,6 @@ import apm from './apm';
 import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
 import type { DataCache, NetworkMap, Pacs002, RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import type { MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
-import type { ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
@@ -75,21 +74,12 @@ const evaluateTypologySendRequest = async (
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
-    const expressionRes = (await databaseManager.getTypologyConfig({
-      id: currTypologyResult.id,
-      cfg: currTypologyResult.cfg,
-      host: '',
-      desc: '',
-      rules: [],
-      tenantId,
-    })) as ITypologyExpression[][];
+    const expression = await databaseManager.getTypologyConfig(currTypologyResult.id, currTypologyResult.cfg, tenantId);
 
-    if (!expressionRes?.[0]?.[0]) {
-      loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg} and tenant ${tenantId}`, logContext, msgId);
+    if (!expression) {
+      loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg},`, logContext, msgId);
       continue;
     }
-
-    const expression = expressionRes[0][0];
 
     const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
 
@@ -214,6 +204,11 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
 
   // Aggregations of typology config merge with rule result
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
+
+  if (!typologyResult.length) {
+    loggerService.warn(`RuleResult ${ruleResult.id}@${ruleResult.cfg} does not belong to a Typology in active network map`, context, id);
+    return;
+  }
 
   // Typology evaluation and Send to TADP interdiction determining
   await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache, tenantId);

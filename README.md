@@ -344,19 +344,21 @@ You then need to configure your environment: a [sample](.env.template) configura
 ```sh
 cp .env.template .env
 ```
-A [registry](https://github.com/tazama-lf/docs) of environment variables is provided to provide more context for what each variable is used for.
+A [registry](https://github.com/tazama-lf/docs/blob/f292c9ddabf52d6fe62addc1c61957419ed4ad05/Technical/processor-startup-config-registry.md) of environment variables is provided to provide more context for what each variable is used for.
 
 ##### Additional Variables
 
-| Variable | Purpose | Example
-| ------ | ------ | ------ |
-| `DATABASE_NAME` | ArangoDB database for TP | `configuration`
-| `DATABASE_URL` | ArangoDB server URL | `tcp://arango:8529`
-| `DATABASE_USER` | ArangoDB username | `root`
-| `DATABASE_PASSWORD` | ArangoDB password for username | `<secure_user_password>`
-| `DATABASE_CERT_PATH` | Certificate's path used for TLS by Arango | `<path_to_certificate>`
-| `SUPPRESS_ALERTS` | Suppress forwarding of Typology Result to the interdiction service | `false`
-| `INTERDICTION_PRODUCER` | The interdiction service NATS subject where typology interdiction threshold breaches will be reported | `interdiction-service`
+| Variable                           | Purpose                                                                                               | Example                    |
+|------------------------------------|-------------------------------------------------------------------------------------------------------|----------------------------|
+| `CONFIGURATION_DATABASE`           | PostgreSQL database name                                                                              | `configuration`            |
+| `CONFIGURATION_DATABASE_HOST`      | PostgreSQL hostname or endpoint                                                                       | `localhost`                |
+| `CONFIGURATION_DATABASE_PORT`      | PostgreSQL post used                                                                                  | `5432`                     |
+| `CONFIGURATION_DATABASE_USER`      | PostgreSQL username                                                                                   | `root`                     |
+| `CONFIGURATION_DATABASE_PASSWORD`  | PostgreSQL database password                                                                          | `password`                 |
+| `CONFIGURATION_DATABASE_CERT_PATH` | PostgreSQL certificate path                                                                           | `/path/to/certificate.crt` |
+| `SUPPRESS_ALERTS`                  | Suppress forwarding of Typology Result to the interdiction service                                    | `false`                    |
+| `INTERDICTION_PRODUCER`            | The interdiction service NATS subject where typology interdiction threshold breaches will be reported | `interdiction-service`     |
+
 
 ## Deployment
 
