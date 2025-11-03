@@ -1,6 +1,6 @@
 {
   "name": "typology-processor",
-  "version": "1.2.0",
+  "version": "3.0.0",
   "description": "typology-processor",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -36,8 +36,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cortex-js/compute-engine": "0.20.2",
-    "@tazama-lf/frms-coe-lib": "6.0.0-postgres.alpha.12",
-    "@tazama-lf/frms-coe-startup-lib": "3.0.0-rc.6",
+    "@tazama-lf/frms-coe-lib": "6.0.0",
+    "@tazama-lf/frms-coe-startup-lib": "3.0.0",
     "dotenv": "^17.2.1",
     "ioredis": "^5.7.0",
     "node-cache": "^5.1.2",
