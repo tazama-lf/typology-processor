@@ -3,17 +3,17 @@
 import type { SemiBoxedExpression } from '@cortex-js/compute-engine';
 import type { RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import { computeEngine, loggerService } from '..';
-import type { ExpressionMathJSON, IRuleValue } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
+import type { ExpressionMathJSON, TypologyRuleConfig } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 
 export const evaluateTypologyExpression = (
-  ruleValues: IRuleValue[],
+  ruleConfig: TypologyRuleConfig[],
   ruleResults: RuleResult[],
   typologyExpression: ExpressionMathJSON,
 ): number => {
   const logContext = 'evaluateTypologyExpression()';
   // Map for efficient rule weight lookup
   const valueMap = new Map<string, [string, number]>();
-  ruleValues.forEach((r) => {
+  ruleConfig.forEach((r) => {
     r.wghts.forEach((w) => {
       valueMap.set(`${r.id}${r.cfg}${w.ref}`, [r.termId, w.wght]);
     });

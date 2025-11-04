@@ -3,14 +3,15 @@ import apm from './apm';
 import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
 import type { DataCache, NetworkMap, Pacs002, RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import type { MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
-import type { ITypologyExpression } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyConfig';
 import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
 
-const saveToRedisGetAll = async (transactionId: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
-  const currentlyStoredRuleResult = await databaseManager.addOneGetAll(transactionId, { ruleResult: { ...ruleResult } });
+const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
+  const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
+    ruleResult,
+  });
   const ruleResults: RuleResult[] | undefined = currentlyStoredRuleResult.map((res) => {
     const result = res as { ruleResult: RuleResult };
     return result.ruleResult;
@@ -25,6 +26,7 @@ const ruleResultAggregation = (
 ): { typologyResult: TypologyResult[]; ruleCount: number } => {
   const typologyResult: TypologyResult[] = [];
   const allRuleSet = new Set();
+  const { tenantId } = networkMap;
   networkMap.messages.forEach((message) => {
     message.typologies.forEach((typology) => {
       const set = new Set();
@@ -41,6 +43,7 @@ const ruleResultAggregation = (
           result: -1,
           ruleResults,
           workflow: { alertThreshold: -1 },
+          tenantId,
         });
       }
     });
@@ -57,6 +60,7 @@ const evaluateTypologySendRequest = async (
   transactionId: string,
   msgId: string,
   dataCache: DataCache,
+  tenantId: string,
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
   for (const currTypologyResult of typologyResults) {
@@ -70,20 +74,13 @@ const evaluateTypologySendRequest = async (
     const startTime = process.hrtime.bigint();
     const spanExecReq = apm.startSpan(`${currTypologyResult.cfg}.exec.Req`);
 
-    const expressionRes = (await databaseManager.getTypologyConfig({
-      id: currTypologyResult.id,
-      cfg: currTypologyResult.cfg,
-      host: '',
-      desc: '',
-      rules: [],
-    })) as unknown[][];
+    const expression = await databaseManager.getTypologyConfig(currTypologyResult.id, currTypologyResult.cfg, tenantId);
 
-    if (!expressionRes?.[0]?.[0]) {
+    if (!expression) {
       loggerService.warn(`No Typology Expression found for Typology ${currTypologyResult.cfg},`, logContext, msgId);
       continue;
     }
 
-    const expression = expressionRes[0][0] as ITypologyExpression;
     const typologyResultValue = evaluateTypologyExpression(expression.rules, currTypologyResult.ruleResults, expression.expression);
 
     currTypologyResult.result = typologyResultValue;
@@ -120,7 +117,7 @@ const evaluateTypologySendRequest = async (
       efrupStatus = currTypologyResult.ruleResults.find((r) => r.id === flowProcessor)?.subRuleRef;
       if (efrupStatus === 'block') {
         efrupBlockAlert = true;
-        currTypologyResult.review = true; // review even if we don't interdict
+        currTypologyResult.review = true;
       } else if (efrupStatus === 'override') {
         efrupBlockAlert = true;
       }
@@ -133,10 +130,19 @@ const evaluateTypologySendRequest = async (
     if (!configuration.SUPPRESS_ALERTS && !efrupBlockAlert && isInterdicting) {
       currTypologyResult.review = true;
       currTypologyResult.prcgTm = CalculateDuration(startTime);
+
+      // Determine interdiction destination based on configuration
+      let interdictionDestination: string[];
+      if (configuration.INTERDICTION_DESTINATION === 'tenant') {
+        interdictionDestination = [`${configuration.INTERDICTION_PRODUCER}-${tenantId}`];
+      } else {
+        interdictionDestination = [configuration.INTERDICTION_PRODUCER];
+      }
+
       // Send Typology to interdiction service
       const spanInterdiction = apm.startSpan(`[${transactionId}] Send Typology result to interdiction service`);
       server
-        .handleResponse({ ...tadpReqBody, metaData }, [configuration.INTERDICTION_PRODUCER])
+        .handleResponse({ ...tadpReqBody, metaData }, interdictionDestination)
         .catch((error: unknown) => {
           loggerService.error('Error while sending Typology result to interdiction service', util.inspect(error), logContext, msgId);
         })
@@ -186,8 +192,8 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   loggerService.log('tx received', context, id);
 
   const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
-  const cacheKey = `TP_${transactionId}`;
-
+  const tenantId = parsedTrans.TenantId;
+  const cacheKey = `${tenantId}:${transactionId}`;
   // Save the rules Result to Redis and continue with the available
   const rulesList: RuleResult[] | undefined = await saveToRedisGetAll(cacheKey, ruleResult);
 
@@ -199,8 +205,13 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   // Aggregations of typology config merge with rule result
   const { typologyResult, ruleCount } = ruleResultAggregation(networkMap, rulesList, ruleResult);
 
+  if (!typologyResult.length) {
+    loggerService.warn(`RuleResult ${ruleResult.id}@${ruleResult.cfg} does not belong to a Typology in active network map`, context, id);
+    return;
+  }
+
   // Typology evaluation and Send to TADP interdiction determining
-  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache);
+  await evaluateTypologySendRequest(typologyResult, networkMap, parsedTrans, metaData!, cacheKey, id, dataCache, tenantId);
 
   // Garbage collection
   if (rulesList.length >= ruleCount) {
