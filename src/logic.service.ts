@@ -7,6 +7,7 @@ import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/proc
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
+import { loadAllTypologyConfigs } from './services/services';
 
 const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
@@ -220,4 +221,8 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     apmTransaction?.end();
     spanDelete?.end();
   }
+};
+
+export const handleReload = async (req: unknown): Promise<void> => {
+  await loadAllTypologyConfigs(databaseManager);
 };

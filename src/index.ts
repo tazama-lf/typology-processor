@@ -10,7 +10,7 @@ import os from 'node:os';
 import { setTimeout } from 'node:timers/promises';
 import * as util from 'node:util';
 import { additionalEnvironmentVariables, type Databases, type Configuration } from './config';
-import { handleTransaction } from './logic.service';
+import { handleReload, handleTransaction } from './logic.service';
 import { loadAllTypologyConfigs, Singleton } from './services/services';
 
 let configuration = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
@@ -46,6 +46,8 @@ export const runServer = async (): Promise<void> => {
         break;
       }
     }
+
+    server.initCommandChannel(handleReload, 'command', loggerService);
 
     if (!isConnected) {
       throw new Error('Unable to connect to nats after 10 retries');
