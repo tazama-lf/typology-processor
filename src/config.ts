@@ -26,12 +26,30 @@ export const additionalEnvironmentVariables: AdditionalConfig[] = [
     type: 'string',
     optional: false,
   },
+  {
+    name: 'COMMAND_CHANNEL_STREAM_SUBJECT',
+    type: 'string',
+    optional: false,
+  },
+  {
+    name: 'COMMAND_CHANNEL_CONSUMER_STREAM',
+    type: 'string',
+    optional: false,
+  },
+  {
+    name: 'COMMAND_CHANNEL_PRODUCER_STREAM',
+    type: 'string',
+    optional: false,
+  },
 ];
 
 export interface ExtendedConfig {
   INTERDICTION_PRODUCER: string;
   SUPPRESS_ALERTS: boolean;
   INTERDICTION_DESTINATION: string;
+  COMMAND_CHANNEL_STREAM_SUBJECT: string;
+  COMMAND_CHANNEL_CONSUMER_STREAM: string;
+  COMMAND_CHANNEL_PRODUCER_STREAM: string;
 }
 
 export type Databases = Required<Pick<ManagerConfig, 'configuration' | 'localCacheConfig' | 'redisConfig'>>;

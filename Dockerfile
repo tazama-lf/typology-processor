@@ -71,6 +71,11 @@ ENV CONFIGURATION_DATABASE_USER=
 ENV CONFIGURATION_DATABASE_PASSWORD=
 ENV CONFIGURATION_DATABASE_CERT_PATH=/usr/local/share/ca-certificates/ca-certificates.crt
 
+#CommandChannel
+ENV COMMAND_CHANNEL_STREAM_SUBJECT=command-channel.subject
+ENV COMMAND_CHANNEL_CONSUMER_STREAM=typology-processor:command-channel:consumer
+ENV COMMAND_CHANNEL_PRODUCER_STREAM=typology-processor:command-channel:producer
+
 # Alert
 ENV SUPPRESS_ALERTS=false
 
