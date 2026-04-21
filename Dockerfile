@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # SPDX-License-Identifier: Apache-2.0
 
 ARG BUILD_IMAGE=node:20-bullseye
@@ -12,9 +13,8 @@ COPY ./src ./src
 COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY .npmrc ./
-ARG GH_TOKEN
 
-RUN npm ci --ignore-scripts
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN npm ci --ignore-scripts
 RUN npm run build
 
 FROM ${BUILD_IMAGE} AS dep-resolver
@@ -23,8 +23,7 @@ LABEL stage=pre-prod
 
 COPY package*.json ./
 COPY .npmrc ./
-ARG GH_TOKEN
-RUN npm ci --omit=dev --ignore-scripts
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN npm ci --omit=dev --ignore-scripts
 
 FROM ${RUN_IMAGE} AS run-env
 USER nonroot
