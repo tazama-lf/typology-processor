@@ -811,6 +811,34 @@ describe('Logic Service', () => {
       expect(getTypologyConfigSpy).toHaveBeenCalledTimes(0);
       expect(responseSpy).toHaveBeenCalledTimes(0);
     });
+
+    it('should return early for unsupported structured transaction type', async () => {
+      const pacs008Transaction = {
+        TxTp: 'pacs.008.001.10',
+        TenantId: 'DEFAULT',
+        FIToFICstmrCdtTrf: {
+          GrpHdr: { MsgId: 'test-msg-id' },
+          CdtTrfTxInf: {},
+        },
+      };
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002();
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        tenantId: 'DEFAULT',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        indpdntVarbl: 0,
+      };
+
+      await handleTransaction({ transaction: pacs008Transaction, networkMap, ruleResult });
+
+      expect(addOneGetAllSpy).toHaveBeenCalledTimes(0);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(0);
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+    });
   });
 
   describe('Review flag, alerts, and interdiction', () => {
