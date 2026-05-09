@@ -1,6 +1,6 @@
 {
   "name": "typology-processor",
-  "version": "4.0.0-rc.0",
+  "version": "4.0.0-rc.1",
   "description": "typology-processor",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -36,8 +36,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cortex-js/compute-engine": "0.20.2",
-    "@tazama-lf/frms-coe-lib": "7.0.2-rc.2",
-    "@tazama-lf/frms-coe-startup-lib": "3.0.2-rc.2",
+    "@tazama-lf/frms-coe-lib": "8.0.0-rc.2",
+    "@tazama-lf/frms-coe-startup-lib": "3.0.2-rc.4",
     "dotenv": "^17.2.1",
     "ioredis": "^5.7.0",
     "node-cache": "^5.1.2",
@@ -51,7 +51,7 @@
     "@types/node-cache": "^4.2.5",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^9.36.0",
+    "eslint": "^9.39.4",
     "eslint-config-love": "^121.0.0",
     "eslint-config-prettier": "^10.1.8",
     "husky": "9.1.7",
