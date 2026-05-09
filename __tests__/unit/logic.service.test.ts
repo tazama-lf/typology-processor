@@ -786,6 +786,31 @@ describe('Logic Service', () => {
       expect(deleteKeySpy).toHaveBeenCalledTimes(0);
       expect(errorSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should return early for unsupported transaction type', async () => {
+      const unsupportedTransaction = {
+        TxTp: 'unsupported.type.v1',
+        TenantId: 'DEFAULT',
+        someField: 'someValue',
+      };
+
+      const networkMap: NetworkMap = getMockNetworkMapPacs002();
+      const ruleResult: RuleResult = {
+        prcgTm: 0,
+        id: '003@1.0.0',
+        tenantId: 'DEFAULT',
+        cfg: '1.0.0',
+        reason: 'reason',
+        subRuleRef: '.01',
+        indpdntVarbl: 0,
+      };
+
+      await handleTransaction({ transaction: unsupportedTransaction, networkMap, ruleResult });
+
+      expect(addOneGetAllSpy).toHaveBeenCalledTimes(0);
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(0);
+      expect(responseSpy).toHaveBeenCalledTimes(0);
+    });
   });
 
   describe('Review flag, alerts, and interdiction', () => {

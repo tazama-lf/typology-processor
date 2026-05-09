@@ -7,7 +7,7 @@ import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/proc
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
-import { isBaseMessageTransaction, isPacs002Transaction } from '@tazama-lf/frms-coe-lib/lib/helpers/transactionTypeGuards';
+import { isBaseMessageTransaction, isPacs002Transaction } from '@tazama-lf/frms-coe-lib';
 
 const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
@@ -187,13 +187,14 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
   });
 
-  let transactionId = '';
+  let transactionId: string;
   if (isPacs002Transaction(transaction)) {
     transactionId = transaction.FIToFIPmtSts.GrpHdr.MsgId;
-  }
-
-  if (isBaseMessageTransaction(transaction)) {
+  } else if (isBaseMessageTransaction(transaction)) {
     transactionId = transaction.MsgId;
+  } else {
+    loggerService.error('Unsupported transaction type', new Error('Unsupported transaction type'), context);
+    return;
   }
   const id = transactionId;
 
