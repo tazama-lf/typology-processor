@@ -7,7 +7,7 @@ import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/proc
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
-import { isBaseMessageTransaction, isPacs002Transaction } from '@tazama-lf/frms-coe-lib';
+import { isBaseMessageTransaction, isPacs002Transaction, isStructuredTransaction } from '@tazama-lf/frms-coe-lib';
 
 const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
@@ -188,8 +188,13 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   });
 
   let transactionId: string;
-  if (isPacs002Transaction(transaction)) {
-    transactionId = transaction.FIToFIPmtSts.GrpHdr.MsgId;
+  if (isStructuredTransaction(transaction)) {
+    if (isPacs002Transaction(transaction)) {
+      transactionId = transaction.FIToFIPmtSts.GrpHdr.MsgId;
+    } else {
+      loggerService.error('Unsupported structured transaction type', new Error('Unsupported structured transaction type'), context);
+      return;
+    }
   } else if (isBaseMessageTransaction(transaction)) {
     transactionId = transaction.MsgId;
   } else {
