@@ -36,8 +36,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cortex-js/compute-engine": "0.20.2",
-    "@tazama-lf/frms-coe-lib": "^8.0.0-rc.3",
-    "@tazama-lf/frms-coe-startup-lib": "^3.0.2-rc.5",
+    "@tazama-lf/frms-coe-lib": "8.0.0-rc.3",
+    "@tazama-lf/frms-coe-startup-lib": "3.0.2-rc.5",
     "dotenv": "^17.2.1",
     "ioredis": "^5.7.0",
     "node-cache": "^5.1.2",
