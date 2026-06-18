@@ -32,7 +32,7 @@ interface ServiceChannelAckData {
 const handleNetworkMapActivated = async (): Promise<void> => {
   const { consumers } = await getRoutesFromNetworkMap(databaseManager, configuration.functionName);
   await server.addConsumers!(consumers, handleTransaction);
-  loggerService.log(`Re-subscribed ${consumers.length} data-plane consumer(s) after network-map reload`);
+  loggerService.log(`Additively subscribed ${consumers.length} data-plane consumer(s) after network-map reload`);
 };
 
 const dispatchTable: Record<string, (event: CloudEvent<NetworkMapActivatedData>) => void | Promise<void>> = {
