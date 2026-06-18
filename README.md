@@ -359,6 +359,7 @@ A [registry](https://github.com/tazama-lf/docs/blob/f292c9ddabf52d6fe62addc1c619
 | `CONFIGURATION_DATABASE_CERT_PATH` | PostgreSQL certificate path                                                                           | `/path/to/certificate.crt` |
 | `SUPPRESS_ALERTS`                  | Suppress forwarding of Typology Result to the interdiction service                                    | `false`                    |
 | `INTERDICTION_PRODUCER`            | The interdiction service NATS subject where typology interdiction threshold breaches will be reported | `interdiction-service`     |
+| `INTERDICTION_DESTINATION`         | Interdiction subject scoping: `tenant` appends the tenant ID (`<INTERDICTION_PRODUCER>-<tenantId>`), otherwise the bare producer subject is used | `tenant`                   |
 
 ##### Service Channel Variables
 
