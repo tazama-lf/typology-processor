@@ -9,8 +9,9 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 import { setTimeout } from 'node:timers/promises';
 import * as util from 'node:util';
-import { additionalEnvironmentVariables, type Databases, type Configuration } from './config';
+import { additionalEnvironmentVariables, type Databases, type Configuration, validateServiceChannelConfiguration } from './config';
 import { handleTransaction } from './logic.service';
+import { handleServiceChannelMessage } from './services/service-channel.service';
 import { loadAllTypologyConfigs, Singleton } from './services/services';
 
 let configuration = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
@@ -30,6 +31,7 @@ export let server: IStartupService;
 export const runServer = async (): Promise<void> => {
   server = new StartupFactory();
   if (configuration.nodeEnv !== 'test') {
+    validateServiceChannelConfiguration(configuration);
     let isConnected = false;
     for (let retryCount = 0; retryCount < 10; retryCount++) {
       loggerService.log('Connecting to nats server...');
@@ -49,6 +51,16 @@ export const runServer = async (): Promise<void> => {
 
     if (!isConnected) {
       throw new Error('Unable to connect to nats after 10 retries');
+    }
+
+    const serviceChannelInitialized = await server.initServiceChannel!(
+      handleServiceChannelMessage,
+      configuration.SERVICE_CHANNEL_CONSUMER,
+      loggerService,
+    );
+
+    if (!serviceChannelInitialized) {
+      throw new Error('Unable to initialize service-channel subscription');
     }
   }
 };
