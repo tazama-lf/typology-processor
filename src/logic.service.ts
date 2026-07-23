@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import apm from './apm';
 import { CalculateDuration } from '@tazama-lf/frms-coe-lib/lib/helpers/calculatePrcg';
-import type { DataCache, NetworkMap, Pacs002, RuleResult } from '@tazama-lf/frms-coe-lib/lib/interfaces';
+import type { DataCache, NetworkMap, RuleResult, SupportedTransactionMessage } from '@tazama-lf/frms-coe-lib/lib/interfaces';
 import type { MetaData } from '@tazama-lf/frms-coe-lib/lib/interfaces/metaData';
 import type { TypologyResult } from '@tazama-lf/frms-coe-lib/lib/interfaces/processor-files/TypologyResult';
 import * as util from 'node:util';
 import { configuration, databaseManager, loggerService, server } from '.';
 import { evaluateTypologyExpression } from './utils/evaluateTExpression';
+import { isBaseMessageTransaction, isPacs002Transaction, isStructuredTransaction } from '@tazama-lf/frms-coe-lib';
 
 const saveToRedisGetAll = async (cacheKey: string, ruleResult: RuleResult): Promise<RuleResult[] | undefined> => {
   const currentlyStoredRuleResult = await databaseManager.addOneGetAll(cacheKey, {
@@ -103,7 +104,7 @@ const evaluateTypologySendRequest = async (
 
     const tadpReqBody = {
       typologyResult: currTypologyResult,
-      transaction: transaction as Pacs002,
+      transaction: transaction as SupportedTransactionMessage,
       networkMap,
       DataCache: dataCache,
     };
@@ -181,17 +182,28 @@ export const handleTransaction = async (req: unknown): Promise<void> => {
   };
 
   const { metaData, networkMap, ruleResult, transaction, DataCache: dataCache } = parsedReq;
-  const parsedTrans = transaction as Pacs002;
+  const parsedTrans = transaction as SupportedTransactionMessage;
   const apmTransaction = apm.startTransaction('typroc.handleTransaction', {
     childOf: typeof metaData?.traceParent === 'string' ? metaData.traceParent : undefined,
   });
 
-  const transactionType = 'FIToFIPmtSts';
+  let transactionId: string;
+  if (isStructuredTransaction(transaction)) {
+    if (isPacs002Transaction(transaction)) {
+      transactionId = transaction.FIToFIPmtSts.GrpHdr.MsgId;
+    } else {
+      loggerService.error('Unsupported structured transaction type', new Error('Unsupported structured transaction type'), context);
+      return;
+    }
+  } else if (isBaseMessageTransaction(transaction)) {
+    transactionId = transaction.MsgId;
+  } else {
+    loggerService.error('Unsupported transaction type', new Error('Unsupported transaction type'), context);
+    return;
+  }
+  const id = transactionId;
 
-  const id = parsedTrans[transactionType].GrpHdr.MsgId;
   loggerService.log('tx received', context, id);
-
-  const transactionId = parsedTrans[transactionType].GrpHdr.MsgId;
   const tenantId = parsedTrans.TenantId;
   const cacheKey = `${tenantId}:${transactionId}`;
   // Save the rules Result to Redis and continue with the available

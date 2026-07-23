@@ -32,7 +32,7 @@ export async function loadAllTypologyConfigs(databaseManager: DatabaseManagerIns
   for (const networkMap of networkMaps) {
     for (const message of networkMap.messages) {
       for (const typology of message.typologies) {
-        await databaseManager.getTypologyConfig(typology.id, typology.cfg, typology.tenantId);
+        await databaseManager.getTypologyConfig(typology.id, typology.cfg, networkMap.tenantId);
       }
     }
   }
