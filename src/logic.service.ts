@@ -65,10 +65,11 @@ const evaluateTypologySendRequest = async (
 ): Promise<void> => {
   const logContext = 'evaluateTypologySendRequest()';
   for (const currTypologyResult of typologyResults) {
-    // Typology Wait for enough rules if they are not matching the number configured
-    const networkMapRules = networkMap.messages[0].typologies.find(
-      (typology) => typology.cfg === currTypologyResult.cfg && typology.id === currTypologyResult.id,
-    );
+    // Typology Wait for enough rules if they are not matching the number configured.
+    // Search every message: ruleResultAggregation takes typologies from all of them, not only the first.
+    const networkMapRules = networkMap.messages
+      .flatMap((message) => message.typologies)
+      .find((typology) => typology.cfg === currTypologyResult.cfg && typology.id === currTypologyResult.id);
     const typologyResultRules = currTypologyResult.ruleResults;
     if (networkMapRules && typologyResultRules.length < networkMapRules.rules.length) continue;
 
