@@ -1714,6 +1714,181 @@ describe('Logic Service', () => {
       expect(tadpRequest.typologyResult.ruleResults).toContainEqual(efrupResult); // evaluateTypologyExpression mock doesn't set wght's for ruleResults
     });
   });
+
+  // A network map can route a transaction type in a later message: here card authorisations come
+  // second, after pacs.002. The event director prunes the map to the transaction's own message
+  // before any rule sees it, so in the pipeline the card message arrives as messages[0]. These
+  // tests hold the typology processor to the same behaviour when it is handed the whole map.
+  describe('Typology routed in a later network map message', () => {
+    const cardAuthMessage = {
+      id: 'card@1.0.0',
+      cfg: '1.0.0',
+      txTp: 'cardauth',
+      typologies: [
+        {
+          id: 'typology-processor',
+          tenantId: 'DEFAULT',
+          cfg: 'C01-card@1.0.0',
+          rules: [
+            { id: '260@1.0.0', cfg: '1.0.0' },
+            { id: 'EFRuP@4.0.0', cfg: 'none' },
+          ],
+        },
+      ],
+    };
+
+    const getMockNetworkMapTwoMessages = (): NetworkMap =>
+      JSON.parse(
+        JSON.stringify({
+          tenantId: 'DEFAULT',
+          active: true,
+          cfg: '4.0.0',
+          messages: [
+            {
+              id: '004@4.0.0',
+              cfg: '4.0.0',
+              txTp: 'pacs.002.001.12',
+              typologies: [
+                {
+                  id: 'typology-processor@1.0.0',
+                  tenantId: 'DEFAULT',
+                  cfg: '028@1.0.0',
+                  rules: [
+                    { id: '003@1.0.0', cfg: '1.0.0' },
+                    { id: 'EFRuP@4.0.0', cfg: 'none' },
+                  ],
+                },
+              ],
+            },
+            cardAuthMessage,
+          ],
+        }),
+      );
+
+    // What the event director sends for a cardauth transaction: only the card message.
+    const getMockNetworkMapCardAuthPruned = (): NetworkMap => {
+      const networkMap = getMockNetworkMapTwoMessages();
+      return { ...networkMap, messages: networkMap.messages.filter((message) => message.txTp === 'cardauth') };
+    };
+
+    const getMockReqCardAuth = () => ({
+      TxTp: 'cardauth',
+      TenantId: 'DEFAULT',
+      MsgId: 'card-auth-0001',
+      Payload: { amount: 120.5, currency: 'KES' },
+    });
+
+    const cardRuleResult = (subRuleRef: string): RuleResult => ({
+      prcgTm: 0,
+      id: '260@1.0.0',
+      tenantId: 'DEFAULT',
+      cfg: '1.0.0',
+      subRuleRef,
+      indpdntVarbl: 0,
+    });
+
+    const efrupRuleResult = (subRuleRef: string): RuleResult => ({
+      prcgTm: 0,
+      id: 'EFRuP@4.0.0',
+      tenantId: 'DEFAULT',
+      cfg: 'none',
+      subRuleRef,
+      indpdntVarbl: 0,
+    });
+
+    // Every publish so far: its subject and the rules in the typology result it carried.
+    const published = () =>
+      responseSpy.mock.calls.map(([body, subject]) => ({
+        subject,
+        rules: body.typologyResult.ruleResults.map((ruleResult: RuleResult) => ruleResult.id),
+      }));
+
+    let suppressAlerts: boolean;
+
+    beforeEach(() => {
+      suppressAlerts = configuration.SUPPRESS_ALERTS;
+      configuration.SUPPRESS_ALERTS = false;
+      getTypologyConfigSpy.mockImplementation(async (_typologyId: string, typologyCfg: string) => {
+        if (typologyCfg !== 'C01-card@1.0.0') throw new Error(`Unexpected typology ${typologyCfg}`);
+        return {
+          id: 'typology-processor',
+          cfg: 'C01-card@1.0.0',
+          tenantId: 'DEFAULT',
+          workflow: { alertThreshold: 400, interdictionThreshold: 700, flowProcessor: 'EFRuP@4.0.0' },
+          rules: [
+            {
+              id: '260@1.0.0',
+              cfg: '1.0.0',
+              termId: 'v260at100at100',
+              wghts: [
+                { ref: '.01', wght: 0 },
+                { ref: '.04', wght: 900 },
+              ],
+            },
+            {
+              id: 'EFRuP@4.0.0',
+              cfg: 'none',
+              termId: 'vEFRuPat400atnone',
+              wghts: [
+                { ref: 'none', wght: 0 },
+                { ref: 'override', wght: 0 },
+              ],
+            },
+          ],
+          expression: ['Add', 'v260at100at100'],
+        };
+      });
+    });
+
+    afterEach(() => {
+      configuration.SUPPRESS_ALERTS = suppressAlerts;
+    });
+
+    it('pruned map, as the event director sends it: evaluates once, when both rules have answered', async () => {
+      const networkMap = getMockNetworkMapCardAuthPruned();
+
+      await handleTransaction({ transaction: getMockReqCardAuth(), networkMap, ruleResult: cardRuleResult('.01') });
+      const afterFirstRule = published();
+      await handleTransaction({ transaction: getMockReqCardAuth(), networkMap, ruleResult: efrupRuleResult('none') });
+
+      expect({ afterFirstRule, afterBothRules: published() }).toEqual({
+        afterFirstRule: [],
+        afterBothRules: [{ subject: ['typology-C01-card@1.0.0'], rules: ['260@1.0.0', 'EFRuP@4.0.0'] }],
+      });
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
+      expect(deleteKeySpy).toHaveBeenCalledWith('DEFAULT:card-auth-0001');
+    });
+
+    it('whole map: waits for every rule of a typology in the second message, and publishes to its subject', async () => {
+      const networkMap = getMockNetworkMapTwoMessages();
+
+      await handleTransaction({ transaction: getMockReqCardAuth(), networkMap, ruleResult: cardRuleResult('.01') });
+      const afterFirstRule = published();
+      await handleTransaction({ transaction: getMockReqCardAuth(), networkMap, ruleResult: efrupRuleResult('none') });
+
+      expect({ afterFirstRule, afterBothRules: published() }).toEqual({
+        afterFirstRule: [],
+        afterBothRules: [{ subject: ['typology-C01-card@1.0.0'], rules: ['260@1.0.0', 'EFRuP@4.0.0'] }],
+      });
+      expect(getTypologyConfigSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('whole map: does not interdict on rule 260 alone before EFRuP can override it', async () => {
+      const networkMap = getMockNetworkMapTwoMessages();
+
+      await handleTransaction({ transaction: getMockReqCardAuth(), networkMap, ruleResult: cardRuleResult('.04') });
+      const afterFirstRule = published();
+      await handleTransaction({ transaction: getMockReqCardAuth(), networkMap, ruleResult: efrupRuleResult('override') });
+
+      expect({ afterFirstRule, afterBothRules: published() }).toEqual({
+        afterFirstRule: [],
+        afterBothRules: [{ subject: ['typology-C01-card@1.0.0'], rules: ['260@1.0.0', 'EFRuP@4.0.0'] }],
+      });
+      const tadpRequest: TADPRequest = responseSpy.mock.calls[0][0];
+      expect(tadpRequest.typologyResult.result).toEqual(900);
+      expect(tadpRequest.typologyResult.review).toEqual(true);
+    });
+  });
 });
 
 describe('Typology Evaluation', () => {
